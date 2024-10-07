@@ -1,7 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "client.h"
-#include "external/GLFW/glfw3.h"
+#include <GLFW/glfw3.h>
 #include "opengl.c"
+#include <stdio.h>
 
 static u8 EnteredChars[8];
 static s32 NumEnteredChars;

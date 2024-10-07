@@ -3,6 +3,7 @@
 #include <memory.h>
 #include <stdlib.h>
 #include <float.h>
+#include <stdio.h>
 #define fn static
 #define ArraySize(Array) (sizeof(Array) / sizeof(*Array))
 
