@@ -18,6 +18,7 @@ typedef struct
 
 	map_t *map;
 	f32 time_elapsed;
+	v2 camera_position;
 } game_world_t;
 
 #include "world.c"
@@ -35,6 +36,8 @@ fn void Setup(game_world_t *state, memory_t *memory)
 	CreateEntity(state->storage, V2s(2, 12), 0);
 	CreateEntity(state->storage, V2s(4, 2), 0);
 	state->entity_size = V2(ENTITY_SIZE, ENTITY_SIZE);
+
+	state->camera_position = V2(0, 0);
 }
 
 fn void Update(game_world_t *state, f32 dt, client_input_t input)
@@ -76,7 +79,17 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt)
 
 	// NOTE(): The camera offset should be passed to the renderer as
 	// some kind of "set transform" command maybe.
-	v2 camera_offset = V2(800.0f, 0.0f);
+	//v2 camera_offset = V2(700.0f, 0.0f);
+
+	entity_t* player_entity = &state->storage->entities[0];
+	v2 player_world_pos = GetTileCenter(state->map, player_entity->p);
+
+	v2 player_iso_pos = ScreenToIso(player_world_pos);
+
+	v2 screen_center = V2(1600.0f/2, 900.0f/2);
+	v2 camera_offset = Sub(screen_center, player_iso_pos);
+	
+	state->camera_position = Lerp2(state->camera_position, camera_offset, 5.0f * dt);
 
 	const map_t *map = state->map;
 	for (s32 y = 0; y < map->y; y++)
@@ -84,7 +97,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt)
 	{
 		v2 p = MapToScreen(map, V2s(x, y));
 		p = ScreenToIso(p);
-		p = Add(p, camera_offset);
+		p = Add(p, state->camera_position);
 		RenderIsoCube(out, p, map->tile_sz, 0, White());
 	}
 
@@ -99,8 +112,10 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt)
 		target = Sub(target, entity_half_sz);
 		entity->deferred_p = Lerp2(entity->deferred_p, target, 10.0f * dt);
 
-		v2 p = ScreenToIso(entity->deferred_p);
-		p = Add(p, camera_offset);
+		v2 p = entity->deferred_p;
+		p = ScreenToIso(p);
+
+		p = Add(p, state->camera_position);
 
 		v4 color = index > 0 ? Red() : Pink();
 		RenderIsoCube(out, p, state->entity_size, ENTITY_PIXEL_HEIGHT, color);
