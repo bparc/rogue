@@ -1,0 +1,10 @@
+{
+	"folders":
+	[
+		{
+			"path": ".",
+			"folder_exclude_patterns": [".vs","x64", "src/stb"],
+			"file_exclude_patterns": ["*.vs","*.sublime-workspace", "subl.bat"],
+		}
+	]
+}

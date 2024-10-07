@@ -1,0 +1,10 @@
+*.sublime-workspace
+*.exe
+*.ilk
+*.pdb
+*.obj
+*.dll
+vs/
+src/external/
+lib/
+x64/
