@@ -210,3 +210,23 @@ fn v2 ClampToLine(v2 a, v2 b, v2 p)
 	}
 	return (p);
 }
+
+fn v2s Up(void)
+{
+	return V2s(0, -1);
+}
+
+fn v2s Down(void)
+{
+	return V2s(0, +1);
+}
+
+fn v2s Left(void)
+{
+	return V2s(-1, 0);
+}
+
+fn v2s Right(void)
+{
+	return V2s(+1, 0);
+}

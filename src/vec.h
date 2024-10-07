@@ -18,6 +18,11 @@ typedef struct
 	s32 y;
 } v2s;
 
+fn b32 IsZero(v2s x)
+{
+	b32 result = (x.x == 0 && x.y == 0);
+	return result;
+}
 // NOTE(): Constructors.
 fn v2s V2s(s32 x, s32 y);
 fn v2 V2(f32 x, f32 y);
