@@ -1,0 +1,13 @@
+player_up_test.png
+size:512,256
+repeat:none
+001
+bounds:255,0,83,170
+002
+bounds:85,0,83,170
+003
+bounds:340,0,83,170
+004
+bounds:170,0,83,170
+005
+bounds:0,0,83,170
