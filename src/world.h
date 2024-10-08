@@ -152,7 +152,12 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 				if ((direction >= 0) && (direction < 4))
 				{
 					// NOTE(): The input is valid - accept it.
-					MoveEntity(map, entity, considered_dirs[direction]);
+					v2s offset = considered_dirs[direction];
+					entity_t *hostile = GetEntityByPosition(storage, AddS(entity->p, offset));
+					if (IsHostile(hostile))
+						Assert(0 && "You lost.");
+
+					MoveEntity(map, entity, offset);
 
 					state->moves_remaining--;
 					if (state->moves_remaining == 0)
@@ -208,7 +213,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				v4 color = White();
 				b32 Filled = 0;
 				f32 height = 0;
-				if (IsWall(state, (v2s) {x, y}))
+				if (IsWall(state, V2s(x, y)))
 				{
 					Filled = true;
 					height = 80;

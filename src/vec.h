@@ -46,6 +46,7 @@ fn v2 LessThanEqual(v2 a, v2 b);
 fn v2 Equal(v2 a, v2 b);
 fn v2 NotEqual(v2 a, v2 b);
 
+fn b32 CompareVectors(v2s a, v2s b);
 // NOTE(): Arithmetic.
 fn v2 Add(v2 a, v2 b);
 fn v2 Mul(v2 a, v2 b);

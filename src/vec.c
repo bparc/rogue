@@ -133,6 +133,12 @@ fn v4 Lerp4(v4 a, v4 b, f32 t)
 	return result;
 }
 
+fn b32 CompareVectors(v2s a, v2s b)
+{
+	b32 result = (a.x == b.x) && (a.y == b.y);
+	return result;
+}
+
 fn v2s V2s(s32 x, s32 y)
 {
 	v2s result = {x, y};

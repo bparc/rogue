@@ -99,6 +99,13 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags)
 	return result;
 }
 
+fn b32 IsHostile(const entity_t *entity)
+{
+	if (entity)
+		return entity->flags & entity_flags_hostile;
+	return 0;
+}
+
 fn entity_t *GetEntity(entity_storage_t *storage, entity_id_t id)
 {
 	for (s32 index = 0; index < storage->num; index++)
@@ -108,6 +115,17 @@ fn entity_t *GetEntity(entity_storage_t *storage, entity_id_t id)
 			return entity;
 	}
 	return (0);
+}
+
+fn entity_t *GetEntityByPosition(entity_storage_t *storage, v2s p)
+{
+	for (s32 index = 0; index < storage->num; index++)
+	{
+		entity_t *entity = &storage->entities[index];
+		if (CompareVectors(entity->p, p))
+			return entity;
+	}
+	return 0;
 }
 
 fn void MoveEntity(map_t *map, entity_t *entity, v2s offset)
@@ -123,11 +141,6 @@ fn void MoveEntity(map_t *map, entity_t *entity, v2s offset)
 		entity->p.y = map->y - 1;
 }
 
-fn b32 IsHostile(const entity_t *entity)
-{
-	b32 result = entity->flags & entity_flags_hostile;
-	return result;
-}
 // NOTE(): Turns
 fn void PushTurn(turn_queue_t *queue, entity_t *entity)
 {
