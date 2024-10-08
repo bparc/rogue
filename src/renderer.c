@@ -189,3 +189,12 @@ fn void PushRenderOutput(render_output_t *output, const command_buffer_t buffer)
 	Assert(output->count < ArraySize(output->buffers));
 	output->buffers[output->count++] = buffer;
 }
+
+fn void SetGlobalOffset(command_buffer_t *buffer, v2 offset)
+{
+	command_set_transform_t *command = (command_set_transform_t *)PushCommand(buffer, command_t_set_transform);
+	if (command)
+	{
+		command->offset = offset;
+	}
+}

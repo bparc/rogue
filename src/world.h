@@ -78,6 +78,8 @@ fn void Setup(game_world_t *state, memory_t *memory)
 fn void BeginGameWorld(game_world_t *state)
 {
 	DebugPrint("Player Controls: WASD; Hold shift for diagonal input.");
+
+	SetGlobalOffset(Debug.out, state->camera_position);
 }
 
 fn void EndGameWorld(game_world_t *state)
@@ -117,7 +119,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 			// NOTE(): We propably want to render stuff like this from here even
 			// when NOT in the debug mode.
 			#if _DEBUG
-			RenderIsoTile(Debug.out, map, entity->p, state->camera_position, Red(), false, 0);
+			RenderIsoTile(Debug.out, map, entity->p, Red(), false, 0);
 			#endif
 
 			// NOTE(): The turn will "stall" until AcceptTurn() is called.
@@ -139,7 +141,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 
 				#if _DEBUG
 				for (s32 index = 0; index < 4; index++)
-					RenderIsoTile(Debug.out, map, AddS(entity->p, considered_dirs[index]), state->camera_position, Green(), true, 0);
+					RenderIsoTile(Debug.out, map, AddS(entity->p, considered_dirs[index]), Green(), true, 0);
 				#endif
 
 				s32 direction = GetDirectionalInput(&input);
@@ -178,16 +180,14 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 
 fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt)
 {
-	// TODO(): The camera offset should be passed to the renderer as
-	// some kind of "set transform" command maybe. Passing
-	// the camera position to all of those drawing routines
-	// will get annoying real fast.
-
 	const map_t *map = state->map;
 	entity_storage_t *storage = state->storage;
 
+	SetGlobalOffset(out, V2(0.0f, 0.0f));
 	DrawRect(out, V2(0, 0), V2(1920, 1080), DarkBlue()); // NOTE(): Background.
 	
+	SetGlobalOffset(out, state->camera_position);
+
 	// NOTE(): Render tiles.
 
 	for (s32 y = 0; y < map->y; y++)
@@ -206,7 +206,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt)
 					height = 80;
 				}
 
-				RenderIsoTile(out, map, V2s(x, y), state->camera_position, color, Filled, height);
+				RenderIsoTile(out, map, V2s(x, y), color, Filled, height);
 			}
 		}
 	}
@@ -220,6 +220,6 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt)
 
 		v4 color = (entity->flags & entity_flags_controllable) ? Pink() : Red();
 		v2 p = ScreenToIso(entity->deferred_p);
-		RenderIsoCubeCentered(out, Add(p, state->camera_position), V2(ENTITY_SIZE, ENTITY_SIZE), ENTITY_PIXEL_HEIGHT, color);
+		RenderIsoCubeCentered(out, p, V2(ENTITY_SIZE, ENTITY_SIZE), ENTITY_PIXEL_HEIGHT, color);
 	}
 }

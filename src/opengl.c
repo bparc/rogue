@@ -12,6 +12,7 @@ fn void OpenGLRenderQuad(v2 min, v2 max, v2 uv_min, v2 uv_max, GLuint texture, v
 
 fn void OpenGLDispatchBuffer(const command_buffer_t *buffer)
 {
+	v2 GlobalOffset = V2(0.0f, 0.0f);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -25,6 +26,8 @@ fn void OpenGLDispatchBuffer(const command_buffer_t *buffer)
 		const command_t *command = (buffer->commands + index);
 
 		glBindTexture(GL_TEXTURE_2D, 0);
+		glPushMatrix();
+		glTranslatef(GlobalOffset.x, GlobalOffset.y, 0.0f);
 		switch (command->header.type)
 		{
 		case command_t_rect:
@@ -103,9 +106,16 @@ fn void OpenGLDispatchBuffer(const command_buffer_t *buffer)
 				glVertex2fv(&quad->points[3].x);
 				glEnd();
 			} break;
+		case command_t_set_transform:
+			{
+				const command_set_transform_t *transform = (&command->transform);
+				GlobalOffset = transform->offset;
+			} break;
 		default:
 			Assert(0);
 		}
+
+		glPopMatrix();
 	}
 
 	glPopMatrix();
