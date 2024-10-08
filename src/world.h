@@ -149,14 +149,20 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 				#endif
 
 				s32 direction = GetDirectionalInput(&input);
+				//Valid input
 				if ((direction >= 0) && (direction < 4))
 				{
-					// NOTE(): The input is valid - accept it.
-					MoveEntity(map, entity, considered_dirs[direction]);
+					//future position
+					v2s peekPos = AddS(entity -> p, considered_dirs[direction]);
+					//valid move pos
+					if(!IsOutOfBounds(state, peekPos) && !IsWall(state, peekPos)){
 
-					state->moves_remaining--;
-					if (state->moves_remaining == 0)
-						AcceptTurn(turns);
+						MoveEntity(map, entity, considered_dirs[direction]);
+
+						state->moves_remaining--;
+						if (state->moves_remaining == 0)
+							AcceptTurn(turns);
+					}
 				}
 			}
 			else

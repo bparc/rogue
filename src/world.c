@@ -123,6 +123,7 @@ fn void MoveEntity(map_t *map, entity_t *entity, v2s offset)
 		entity->p.y = map->y - 1;
 }
 
+
 fn b32 IsHostile(const entity_t *entity)
 {
 	b32 result = entity->flags & entity_flags_hostile;
@@ -169,5 +170,11 @@ fn void AcceptTurn(turn_queue_t *queue)
 fn b32 IsWall(game_world_t *state, v2s p)
 {
 	b32 result = (GetTileValue(state->map, p.x, p.y) == 2);
+	return result;
+}
+
+fn b32 IsOutOfBounds(game_world_t *state, v2s p) {
+	b32 result = (GetTileValue(state->map, p.x, p.y) == 0);
+	printf("%d",GetTileValue(state->map, p.x, p.y));
 	return result;
 }
