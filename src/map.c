@@ -18,6 +18,12 @@ fn b32 IsTileTraversable(map_t *map, s32 x, s32 y)
 	return result;
 }
 
+fn b32 IsWall(map_t *map, v2s p)
+{
+	b32 result = (GetTileValue(map, p.x, p.y) > 0);
+	return result;
+}
+
 fn void SetTileValue(map_t *map, s32 x, s32 y, u8 value)
 {
 	tile_t *tile= GetTile(map, x, y);

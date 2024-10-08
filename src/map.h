@@ -22,7 +22,9 @@ fn u8 GetTileValue(const map_t *map, s32 x, s32 y);
 fn void SetTileDistance(map_t *map, s32 x, s32 y, s16 value);
 fn s16 GetTileDistance(const map_t *map, s32 x, s32 y);
 
+// NOTE(): Queries
 fn b32 IsTileTraversable(map_t *map, s32 x, s32 y);
+fn b32 IsWall(map_t *map, v2s p);
 
 // NOTE(): Geometric queries
 fn bb_t GetTileBounds(const map_t *map, s32 x, s32 y);

@@ -47,6 +47,9 @@ typedef struct
 
 #include "world.c"
 
+fn void BeginGameWorld(game_world_t *state);
+fn void EndGameWorld(game_world_t *state);
+
 fn void Setup(game_world_t *world, memory_t *memory);
 fn void Update(game_world_t *state, f32 dt, client_input_t input);
 fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt);
@@ -56,15 +59,32 @@ fn void Setup(game_world_t *state, memory_t *memory)
 	state->turns = PushStruct(turn_queue_t, memory);
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->map = CreateMap(20, 20, memory, TILE_PIXEL_SIZE);
-	CreateEntity(state->storage, V2s(5, 5), entity_flags_controllable);
+	CreateEntity(state->storage, V2s(10, 5), entity_flags_controllable);
 	CreateEntity(state->storage, V2s(8, 4), 0);
 	CreateEntity(state->storage, V2s(2, 12), 0);
 	CreateEntity(state->storage, V2s(4, 2), 0);
+	SetTileValue(state->map, 4, 5, 1);
+	SetTileValue(state->map, 5, 5, 1);
+	SetTileValue(state->map, 6, 5, 1);
+	SetTileValue(state->map, 6, 6, 1);
+	SetTileValue(state->map, 6, 7, 1);
 	state->camera_position = V2(0, 0);
+}
+
+fn void BeginGameWorld(game_world_t *state)
+{
+	DebugPrint("Player Controls: WASD; Hold shift for diagonal input.");
+}
+
+fn void EndGameWorld(game_world_t *state)
+{
+	
 }
 
 fn void Update(game_world_t *state, f32 dt, client_input_t input)
 {
+	BeginGameWorld(state);
+
 	map_t *map = state->map;
 	entity_storage_t *storage = state->storage;
 	turn_queue_t *turns = state->turns;
@@ -76,6 +96,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 		// current one ends?
 	}
 
+	// NOTE(): Print out the turn order.
 	#if 0
 	#if _DEBUG
 		for (s32 index = turns->num - 1; index >= 0; index--)
@@ -85,24 +106,27 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 
 	if (turns->num > 0)
 	{
-		// NOTE(): Process the turn
+		// NOTE(): Process the current turn
 		entity_t *entity = NextInOrder(turns, storage);
 		if (entity)
 		{
 			// NOTE(): We propably want to render stuff like this from here even
 			// when NOT in the debug mode.
 			#if _DEBUG
-			RenderIsoTile(Debug.out, map, entity->p, state->camera_position, Red());
+			RenderIsoTile(Debug.out, map, entity->p, state->camera_position, Red(), false, 0);
 			#endif
 
 			// NOTE(): The turn will "stall" until AcceptTurn() is called.
 			if (entity->flags & entity_flags_controllable)
 			{
-				// NOTE(): Tack the entity with a camera.
+				if (IsWall(map, entity->p))
+					DebugPrint("The entity is inside a wall...");
+
+				// NOTE(): Track the entity with a camera.
 				v2 player_world_pos = GetTileCenter(state->map, entity->p);
 				v2 player_iso_pos = ScreenToIso(player_world_pos);
 			
-				v2 screen_center = V2(1600.0f/2, 900.0f/2);
+				v2 screen_center = Scale(GetViewport(&input), 0.5f);
 				v2 camera_offset = Sub(screen_center, player_iso_pos);
 				state->camera_position = Lerp2(state->camera_position, camera_offset, 5.0f * dt);
 
@@ -114,10 +138,10 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 
 				#if _DEBUG
 				for (s32 index = 0; index < 4; index++)
-					RenderIsoTile(Debug.out, map, AddS(entity->p, considered_dirs[index]), state->camera_position, Green());
+					RenderIsoTile(Debug.out, map, AddS(entity->p, considered_dirs[index]), state->camera_position, Green(), false, 0);
 				#endif
 
-				s32 direction = GetDirectionalInput(&input); // GetDirectionalInput(&input);
+				s32 direction = GetDirectionalInput(&input);
 				if ((direction >= 0) && (direction < 4))
 				{
 					MoveEntity(map, entity, considered_dirs[direction]);
@@ -146,6 +170,8 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 			}
 		}
 	}
+
+	EndGameWorld(state);
 }
 
 fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt)
@@ -159,7 +185,17 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt)
 	for (s32 y = 0; y < map->y; y++)
 	{
 		for (s32 x = 0; x < map->x; x++)
-			RenderIsoTile(out, map, V2s(x, y), state->camera_position, White());
+		{
+			v4 color = White();
+			b32 Filled = 0;
+			f32 height = 0;
+			if (GetTileValue(map, x, y) > 0)
+			{
+				Filled = true;
+				height = 55;
+			}
+			RenderIsoTile(out, map, V2s(x, y), state->camera_position, color, Filled, height);
+		}
 	}
 
 	entity_storage_t *storage = state->storage;

@@ -40,15 +40,15 @@ fn void MakeIsoRect(v2 points[4], f32 x, f32 y, v2 sz)
 fn void RenderIsoCube(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 color)
 {
 	p = IsoToScreen(p);
-	v2 R1[4], R2[4];
-	MakeIsoRect(R1, p.x, p.y, sz);
-	MakeIsoRect(R2, p.x - height, p.y - height, sz);
-	DrawLineLoop(out, R1, 4, color);
-	DrawLineLoop(out, R2, 4, color);
-	DrawLine(out, R1[0], R2[0], color);
-	DrawLine(out, R1[1], R2[1], color);
-	DrawLine(out, R1[2], R2[2], color);
-	DrawLine(out, R1[3], R2[3], color);
+	v2 A[4], B[4];
+	MakeIsoRect(A, p.x, p.y, sz);
+	MakeIsoRect(B, p.x - height, p.y - height, sz);
+	DrawLineLoop(out, A, 4, color);
+	DrawLineLoop(out, B, 4, color);
+	DrawLine(out, A[0], B[0], color);
+	DrawLine(out, A[1], B[1], color);
+	DrawLine(out, A[2], B[2], color);
+	DrawLine(out, A[3], B[3], color);
 }
 
 fn void RenderIsoCubeCentered(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 color)
@@ -57,17 +57,31 @@ fn void RenderIsoCubeCentered(command_buffer_t *out, v2 p, v2 sz, f32 height, v4
 	RenderIsoCube(out, p, sz, height, color);
 }
 
-fn void RenderIsoTile(command_buffer_t *out, const map_t *map, v2s offset, v2 camera_offset, v4 color)
+fn void RenderIsoCubeFilled(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 color)
+{
+	//Assert((0 && "Not implemented!"));
+	p = IsoToScreen(p);
+	v2 A[4], B[4];
+	MakeIsoRect(A, p.x, p.y, sz);
+	MakeIsoRect(B, p.x - height, p.y - height, sz);
+	DrawQuad(out, A[0], A[1], A[2], A[3], color);
+	if (height != 0)
+	{
+		DrawQuadv(out, B, Red());
+		DrawQuad(out, A[3], B[3], B[2], A[2], Green());
+		DrawQuad(out, B[2], B[1], A[1], A[2], Blue());
+	}
+}
+
+fn void RenderIsoTile(command_buffer_t *out, const map_t *map, v2s offset, v2 camera_offset, v4 color, s32 Filled, f32 height)
 {
 	v2 p = MapToScreen(map, offset);
 	p = ScreenToIso(p);
 	p = Add(p, camera_offset);
-	RenderIsoCube(out, p, map->tile_sz, 0, color);
-}
-
-fn void RenderIsoCubeFilled(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 color)
-{
-	Assert("Not implemented!");
+	if (Filled)
+		RenderIsoCubeFilled(out, p, map->tile_sz, height, color);
+	else
+		RenderIsoCube(out, p, map->tile_sz, height, color);
 }
 
 // NOTE(): Entities.

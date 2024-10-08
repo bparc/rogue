@@ -92,6 +92,17 @@ fn void OpenGLDispatchBuffer(const command_buffer_t *buffer)
 				glTexCoord2f(0.0f, 1.0f); glVertex2f(bitmap->min[0], bitmap->max[1]);
 				glEnd();
 			} break;
+		case command_t_quad:
+			{
+				const command_quad_t *quad = (&command->quad);
+				glBegin(GL_QUADS);
+				glColor4fv(&quad->color[0]);
+				glVertex2fv(&quad->points[0].x);
+				glVertex2fv(&quad->points[1].x);
+				glVertex2fv(&quad->points[2].x);
+				glVertex2fv(&quad->points[3].x);
+				glEnd();
+			} break;
 		default:
 			Assert(0);
 		}

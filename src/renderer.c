@@ -163,6 +163,27 @@ fn void DrawText(command_buffer_t *buffer, const bmfont_t *font, v2 p, const cha
 	}	
 }
 
+fn void DrawQuad(command_buffer_t *buffer, v2 a, v2 b, v2 c, v2 d, v4 color)
+{
+	command_quad_t *command = (command_quad_t *)PushCommand(buffer, command_t_quad);
+	if (command)
+	{
+		command->points[0] = a;
+		command->points[1] = b;
+		command->points[2] = c;
+		command->points[3] = d;
+		command->color[0] = color.x;
+		command->color[1] = color.y;
+		command->color[2] = color.z;
+		command->color[3] = color.w;
+	}
+}
+
+fn void DrawQuadv(command_buffer_t *buffer, v2 points[4], v4 color)
+{
+	DrawQuad(buffer, points[0], points[1], points[2], points[3], color);
+}
+
 fn void PushRenderOutput(render_output_t *output, const command_buffer_t buffer)
 {
 	Assert(output->count < ArraySize(output->buffers));

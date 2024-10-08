@@ -2,7 +2,12 @@ typedef enum
 {
 	command_t_triangle,
 	command_t_line,
+
+	// TODO(): Having a "rect" and
+	// a "quad" command seems kind of redundant?
+	// There should be a "cirle" command, though.
 	command_t_rect,
+	command_t_quad,
 	command_t_text,
 	command_t_bitmap,
 } command_type_t;
@@ -32,6 +37,13 @@ typedef struct
 typedef struct
 {
 	command_header_t header;
+	v2  points[4];
+	f32 color[4];
+} command_quad_t;
+
+typedef struct
+{
+	command_header_t header;
 	f32 from[2];
 	f32 to[2];
 	f32 color[4];
@@ -52,6 +64,7 @@ typedef union
 	command_header_t header;
 	command_line_t line;
 	command_rect_t rect;
+	command_quad_t quad;
 	command_text_t text;
 	command_bitmap_t bitmap;
 } command_t;
@@ -88,6 +101,8 @@ fn void DrawLine(command_buffer_t *buffer, v2 from, v2 to, v4 color);
 fn void DrawText(command_buffer_t *buffer, const bmfont_t *font, v2 p, const char string[], v4 color);
 
 fn void DrawPoint(command_buffer_t *buffer, v2 p, v2 sz, v4 color);
+fn void DrawQuad(command_buffer_t *buffer, v2 a, v2 b, v2 c, v2 d, v4 color);
+fn void DrawQuadv(command_buffer_t *buffer, v2 points[4], v4 color);
 
 typedef struct
 {
