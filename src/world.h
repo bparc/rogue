@@ -6,6 +6,7 @@ typedef enum
 	entity_flags_hostile = 1 << 1,
 	entity_flags_dead = 1 << 2,
 	entity_flags_cursor = 1 << 3,
+	entity_flags_immobile = 1 << 4,
 } entity_flags_t;
 
 typedef struct
@@ -59,7 +60,13 @@ typedef struct
 
 //fn void Setup(game_world_t *world, memory_t *memory);
 //fn void Update(game_world_t *state, f32 dt, client_input_t input);
-//fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets);
+//fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets);7
+
+//helper functions for flags
+fn void AddEntityFlags(entity_t*, u8 flags);
+fn void RemoveEntityFlags(entity_t*, u8 flags);
+
+fn entity_t* GetPlayerEntity(entity_storage_t* storage);
 
 fn entity_t* GetCursorEntity(entity_storage_t* storage);
 fn void RemoveEntity(entity_storage_t* storage, entity_t* entity);
@@ -137,8 +144,9 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 			#endif
 
 			// NOTE(): The turn will "stall" until AcceptTurn() is called.
-			if (entity->flags & entity_flags_controllable)
-			{
+			//player controllable and not immobile
+			if ((entity->flags & entity_flags_controllable)) {
+			
 				// NOTE(): Track the entity with a camera.
 				v2 player_world_pos = GetTileCenter(state->map, entity->p);
 				v2 player_iso_pos = ScreenToIso(player_world_pos);
@@ -160,7 +168,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 
 				s32 direction = GetDirectionalInput(&input);
 				//Valid input
-				if ((direction >= 0) && (direction < 4))
+				if ((direction >= 0) && (direction < 4) && !(entity->flags & entity_flags_immobile))
 				{
 					//future position
 					v2s peekPos = AddS(entity -> p, considered_dirs[direction]);
@@ -201,8 +209,12 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 
 	// Combat stuff
 	entity_t* cursor = GetCursorEntity(storage);
+	entity_t* player = GetPlayerEntity(storage);
 
 	if (IsKeyPressed(&input, 'F')) {
+		//disable player movement
+		AddEntityFlags(player, entity_flags_immobile);
+
 		if (!cursor) {
 			cursor = CreateEntity(storage, state->storage->entities[0].p, entity_flags_cursor, 1, 0);
 			if (cursor) {
@@ -265,10 +277,30 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 	}
 
 	if (IsKeyPressed(&input, key_code_escape) && cursor) {
+		//make player mobile
+		//RemoveEntityFlags(player, entity_flags_immobile);
+
 		RemoveCursor(storage);
 	}
 
 	EndGameWorld(state);
+}
+
+//flagging
+fn void AddEntityFlags(entity_t* entity, u8 flags) {
+	entity->flags |= flags;
+}
+fn void RemoveEntityFlags(entity_t* entity, u8 flags) {
+	entity->flags &= ~flags;
+}
+
+fn entity_t *GetPlayerEntity(entity_storage_t *storage) {
+	for (s32 index = 0; index < storage->num; index++) {
+
+		if (storage->entities[index].flags & entity_flags_controllable)
+			return &storage->entities[index];
+	}
+	return NULL;
 }
 
 fn entity_t *GetCursorEntity(entity_storage_t *storage) {
