@@ -175,6 +175,5 @@ fn b32 IsWall(game_world_t *state, v2s p)
 
 fn b32 IsOutOfBounds(game_world_t *state, v2s p) {
 	b32 result = (GetTileValue(state->map, p.x, p.y) == 0);
-	printf("%d",GetTileValue(state->map, p.x, p.y));
 	return result;
 }

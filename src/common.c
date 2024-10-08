@@ -51,6 +51,26 @@ fn f32 Lerp(f32 a, f32 b, f32 t)
 	return result;
 }
 
+fn s32 SRandIntFixed(s32 upper, s32 lower, s32 seed) {
+	 if (upper < lower) { //swap upper lower if switched
+        s32 temp = upper;
+        upper = lower;
+        lower = temp;
+    }
+
+    // LCG
+    s32 rand_val = (s32)((((s32)LCG_A * (s32)seed) + LCG_C) % LCG_M);
+
+    s32 range = upper - lower + 1;
+    return lower + (rand_val % range);
+}
+fn s32 SRandInt(s32 seed) {
+    // LCG
+    s32 rand_val = (s32)((((s32)LCG_A * (s32)seed) + LCG_C) % LCG_M);
+    return rand_val;
+}
+
+
 fn s32 RandomInt(void)
 {
 	s32 result = rand();

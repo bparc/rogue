@@ -65,5 +65,13 @@ fn f32 Cosine(f32 x);
 fn f32 SqRoot(f32 x);
 fn f32 Lerp(f32 a, f32 b, f32 t);
 
+// Constants for LCG
+#define LCG_A 1664525
+#define LCG_C 1013904223
+#define LCG_M 4294967296 // 2^32
+
+fn s32 SRandIntFixed(int upper, int lower, int seed); //rand in range with seed
+fn s32 SRandInt(int seed); //rand in 0 - 2^32 range with seed
+
 fn s32 RandomInt(void);
 fn s32 MinS32(s32 a, s32 b);
