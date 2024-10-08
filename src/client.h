@@ -15,12 +15,14 @@
 #include "map.h"
 #include "map.c"
 #include "dijkstra.c"
+#include "assets.h"
 #include "world.h"
 #include "editor.h"
 #include "editor.c"
 
 typedef struct
 {
+	assets_t assets;
 	bmfont_t font;
 	editor_state_t editor;
 	game_world_t world;
@@ -41,6 +43,8 @@ fn s32 Startup(client_t *state)
 	command_buffer_t *buffers = state->buffers;
 	buffers[0] = PushCommandBuffer(memory, 1024 * 16);
 	buffers[1] = PushCommandBuffer(memory, 1024);
+	
+	LoadAssets(&state->assets);
 	Setup(&state->world, &state->memory);
 
 	s32 FontLoaded = LoadBMFont(&state->font, "assets/inconsolata.fnt");
@@ -72,7 +76,7 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 	Editor(&state->editor, &state->world, &state->buffers[0], &input);
 	
 	Update(&state->world, dt, input);
-	DrawFrame(&state->world, &state->buffers[0], dt);
+	DrawFrame(&state->world, &state->buffers[0], dt, &state->assets);
 	EndFrame(state);
 
 	memset(output, 0, sizeof(*output));

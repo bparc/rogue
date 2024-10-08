@@ -141,6 +141,7 @@ fn bitmap_t LoadBitmapFromFile(const char *path)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, result.x, result.y,
 			0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
+		result.scale = V2((f32)result.x, (f32)result.y);
 		result.handle = (u32)texture;
 		free(pixels);
 	}

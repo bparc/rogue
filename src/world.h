@@ -52,7 +52,7 @@ fn void EndGameWorld(game_world_t *state);
 
 fn void Setup(game_world_t *world, memory_t *memory);
 fn void Update(game_world_t *state, f32 dt, client_input_t input);
-fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt);
+fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets);
 
 fn void Setup(game_world_t *state, memory_t *memory)
 {
@@ -60,8 +60,8 @@ fn void Setup(game_world_t *state, memory_t *memory)
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->map = CreateMap(20, 20, memory, TILE_PIXEL_SIZE);
 	CreateEntity(state->storage, V2s(10, 5), entity_flags_controllable);
-	CreateEntity(state->storage, V2s(8, 4), 0);
-	CreateEntity(state->storage, V2s(2, 12), 0);
+	CreateEntity(state->storage, V2s(8, 6), 0);
+	CreateEntity(state->storage, V2s(5, 12), 0);
 	CreateEntity(state->storage, V2s(4, 2), 0);
 
 	for (s32 index = 0; index < 8; index++)
@@ -79,12 +79,14 @@ fn void BeginGameWorld(game_world_t *state)
 {
 	DebugPrint("Player Controls: WASD; Hold shift for diagonal input.");
 
+	// TODO(): This will break DebugPrints!
+	// Let's make a separate output for those.
 	SetGlobalOffset(Debug.out, state->camera_position);
 }
 
 fn void EndGameWorld(game_world_t *state)
 {
-	
+	SetGlobalOffset(Debug.out, V2(0.0f, 0.0f));
 }
 
 fn void Update(game_world_t *state, f32 dt, client_input_t input)
@@ -166,6 +168,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 				MoveEntity(map, entity, directions[direction]);
 				#endif
 				AcceptTurn(turns);
+
 				// TODO(): We should either have like a few seconds of delay here,
 				// during which an animation plays out,
 				// OR exhaust all of the remaining turns in the queue in this single frame.
@@ -178,14 +181,14 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 	EndGameWorld(state);
 }
 
-fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt)
+fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets)
 {
 	const map_t *map = state->map;
 	entity_storage_t *storage = state->storage;
 
 	SetGlobalOffset(out, V2(0.0f, 0.0f));
-	DrawRect(out, V2(0, 0), V2(1920, 1080), DarkBlue()); // NOTE(): Background.
-	
+	DrawRect(out, V2(0, 0), V2(1920, 1080), DarkBlue()); // NOTE(): Background
+
 	SetGlobalOffset(out, state->camera_position);
 
 	// NOTE(): Render tiles.
@@ -218,8 +221,27 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt)
 		entity_t *entity = &storage->entities[index];
 		entity->deferred_p = Lerp2(entity->deferred_p, GetTileCenter(state->map, entity->p), 10.0f * dt);
 
-		v4 color = (entity->flags & entity_flags_controllable) ? Pink() : Red();
 		v2 p = ScreenToIso(entity->deferred_p);
+		v4 color = Red();
+
+		if (entity->flags & entity_flags_controllable)
+		{
+			color = Pink();
+		}		
+		else
+		{
+			bitmap_t *bitmap = &assets->Slime;
+			v2 bitmap_sz = bitmap->scale;
+			v2 bitmap_half_sz = Scale(bitmap_sz, 0.5f);
+			v2 bitmap_aligment = bitmap_half_sz;
+			bitmap_aligment.y += 5.0f;
+
+			v2 bitmap_p = Sub(p, bitmap_aligment);
+			DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
+
+			//DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
+		}
+
 		RenderIsoCubeCentered(out, p, V2(ENTITY_SIZE, ENTITY_SIZE), ENTITY_PIXEL_HEIGHT, color);
 	}
 }

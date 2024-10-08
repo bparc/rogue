@@ -5,7 +5,7 @@ fn void BeginDebugFrame(command_buffer_t *output, const bmfont_t *font)
 	Debug.font = font;
 	Debug.out = output;
 
-	Debug.print_p = V2(8.0f, 0.0f);
+	Debug.print_p = V2(10.0f, 8.0f);
 }
 
 fn void EndDebugFrame(void)
