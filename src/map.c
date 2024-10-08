@@ -12,23 +12,22 @@ fn u8 GetTileValue(const map_t *map, s32 x, s32 y)
 	return (tile ? tile->value : 0);
 }
 
-fn b32 IsTileTraversable(map_t *map, s32 x, s32 y)
+fn b32 IsTraversable(map_t *map, s32 x, s32 y)
 {
 	b32 result = (GetTileValue(map, x, y) > 0);
 	return result;
 }
 
-fn b32 IsWall(map_t *map, v2s p)
-{
-	b32 result = (GetTileValue(map, p.x, p.y) > 0);
-	return result;
-}
-
-fn void SetTileValue(map_t *map, s32 x, s32 y, u8 value)
+fn void SetTileValueI(map_t *map, s32 x, s32 y, u8 value)
 {
 	tile_t *tile= GetTile(map, x, y);
 	if (tile)
 		tile->value = value;
+}
+
+fn void SetTileValue (map_t *map, v2s p, u8 value)
+{
+	SetTileValueI(map, p.x, p.y, value);
 }
 
 fn void SetTileDistance(map_t *map, s32 x, s32 y, s16 value)
@@ -66,4 +65,10 @@ fn map_t *CreateMap(s32 x, s32 y, memory_t *memory, f32 tile_height)
 	result->tiles = PushArray(tile_t, memory, x * y);
 	Assert(result->tiles);
 	return result;
+}
+
+fn void ClearMap(map_t *map)
+{
+	for (s32 index = 0; index < map->x * map->y; index++)
+		ZeroStruct(&map->tiles[index]);
 }

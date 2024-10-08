@@ -13,18 +13,21 @@ typedef struct
 } map_t;
 
 fn map_t *CreateMap(s32 x, s32 y, memory_t *memory, f32 tile_height);
+fn void ClearMap(map_t *map);
 
 // NOTE(): Accessors
 fn tile_t *GetTile(map_t *map, s32 x, s32 y);
-fn void SetTileValue(map_t *map, s32 x, s32 y, u8 value);
+
+fn void SetTileValueI(map_t *map, s32 x, s32 y, u8 value);
+fn void SetTileValue(map_t *map, v2s p, u8 value);
+
 fn u8 GetTileValue(const map_t *map, s32 x, s32 y);
 
 fn void SetTileDistance(map_t *map, s32 x, s32 y, s16 value);
 fn s16 GetTileDistance(const map_t *map, s32 x, s32 y);
 
 // NOTE(): Queries
-fn b32 IsTileTraversable(map_t *map, s32 x, s32 y);
-fn b32 IsWall(map_t *map, v2s p);
+fn b32 IsTraversable(map_t *map, s32 x, s32 y);
 
 // NOTE(): Geometric queries
 fn bb_t GetTileBounds(const map_t *map, s32 x, s32 y);

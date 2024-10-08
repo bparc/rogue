@@ -2,7 +2,7 @@ typedef u64 entity_id_t;
 
 typedef enum
 {
-	entity_flags_controllable = 1 << 1,
+	entity_flags_controllable = 1 << 0,
 } 
 entity_flags_t;
 
@@ -63,11 +63,15 @@ fn void Setup(game_world_t *state, memory_t *memory)
 	CreateEntity(state->storage, V2s(8, 4), 0);
 	CreateEntity(state->storage, V2s(2, 12), 0);
 	CreateEntity(state->storage, V2s(4, 2), 0);
-	SetTileValue(state->map, 4, 5, 1);
-	SetTileValue(state->map, 5, 5, 1);
-	SetTileValue(state->map, 6, 5, 1);
-	SetTileValue(state->map, 6, 6, 1);
-	SetTileValue(state->map, 6, 7, 1);
+
+	for (s32 index = 0; index < 8; index++)
+	{
+		SetTileValueI(state->map, 0, index, 1);
+		SetTileValueI(state->map, 1, index, 1);
+		SetTileValueI(state->map, 2, index, 1);
+		SetTileValueI(state->map, 3, index, 1);
+	}
+
 	state->camera_position = V2(0, 0);
 }
 
@@ -119,9 +123,6 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 			// NOTE(): The turn will "stall" until AcceptTurn() is called.
 			if (entity->flags & entity_flags_controllable)
 			{
-				if (IsWall(map, entity->p))
-					DebugPrint("The entity is inside a wall...");
-
 				// NOTE(): Track the entity with a camera.
 				v2 player_world_pos = GetTileCenter(state->map, entity->p);
 				v2 player_iso_pos = ScreenToIso(player_world_pos);
@@ -138,12 +139,13 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 
 				#if _DEBUG
 				for (s32 index = 0; index < 4; index++)
-					RenderIsoTile(Debug.out, map, AddS(entity->p, considered_dirs[index]), state->camera_position, Green(), false, 0);
+					RenderIsoTile(Debug.out, map, AddS(entity->p, considered_dirs[index]), state->camera_position, Green(), true, 0);
 				#endif
 
 				s32 direction = GetDirectionalInput(&input);
 				if ((direction >= 0) && (direction < 4))
 				{
+					// NOTE(): The input is valid - accept it.
 					MoveEntity(map, entity, considered_dirs[direction]);
 					AcceptTurn(turns);
 				}
@@ -154,7 +156,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 				// switch (entity->behaviour) ... etc.
 
 				// NOTE(): Move the entity in a random direction.
-				#if 0
+				#if 1
 				// TODO(): IMPORTANT! We should make our own rand() and stop using
 				// the CRT one altogether. Just in case we'll ever need to have a reliable determinism.
 				v2s directions[4] = { Up(), Down(), Left(), Right() };
@@ -176,29 +178,41 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 
 fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt)
 {
-	DrawRect(out, V2(0, 0), V2(1920, 1080), DarkBlue());
+	// TODO(): The camera offset should be passed to the renderer as
+	// some kind of "set transform" command maybe. Passing
+	// the camera position to all of those drawing routines
+	// will get annoying real fast.
 
-	// NOTE(): The camera offset should be passed to the renderer as
-	// some kind of "set transform" command maybe.
-	
 	const map_t *map = state->map;
+	entity_storage_t *storage = state->storage;
+
+	DrawRect(out, V2(0, 0), V2(1920, 1080), DarkBlue()); // NOTE(): Background.
+	
+	// NOTE(): Render tiles.
+
 	for (s32 y = 0; y < map->y; y++)
 	{
 		for (s32 x = 0; x < map->x; x++)
 		{
-			v4 color = White();
-			b32 Filled = 0;
-			f32 height = 0;
-			if (GetTileValue(map, x, y) > 0)
+			s32 value = GetTileValue(map, x, y);
+			if (value > 0)
 			{
-				Filled = true;
-				height = 55;
+				v4 color = White();
+				b32 Filled = 0;
+				f32 height = 0;
+				if (IsWall(state, (v2s) {x, y}))
+				{
+					Filled = true;
+					height = 80;
+				}
+
+				RenderIsoTile(out, map, V2s(x, y), state->camera_position, color, Filled, height);
 			}
-			RenderIsoTile(out, map, V2s(x, y), state->camera_position, color, Filled, height);
 		}
 	}
 
-	entity_storage_t *storage = state->storage;
+	// NOTE(): Render entities.
+	
 	for (s32 index = 0; index < storage->num; index++)
 	{
 		entity_t *entity = &storage->entities[index];

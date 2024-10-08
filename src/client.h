@@ -16,10 +16,13 @@
 #include "map.c"
 #include "dijkstra.c"
 #include "world.h"
+#include "editor.h"
+#include "editor.c"
 
 typedef struct
 {
 	bmfont_t font;
+	editor_state_t editor;
 	game_world_t world;
 	command_buffer_t buffers[2];
 	memory_t memory;
@@ -66,6 +69,8 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 	state->timestamp = input.time;
 
 	BeginFrame(state);
+	Editor(&state->editor, &state->world, &state->buffers[0], &input);
+	
 	Update(&state->world, dt, input);
 	DrawFrame(&state->world, &state->buffers[0], dt);
 	EndFrame(state);

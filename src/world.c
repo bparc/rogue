@@ -160,3 +160,10 @@ fn void AcceptTurn(turn_queue_t *queue)
 	Assert(queue->num > 0);
 	queue->num--;
 }
+
+// NOTE(): World.
+fn b32 IsWall(game_world_t *state, v2s p)
+{
+	b32 result = (GetTileValue(state->map, p.x, p.y) == 2);
+	return result;
+}
