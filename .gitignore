@@ -5,6 +5,7 @@
 *.obj
 *.dll
 vs/
+.vs/
 src/external/
 lib/
 x64/
