@@ -4,6 +4,8 @@ typedef enum
 {
 	entity_flags_controllable = 1 << 0,
 	entity_flags_hostile = 1 << 1,
+	entity_flags_dead = 1 << 2,
+	entity_flags_cursor = 1 << 3,
 } entity_flags_t;
 
 typedef struct
@@ -12,6 +14,10 @@ typedef struct
 	entity_id_t id;
 	v2s p; // A position on the tile map.
 	v2 deferred_p;
+
+	// Gameplay related variables:
+	u16 health;
+	u8 base_attack_dmg;
 } entity_t;
 
 typedef struct
@@ -55,15 +61,19 @@ typedef struct
 //fn void Update(game_world_t *state, f32 dt, client_input_t input);
 //fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets);
 
+fn entity_t* GetCursorEntity(entity_storage_t* storage);
+fn void RemoveEntity(entity_storage_t* storage, entity_t* entity);
+fn void RemoveCursor(entity_storage_t* storage);
+
 fn void Setup(game_world_t *state, memory_t *memory)
 {
 	state->turns = PushStruct(turn_queue_t, memory);
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->map = CreateMap(20, 20, memory, TILE_PIXEL_SIZE);
-	CreateEntity(state->storage, V2s(10, 5), entity_flags_controllable);
-	CreateEntity(state->storage, V2s(8, 6), entity_flags_hostile);
-	CreateEntity(state->storage, V2s(5, 12), entity_flags_hostile);
-	CreateEntity(state->storage, V2s(4, 2), entity_flags_hostile);
+	CreateEntity(state->storage, V2s(10, 5), entity_flags_controllable, 100, 10);
+	CreateEntity(state->storage, V2s(8, 6), entity_flags_hostile, 100, 10);
+	CreateEntity(state->storage, V2s(5, 12), entity_flags_hostile, 100, 10);
+	CreateEntity(state->storage, V2s(4, 2), entity_flags_hostile, 100, 10);
 
 	for (s32 index = 0; index < 8; index++)
 	{
@@ -142,7 +152,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 				
 				if (IsKeyPressed(&input, key_code_shift)) // TODO(): Implement key_code_shift on the GLFW backend.
 					considered_dirs = DiagonalDirections;
-
+			
 				#if _DEBUG
 				for (s32 index = 0; index < 4; index++)
 					RenderIsoTile(Debug.out, map, AddS(entity->p, considered_dirs[index]), Orange(), true, 0);
@@ -189,7 +199,107 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 		}
 	}
 
+	// Combat stuff
+	entity_t* cursor = GetCursorEntity(storage);
+
+	if (IsKeyPressed(&input, 'F')) {
+		if (!cursor) {
+			cursor = CreateEntity(storage, state->storage->entities[0].p, entity_flags_cursor, 1, 0);
+			if (cursor) {
+				cursor->health = 1; // Cursor properties intialization goes here
+			}
+		}
+		else {
+			entity_t* target = NULL;
+			for (s32 index = 0; index < storage->num; index++) {
+				entity_t* potential = &storage->entities[index];
+				if ((potential->flags & entity_flags_hostile) &&
+					(potential->p.x == cursor->p.x) &&
+					(potential->p.y == cursor->p.y) &&
+					!(potential->flags & entity_flags_dead)) {
+					target = potential;
+					break;
+				}
+			}
+
+			if (target) {
+				target->health -= state->storage->entities[0].base_attack_dmg;
+				//DebugPrint("Attacked entity %11u for %u damage.", target->id, entity->base_attack_dmg);
+
+				if (target->health <= 0) {
+					target->flags |= entity_flags_dead;
+					//DebugPrint("Entity %11u has died!", target->id);
+				}
+
+				RemoveCursor(storage);
+			}
+			else {
+				//DebugPrint("No hostile entity at cursor position.");
+			}
+		}
+	}
+
+	if (cursor) {
+
+		v2s movement = { 0, 0 };
+
+		if (IsKeyPressed(&input, key_code_up))
+			movement = AddS(movement, CardinalDirections[0]); // Up
+		if (IsKeyPressed(&input, key_code_down))
+			movement = AddS(movement, CardinalDirections[2]); // Down
+		if (IsKeyPressed(&input, key_code_left))
+			movement = AddS(movement, CardinalDirections[3]); // Left
+		if (IsKeyPressed(&input, key_code_right))
+			movement = AddS(movement, CardinalDirections[1]); // Right
+
+		if (movement.x != 0 || movement.y != 0) {
+			v2s new_pos = AddS(cursor->p, movement);
+
+			if (!IsOutOfBounds(state, new_pos) && !IsWall(state, new_pos)) {
+				cursor->p = new_pos;
+			}
+			else {
+				//DebugPrint("Cannot move cursor to (%d, %d).", new_pos.x, new_pos.y);
+			}
+		}
+	}
+
+	if (IsKeyPressed(&input, key_code_escape) && cursor) {
+		RemoveCursor(storage);
+	}
+
 	EndGameWorld(state);
+}
+
+fn entity_t *GetCursorEntity(entity_storage_t *storage) {
+	for (s32 index = 0; index < storage->num; index++) {
+
+		if (storage->entities[index].flags & entity_flags_cursor)
+			return &storage->entities[index];
+	}
+	return NULL;
+}
+
+fn void RemoveEntity(entity_storage_t *storage, entity_t *entity) {
+	for (s32 index = 0; index < storage->num; index++) {
+
+		if (&storage->entities[index] == entity) {
+			storage->entities[index] = storage->entities[storage->num - 1];
+			storage->num--;
+			break;
+		}
+	}
+}
+
+fn void RemoveCursor(entity_storage_t* storage) {
+	for (s32 index = 0; index < storage->num; index++) {
+		entity_t* entity = &storage->entities[index];
+		if (entity->flags & entity_flags_cursor) {
+			storage->entities[index] = storage->entities[storage->num - 1];
+			storage->num--;
+			break;
+		}
+	}
 }
 
 fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets)
@@ -238,7 +348,10 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		if (entity->flags & entity_flags_controllable)
 		{
 			color = Pink();
-		}		
+		}
+		else if (entity->flags & entity_flags_cursor) {
+			color = Blue();
+		}
 		else
 		{
 			bitmap_t *bitmap = &assets->Slime;
@@ -251,6 +364,11 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 			DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
 
 			//DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
+		}
+
+		if (entity->flags & entity_flags_cursor) {
+			v4 cursor_color = V4(0.0f, 0.0f, 1.0f, 0.5f); // Semi-transparent blue
+			RenderIsoCubeFilled(out, p, V2(ENTITY_SIZE + 10, ENTITY_SIZE + 10), ENTITY_PIXEL_HEIGHT, cursor_color);
 		}
 
 		RenderIsoCubeCentered(out, p, V2(ENTITY_SIZE, ENTITY_SIZE), ENTITY_PIXEL_HEIGHT, color);

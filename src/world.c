@@ -84,7 +84,8 @@ fn void RenderIsoTile(command_buffer_t *out, const map_t *map, v2s offset, v4 co
 }
 
 // NOTE(): Entities.
-fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags)
+fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, 
+	u8 flags, u16 health, u8 base_attack_dmg)
 {
 	entity_t *result = 0;
 	if (storage->num < ArraySize(storage->entities))
@@ -95,6 +96,8 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags)
 		result->p = p;
 		result->id = storage->next_id++;
 		result->flags = flags;
+		result->health = health;
+		result->base_attack_dmg = base_attack_dmg;
 	}
 	return result;
 }
@@ -141,7 +144,9 @@ fn void DefaultTurnOrder(turn_queue_t *queue, entity_storage_t *storage)
 	for (s32 index = 0; index < storage->num; index++)
 	{
 		entity_t *entity = &storage->entities[index];
-		PushTurn(queue, entity);
+		if (!(entity->flags & entity_flags_cursor)) {
+			PushTurn(queue, entity);
+		}
 	}
 }
 

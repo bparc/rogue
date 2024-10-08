@@ -5,6 +5,12 @@ typedef enum
 	// NOTE(): Key codes for letter keys
 	// are the same as the coresponding
 	// ASCII characters.
+
+	key_code_up,
+	key_code_down,
+	key_code_left,
+	key_code_right,
+	key_code_escape,
 } key_code_t;
 
 typedef struct
@@ -14,7 +20,7 @@ typedef struct
 	s32 mouse_buttons[2];
 	s32 char_count;
 	u8 char_queue[16];
-	u8 keys[256];
+	u8 keys[512];
 	f64 time;
 	const char *gpu_driver_desc;
 } client_input_t;
