@@ -123,6 +123,11 @@ fn void MoveEntity(map_t *map, entity_t *entity, v2s offset)
 		entity->p.y = map->y - 1;
 }
 
+fn b32 IsHostile(const entity_t *entity)
+{
+	b32 result = entity->flags & entity_flags_hostile;
+	return result;
+}
 // NOTE(): Turns
 fn void PushTurn(turn_queue_t *queue, entity_t *entity)
 {

@@ -3,8 +3,8 @@ typedef u64 entity_id_t;
 typedef enum
 {
 	entity_flags_controllable = 1 << 0,
-} 
-entity_flags_t;
+	entity_flags_hostile = 1 << 1,
+} entity_flags_t;
 
 typedef struct
 {
@@ -43,16 +43,17 @@ typedef struct
 	f32 time_elapsed;
 
 	v2 camera_position;
+	s32 moves_remaining;
 } game_world_t;
 
 #include "world.c"
 
-fn void BeginGameWorld(game_world_t *state);
-fn void EndGameWorld(game_world_t *state);
+//fn void BeginGameWorld(game_world_t *state);
+//fn void EndGameWorld(game_world_t *state);
 
-fn void Setup(game_world_t *world, memory_t *memory);
-fn void Update(game_world_t *state, f32 dt, client_input_t input);
-fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets);
+//fn void Setup(game_world_t *world, memory_t *memory);
+//fn void Update(game_world_t *state, f32 dt, client_input_t input);
+//fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets);
 
 fn void Setup(game_world_t *state, memory_t *memory)
 {
@@ -60,9 +61,9 @@ fn void Setup(game_world_t *state, memory_t *memory)
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->map = CreateMap(20, 20, memory, TILE_PIXEL_SIZE);
 	CreateEntity(state->storage, V2s(10, 5), entity_flags_controllable);
-	CreateEntity(state->storage, V2s(8, 6), 0);
-	CreateEntity(state->storage, V2s(5, 12), 0);
-	CreateEntity(state->storage, V2s(4, 2), 0);
+	CreateEntity(state->storage, V2s(8, 6), entity_flags_hostile);
+	CreateEntity(state->storage, V2s(5, 12), entity_flags_hostile);
+	CreateEntity(state->storage, V2s(4, 2), entity_flags_hostile);
 
 	for (s32 index = 0; index < 8; index++)
 	{
@@ -78,7 +79,7 @@ fn void Setup(game_world_t *state, memory_t *memory)
 fn void BeginGameWorld(game_world_t *state)
 {
 	DebugPrint("Player Controls: WASD; Hold shift for diagonal input.");
-
+	DebugPrint("Moves: %i", state->moves_remaining);
 	// TODO(): This will break DebugPrints!
 	// Let's make a separate output for those.
 	SetGlobalOffset(Debug.out, state->camera_position);
@@ -100,6 +101,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 	{
 		// NOTE(): We run out of the turns, time to schedule new ones.
 		DefaultTurnOrder(turns, storage);
+		state->moves_remaining = 4;
 		// NOTE():  Maybe a new turn should be scheduled in *immediately* after the
 		// current one ends?
 	}
@@ -143,7 +145,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 
 				#if _DEBUG
 				for (s32 index = 0; index < 4; index++)
-					RenderIsoTile(Debug.out, map, AddS(entity->p, considered_dirs[index]), Green(), true, 0);
+					RenderIsoTile(Debug.out, map, AddS(entity->p, considered_dirs[index]), Orange(), true, 0);
 				#endif
 
 				s32 direction = GetDirectionalInput(&input);
@@ -151,7 +153,10 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 				{
 					// NOTE(): The input is valid - accept it.
 					MoveEntity(map, entity, considered_dirs[direction]);
-					AcceptTurn(turns);
+
+					state->moves_remaining--;
+					if (state->moves_remaining == 0)
+						AcceptTurn(turns);
 				}
 			}
 			else
