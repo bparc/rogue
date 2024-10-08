@@ -145,7 +145,7 @@ fn bb_t BB(v2 min, v2 max)
 	return result;
 }
 
-fn bb_t RectToBB(v2 p, v2 sz)
+fn bb_t RectToBounds(v2 p, v2 sz)
 {
 	bb_t result = BB(p, Add(p, sz));
 	return result;

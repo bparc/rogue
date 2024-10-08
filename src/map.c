@@ -42,7 +42,7 @@ fn bb_t GetTileBounds(const map_t *map, s32 x, s32 y)
 {
 	v2 min = SV2(x, y);
 	min = Mul(min, map->tile_sz);
-	return RectToBB(min, map->tile_sz);
+	return RectToBounds(min, map->tile_sz);
 }
 
 fn v2 GetTileCenter(const map_t *map, v2s p)

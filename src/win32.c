@@ -61,4 +61,6 @@ fn void Win32GetInput(client_input_t *result, HWND window)
 	result->mouse_buttons[1] = (GetAsyncKeyState(VK_RBUTTON) < 0);
 	for (s32 index = '0'; index <= 'Z'; index++)
 		result->keys[index] = (GetAsyncKeyState(index) < 0);
+	result->keys[key_code_alt] = (GetAsyncKeyState(VK_LMENU) < 0);
+	result->keys[key_code_shift] = (GetAsyncKeyState(VK_SHIFT) < 0);
 }

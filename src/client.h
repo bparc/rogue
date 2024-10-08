@@ -55,13 +55,6 @@ fn void BeginFrame(client_t *state)
 
 fn void EndFrame(client_t *state)
 {
-	DebugPrint("");
-	for (s32 index = 0; index < ArraySize(state->buffers); index++)
-	{
-		command_buffer_t *buffer = &state->buffers[index];
-		f32 occupied_percent = 100.0f * ((f32)buffer->count / (f32)buffer->size);
-		DebugPrint("[%i] %06d/%06d cmds (%.2f%%)", index, buffer->count, buffer->size, occupied_percent);
-	}
 	EndDebugFrame();
 }
 

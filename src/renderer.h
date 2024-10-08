@@ -87,6 +87,8 @@ fn void DrawLineLoop(command_buffer_t *out, v2 *points, s32 count, v4 color);
 fn void DrawLine(command_buffer_t *buffer, v2 from, v2 to, v4 color);
 fn void DrawText(command_buffer_t *buffer, const bmfont_t *font, v2 p, const char string[], v4 color);
 
+fn void DrawPoint(command_buffer_t *buffer, v2 p, v2 sz, v4 color);
+
 typedef struct
 {
 	int32_t count;

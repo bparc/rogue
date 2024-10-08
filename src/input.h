@@ -1,3 +1,12 @@
+typedef enum
+{
+	key_code_alt,
+	key_code_shift,	
+	// NOTE(): Key codes for letter keys
+	// are the same as the coresponding
+	// ASCII characters.
+} key_code_t;
+
 typedef struct
 {
 	f32 viewport[2];
@@ -16,29 +25,25 @@ fn inline v2 GetCursorP(const client_input_t *input)
 	return result;
 }
 
-fn v2s GetDirectionalInput(const client_input_t *input)
+fn s32 GetDirectionalInput(const client_input_t *input)
 {
-	v2s result = {0};
 	s32 num_keys = input->char_count;
 	while (num_keys--)
 	{
 		u8 key = input->char_queue[num_keys];
-		if (ToUpper(key) == 'D')
-			result.x++;
-		else
-		if (ToUpper(key) == 'A')
-			result.x--;
-		else
 		if (ToUpper(key) == 'W')
-			result.y--;
+			return (0);
+		else
+		if (ToUpper(key) == 'D')
+			return (1);
 		else
 		if (ToUpper(key) == 'S')
-			result.y++;
-
-		if (IsZero(result) == false)
-			break;
+			return (2);
+		else
+		if (ToUpper(key) == 'A')
+			return (3);
 	}
-	return result;
+	return -1;
 }
 
 fn b32 IsKeyPressed(const client_input_t *input, u8 key)

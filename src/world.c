@@ -51,6 +51,12 @@ fn void RenderIsoCube(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 color)
 	DrawLine(out, R1[3], R2[3], color);
 }
 
+fn void RenderIsoCubeCentered(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 color)
+{
+	p.y -= sz.y * 0.25f;
+	RenderIsoCube(out, p, sz, height, color);
+}
+
 fn void RenderIsoTile(command_buffer_t *out, const map_t *map, v2s offset, v2 camera_offset, v4 color)
 {
 	v2 p = MapToScreen(map, offset);

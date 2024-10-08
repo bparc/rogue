@@ -10,6 +10,10 @@ fn void BeginDebugFrame(command_buffer_t *output, const bmfont_t *font)
 
 fn void EndDebugFrame(void)
 {
+	#if 0
+	DrawRect(Debug.out, V2(10.0f, 10.0f),
+		V2(500.0f, 200.0f), V4(0.0f, 0.0f, 0.0f, 0.2f));
+	#endif
 	Assert(Debug.out);
 	Debug.out = NULL;
 }
@@ -83,5 +87,5 @@ fn void DebugPrint(const char *format, ...)
 	vsprintf(Debug.format_buffer, format, args);
 	va_end(args);
 	DebugText(Debug.print_p, Debug.format_buffer);
-	Debug.print_p.y += 20.0f;
+	Debug.print_p.y += 25.0f;
 }
