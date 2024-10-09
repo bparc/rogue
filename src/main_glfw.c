@@ -17,6 +17,7 @@ extern int main(void)
 {
 	if (glfwInit())
 	{
+		glfwWindowHint(GLFW_SAMPLES, 8);
 		GLFWwindow *window = glfwCreateWindow(1600, 900, "Project1.exe", 0, 0);
 		Assert(window);
 
@@ -40,6 +41,10 @@ extern int main(void)
 					client_input_t input = {0};
 					for (int key = '0'; key <= 'Z'; key++)
 						input.keys[key] = (u8)glfwGetKey(window, key);
+					input.keys[key_code_alt] = (u8)glfwGetKey(window, GLFW_KEY_LEFT_ALT);
+					input.keys[key_code_shift] = (u8)glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
+					input.keys[key_code_space] = (u8)glfwGetKey(window, GLFW_KEY_SPACE);
+					
 					for (s32 index = 0; index < NumEnteredChars; index++)
 						input.char_queue[index] = EnteredChars[index];
 					input.char_count = NumEnteredChars;

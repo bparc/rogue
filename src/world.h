@@ -12,6 +12,9 @@ typedef struct
 	entity_id_t id;
 	v2s p; // A position on the tile map.
 	v2 deferred_p;
+	
+	u16 health;
+	u8 base_attack_dmg;
 } entity_t;
 
 typedef struct
@@ -129,7 +132,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 			s32 direction = GetDirectionalInput(&input);
 			b32 input_valid = (direction >= 0) && (direction < 4);
 			b32 cursor_mode_active = DoCursor(Debug.out, IsKeyPressed(&input, key_code_space), IsKeyPressed(&input, key_code_alt),
-				input_valid, direction, considered_dirs, &state->cursor_p, map, &state->cursor_mode_active, entity->p);
+				input_valid, direction, considered_dirs, &state->cursor_p, map, storage, &state->cursor_mode_active, entity->p);
 			
 			#if _DEBUG // NOTE(): Render the "considered_dirs" on the map.
 			v2s base_p = cursor_mode_active ? state->cursor_p : entity->p;
@@ -143,7 +146,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 			{
 				//future position
 				v2s peekPos = AddS(entity -> p, considered_dirs[direction]);
-				
+
 				//valid move pos
 				if(!IsOutOfBounds(state, peekPos) && !IsWall(state, peekPos))
 				{

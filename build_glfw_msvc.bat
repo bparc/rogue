@@ -1,5 +1,5 @@
 :: DEBUG
- cl /wd4505 /wd4201 /wd4189 /wd4101 /wd4702 /wd4100 /W4 /WX /Zi /D_DEBUG /DEBUG:FULL src/main_glfw.c /Fe:"x64/debug-x64.exe" /Fd:"x64/" /Fo:"x64/" opengl32.lib Gdi32.lib  User32.lib lib/glfw3dll.lib
+ cl /Isrc/external/ /wd4505 /wd4201 /wd4189 /wd4101 /wd4702 /wd4100 /W4 /WX /Zi /D_DEBUG /DEBUG:FULL src/main_glfw.c /Fe:"x64/debug-x64.exe" /Fd:"x64/" /Fo:"x64/" opengl32.lib Gdi32.lib  User32.lib lib/glfw3dll.lib
  
 
 
