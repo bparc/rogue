@@ -132,8 +132,9 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 			
 			s32 direction = GetDirectionalInput(&input);
 			b32 input_valid = (direction >= 0) && (direction < 4);
-			b32 cursor_mode_active = DoCursor(Debug.out, IsKeyPressed(&input, key_code_space), IsKeyPressed(&input, key_code_alt),
-				input_valid, direction, considered_dirs, &state->cursor_p, map, storage, &state->cursor_mode_active, entity->p);
+			b32 cursor_mode_active = state->cursor_mode_active;
+			DoCursor(Debug.out, IsKeyPressed(&input, key_code_space), IsKeyPressed(&input, key_code_alt),
+				input_valid, direction, considered_dirs, &state->cursor_p, map, storage, &state->cursor_mode_active, entity->p, log);
 			
 			#if _DEBUG // NOTE(): Render the "considered_dirs" on the map.
 			v2s base_p = cursor_mode_active ? state->cursor_p : entity->p;

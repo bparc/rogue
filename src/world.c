@@ -197,7 +197,7 @@ fn b32 IsOutOfBounds(game_world_t *state, v2s p) {
 }
 
 // NOTE(): Cursor
-fn b32 DoCursor(command_buffer_t *out, b32 exit_key, b32 toggle_key, b32 do_move, s32 direction, const v2s dirs[4], v2s *p, map_t *map, entity_storage_t *storage, b32 *active, v2s entity_p)
+fn b32 DoCursor(command_buffer_t *out, b32 exit_key, b32 toggle_key, b32 do_move, s32 direction, const v2s dirs[4], v2s *p, map_t *map, entity_storage_t *storage, b32 *active, v2s entity_p, log_t *log)
 {
 	if ((*active == false) && toggle_key)
 	{
@@ -208,12 +208,20 @@ fn b32 DoCursor(command_buffer_t *out, b32 exit_key, b32 toggle_key, b32 do_move
 	if (*active)
 	{
 		if (exit_key)
-		{
 			*active = false;
-		}
-
 		if (do_move)
 			*p = AddS(*p, dirs[direction]);
+
+		// NOTE(): Combat!!
+		entity_t *Target = GetEntityByPosition(storage, *p);
+		if (IsHostile(Target) == false)
+			Target = 0;
+
+		if (Target && exit_key)
+		{
+			PushLogLn(log, "Attacked entity %i for %i damage!", Target->id, 0);
+			*active = false;
+		}
 
 		RenderIsoTile(out, map, *p, SetAlpha(Pink(), 0.8f), true, 0);
 	}
