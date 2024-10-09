@@ -99,6 +99,11 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags)
 	return result;
 }
 
+fn void CreateSlimeI(game_world_t *state, s32 x, s32 y)
+{
+	CreateEntity(state->storage, V2s(x, y), entity_flags_hostile);
+}
+
 fn b32 IsHostile(const entity_t *entity)
 {
 	if (entity)
@@ -159,8 +164,7 @@ fn void DefaultTurnOrder(turn_queue_t *queue, entity_storage_t *storage)
 
 fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)
 {
-	Assert(queue->num > 0);
-	entity_t *result = GetEntity(storage, queue->entities[queue->num]);
+	entity_t *result = GetEntity(storage, queue->entities[queue->num - 1]);
 	return result;
 }
 
@@ -188,4 +192,31 @@ fn b32 IsWall(game_world_t *state, v2s p)
 fn b32 IsOutOfBounds(game_world_t *state, v2s p) {
 	b32 result = (GetTileValue(state->map, p.x, p.y) == 0);
 	return result;
+}
+
+// NOTE(): Cursor
+fn b32 DoCursor(command_buffer_t *out, b32 exit_key, b32 toggle_key, b32 do_move, s32 direction, const v2s dirs[4], v2s *p, map_t *map, b32 *active, v2s entity_p)
+{
+	if ((*active == false) && toggle_key)
+	{
+		*active = true;
+		*p = entity_p;
+	}
+
+	if (*active)
+	{
+		if (exit_key)
+		{
+			*active = false;
+			goto End;
+		}
+
+		if (do_move)
+			*p = AddS(*p, dirs[direction]);
+
+		RenderIsoTile(out, map, *p, SetAlpha(Pink(), 0.8f), true, 0);
+	}
+
+End:
+	return *active;
 }
