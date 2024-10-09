@@ -118,6 +118,11 @@ fn void DrawLine(command_buffer_t *buffer, v2 from, v2 to, v4 color)
 	}
 }
 
+fn void DrawCurvedLine(command_buffer_t *buffer, v2 from, v2 to, v4 color)
+{
+
+}
+
 fn void DrawLineLoop(command_buffer_t *out, v2 *points, s32 count, v4 color)
 {
 	for (s32 index = 0; index < (count - 1); index++)

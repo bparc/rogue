@@ -31,6 +31,7 @@ typedef struct
 	s32 num;
 	entity_id_t entities[64];
 	f32 time;
+	s32 moves_remaining;
 } turn_queue_t;
 
 // NOTE(): Directions
@@ -50,7 +51,6 @@ typedef struct
 	entity_storage_t *storage;
 
 	turn_queue_t *turns;
-	s32 moves_remaining;
 
 	map_t *map;
 	v2 camera_position;
@@ -73,7 +73,7 @@ fn void Setup(game_world_t *state, memory_t *memory)
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->map = CreateMap(20, 20, memory, TILE_PIXEL_SIZE);
 	CreateEntity(state->storage, V2S(10, 5), entity_flags_controllable);
-	//CreateEntity(state->storage, V2S(11, 5), entity_flags_controllable);
+	CreateEntity(state->storage, V2S(11, 5), entity_flags_controllable);
 	//CreateEntity(state->storage, V2S(12, 5), entity_flags_controllable);
 	state->camera_position = V2(0, 0);
 }
@@ -82,7 +82,7 @@ fn void BeginGameWorld(game_world_t *state)
 {
 	DebugPrint("Player Controls: WASD; Hold shift for diagonal input.");
 	DebugPrint("Cursor Controls: Press ALT to open the cursor. Press space to close it.");
-	DebugPrint("Moves: %i", state->moves_remaining);
+	DebugPrint("Moves: %i", state->turns->moves_remaining);
 	// TODO(): This will break DebugPrints!
 	// Let's make a separate output for those.
 	SetGlobalOffset(Debug.out, state->camera_position);
@@ -100,16 +100,16 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 	map_t *map = state->map;
 	entity_storage_t *storage = state->storage;
 	turn_queue_t *turns = state->turns;
-	if (turns->num == 0)
+	
+	// NOTE(): Process the current turn
+	entity_t *entity = NextInOrder(turns, storage);
+	if (entity == 0)
 	{
 		// NOTE(): We run out of the turns, time to schedule new ones.
 		DefaultTurnOrder(turns, storage);
 		// NOTE():  Maybe a new turn should be scheduled in *immediately* after the
 		// current one ends?
 	}
-
-	// NOTE(): Process the current turn
-	entity_t *entity = NextInOrder(turns, storage);
 	if (entity)
 	{
 		// NOTE(): The turn will "stall" until AcceptTurn() is called.
@@ -153,14 +153,15 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 				//valid move pos
 				if(!IsOutOfBounds(state, peekPos) && !IsWall(state, peekPos))
 				{
-					MoveEntity(map, entity, considered_dirs[direction]);
+					if (turns->moves_remaining > 0)
+						MoveEntity(map, entity, considered_dirs[direction]);
 
 					// NOTE(): Consume moves
-					state->moves_remaining--;
-					if (state->moves_remaining <= 0)
+					turns->moves_remaining--;
+					if (turns->moves_remaining <= 0)
 					{
 						AcceptTurn(turns);
-						state->moves_remaining = 4;
+						turns->moves_remaining = 4;
 					}
 				}
 			}
@@ -178,15 +179,15 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 			if (turns->time >= 1.0f)
 			{
 				// NOTE(): Move the entity in a random direction.
-				state->moves_remaining--;
+				turns->moves_remaining--;
 				turns->time = 0.0f;
-				if (state->moves_remaining > 0)
+				if (turns->moves_remaining > 0) // NOTE(): We can still make moves.
 					MoveEntity(map, entity, CardinalDirections[rand() % 4]);
 			}
-			if (state->moves_remaining<=0)
+			if (turns->moves_remaining<=0)
 			{
 				AcceptTurn(turns);
-				state->moves_remaining = 4;
+				turns->moves_remaining = 4;
 			}
 		}
 	}
@@ -256,7 +257,16 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 			v2 bitmap_p = Sub(p, bitmap_aligment);
 			DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
 			if (IsEntityActive_O1(state->turns, storage, entity->id))
+			{
 				color = Blue();
+
+				entity_t *next = PeekNextTurn(state->turns, storage);
+				if (next)
+				{
+					DrawLine(out, ScreenToIso(entity->deferred_p), ScreenToIso(next->deferred_p), Orange());
+				}
+			}
+
 			//DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
 		}
 		
