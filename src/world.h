@@ -36,7 +36,6 @@ typedef struct
 static const v2s CardinalDirections[4] = { {0, -1}, {+1, 0}, {0, +1}, {-1, 0} };
 static const v2s DiagonalDirections[4] = { {-1, -1}, {1, -1}, {1, +1}, {-1, +1}};
 
-// NOTE(): Cursor
 typedef struct
 {
 	v2s p;
@@ -57,6 +56,7 @@ typedef struct
 } game_world_t;
 
 #include "world.c"
+#include "cursor.c"
 
 //fn void BeginGameWorld(game_world_t *state);
 //fn void EndGameWorld(game_world_t *state);
