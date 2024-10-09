@@ -22,7 +22,7 @@ fn void	DoCursor(
 			cursor->p = AddS(cursor->p, dirs[direction]);
 
 		if (snap_key) {
-			entity_t *nearest_enemy = FindNearestEnemy(storage, User->p);
+			entity_t *nearest_enemy = FindNearestEnemy(storage, cursor->p);
 
 			cursor->p = nearest_enemy->p;
 		}
