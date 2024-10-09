@@ -197,34 +197,42 @@ fn b32 IsOutOfBounds(game_world_t *state, v2s p) {
 }
 
 // NOTE(): Cursor
-fn b32 DoCursor(command_buffer_t *out, b32 exit_key, b32 toggle_key, b32 do_move, s32 direction, const v2s dirs[4], v2s *p, map_t *map, entity_storage_t *storage, b32 *active, v2s entity_p, log_t *log)
+fn void	DoCursor(
+	command_buffer_t *out,
+	entity_t *User, // the entity that currently uses the cursor
+	b32 exit_key, // the player wants to close the cursor
+	b32 toggle_key, // the player wants to open the cursor
+	b32 move_requested, s32 direction, const v2s dirs[4], // the player wants to move
+	turn_queue_t *queue, map_t *map, entity_storage_t *storage, log_t *log, cursor_t *cursor)
 {
-	if ((*active == false) && toggle_key)
+	Assert(User);
+	if ((cursor->active == false) && toggle_key)
 	{
-		*active = true;
-		*p = entity_p;
+		// NOTE(): The cursor was just activated.
+		// Setup a starting state.
+		cursor->active = true;
+		cursor->p = User->p;
 	}
 
-	if (*active)
+	if (cursor->active)
 	{
-		if (exit_key)
-			*active = false;
-		if (do_move)
-			*p = AddS(*p, dirs[direction]);
+		if (move_requested)
+			cursor->p = AddS(cursor->p, dirs[direction]);
 
 		// NOTE(): Combat!!
-		entity_t *Target = GetEntityByPosition(storage, *p);
+		entity_t *Target = GetEntityByPosition(storage, cursor->p);
 		if (IsHostile(Target) == false)
 			Target = 0;
 
 		if (Target && exit_key)
 		{
-			PushLogLn(log, "Attacked entity %i for %i damage!", Target->id, 0);
-			*active = false;
+			PushLogLn(log, "Attacked entity %i for %i damage!", Target->id, User->base_attack_dmg);
+			cursor->active = false;
 		}
 
-		RenderIsoTile(out, map, *p, SetAlpha(Pink(), 0.8f), true, 0);
-	}
+		RenderIsoTile(out, map, cursor->p, SetAlpha(Pink(), 0.8f), true, 0);
 
-	return *active;
+		if (exit_key)
+			cursor->active = false;
+	}
 }

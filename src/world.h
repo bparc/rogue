@@ -32,13 +32,21 @@ typedef struct
 	entity_id_t entities[64];
 } turn_queue_t;
 
-// NOTE(): Directions.
+// NOTE(): Directions
 static const v2s CardinalDirections[4] = { {0, -1}, {+1, 0}, {0, +1}, {-1, 0} };
 static const v2s DiagonalDirections[4] = { {-1, -1}, {1, -1}, {1, +1}, {-1, +1}};
+
+// NOTE(): Cursor
+typedef struct
+{
+	v2s p;
+	b32 active; // If active, the player input is redirected to the cursor.
+} cursor_t;
 
 #include "settings.h"
 typedef struct
 {
+	cursor_t *cursor;
 	entity_storage_t *storage;
 
 	turn_queue_t *turns;
@@ -46,11 +54,6 @@ typedef struct
 
 	map_t *map;
 	v2 camera_position;
-	
-	// NOTE(): Cursor_t
-	v2s cursor_p;
-	//v2 cursor_deferred_p;
-	b32 cursor_mode_active;
 } game_world_t;
 
 #include "world.c"
@@ -64,6 +67,7 @@ typedef struct
 
 fn void Setup(game_world_t *state, memory_t *memory)
 {
+	state->cursor = PushStruct(cursor_t, memory);
 	state->turns = PushStruct(turn_queue_t, memory);
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->map = CreateMap(20, 20, memory, TILE_PIXEL_SIZE);
@@ -126,18 +130,18 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 			// NOTE(): Listen for the player input.
 			const v2s *considered_dirs = CardinalDirections;
 			#if ENABLE_DIAGONAL_MOVEMENT
-			if (IsKeyPressed(&input, key_code_shift)) // TODO(): Implement key_code_shift on the GLFW backend.
+			if (IsKeyPressed(&input, key_code_shift))
 				considered_dirs = DiagonalDirections;
 			#endif
 			
 			s32 direction = GetDirectionalInput(&input);
 			b32 input_valid = (direction >= 0) && (direction < 4);
-			b32 cursor_mode_active = state->cursor_mode_active;
-			DoCursor(Debug.out, IsKeyPressed(&input, key_code_space), IsKeyPressed(&input, key_code_alt),
-				input_valid, direction, considered_dirs, &state->cursor_p, map, storage, &state->cursor_mode_active, entity->p, log);
+			b32 cursor_mode_active = state->cursor->active;
+			DoCursor(Debug.out, entity, IsKeyPressed(&input, key_code_space), IsKeyPressed(&input, key_code_alt),
+				input_valid, direction, considered_dirs, turns, map, storage, log, state->cursor);
 			
 			#if _DEBUG // NOTE(): Render the "considered_dirs" on the map.
-			v2s base_p = cursor_mode_active ? state->cursor_p : entity->p;
+			v2s base_p = cursor_mode_active ? state->cursor->p : entity->p;
 			for (s32 index = 0; index < 4; index++)
 				RenderIsoTile(Debug.out, map, AddS(base_p, considered_dirs[index]), Orange(), true, 0);
 			#endif
@@ -172,9 +176,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 			#if 1
 			// TODO(): IMPORTANT! We should make our own rand() and stop using
 			// the CRT one altogether. Just in case we'll ever need to have a reliable determinism.
-			v2s directions[4] = { Up(), Down(), Left(), Right() };
-			s32 direction = rand() % ArraySize(directions);
-			MoveEntity(map, entity, directions[direction]);
+			MoveEntity(map, entity, CardinalDirections[rand() % 4]);
 			#endif
 			AcceptTurn(turns);
 			// TODO(): We should either have like a few seconds of delay here,
