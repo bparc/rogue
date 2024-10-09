@@ -133,6 +133,30 @@ fn entity_t *GetEntityByPosition(entity_storage_t *storage, v2s p)
 	return 0;
 }
 
+fn entity_t *FindNearestEnemy(entity_storage_t *storage, v2s player_pos)
+{
+	entity_t *nearest_enemy = 0;
+	f32 nearest_distance = FLT_MAX;
+
+	for (s32 i = 0; i < storage->num; i++)
+	{
+		entity_t *entity = &storage->entities[i];
+
+		if (entity->flags & entity_flags_hostile)
+		{
+			f32 distance = DistanceV2S(entity->p, player_pos);
+
+			if (distance < nearest_distance)
+			{
+				nearest_enemy = entity;
+				nearest_distance = distance;
+			}
+		}
+	}
+
+	return nearest_enemy;
+}
+
 fn void MoveEntity(map_t *map, entity_t *entity, v2s offset)
 {
 	entity->p = AddS(entity->p, offset);

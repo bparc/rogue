@@ -69,6 +69,12 @@ fn f32 Distance(v2 a, v2 b)
 	return result;
 }
 
+fn f32 DistanceV2S(v2s a, v2s b)
+{
+	v2s delta = SubS(a, b);
+	return sqrtf((f32)(delta.x * delta.x + delta.y * delta.y));
+}
+
 fn v2 Invert(v2 v)
 {
 	v2 result = {-v.x, -v.y};
