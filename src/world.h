@@ -135,7 +135,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 			b32 input_valid = (direction >= 0) && (direction < 4);
 			b32 cursor_mode_active = state->cursor->active; // NOTE(): The cursor_active flag needs to be stored *before* calling DoCursor. This is actually the correct order. For reasons.
 			DoCursor(Debug.out, entity, IsKeyPressed(&input, key_code_space), IsKeyPressed(&input, key_code_alt),
-				input_valid, direction, considered_dirs, turns, map, storage, log, state->cursor);
+			IsKeyPressed(&input, key_code_tab), input_valid, direction, considered_dirs, turns, map, storage, log, state->cursor);
 			
 			// TODO(): Pass a "real" buffer to DoCursor() instead of a Debug one!!
 			#if _DEBUG // NOTE(): Render the considered directions on the map.

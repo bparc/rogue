@@ -3,6 +3,7 @@ typedef enum
 	key_code_alt,
 	key_code_shift,	
 	key_code_space,
+	key_code_tab,
 	// NOTE(): Key codes for letter keys
 	// are the same as the coresponding
 	// ASCII characters.

@@ -4,10 +4,10 @@ fn double Win32GetTime(void)
 {
 	double result = 0;
 
-	LARGE_INTEGER frequency = {};
+	LARGE_INTEGER frequency = {0};
 	if (QueryPerformanceFrequency(&frequency))
 	{
-		LARGE_INTEGER time = {};
+		LARGE_INTEGER time = {0};
 		if (QueryPerformanceCounter(&time))
 		{
 			result = ((double)time.QuadPart / (double)frequency.QuadPart);
@@ -64,4 +64,5 @@ fn void Win32GetInput(client_input_t *result, HWND window)
 	result->keys[key_code_alt] = (GetAsyncKeyState(VK_LMENU) < 0);
 	result->keys[key_code_shift] = (GetAsyncKeyState(VK_SHIFT) < 0);
 	result->keys[key_code_space] = (GetAsyncKeyState(VK_SPACE) < 0);
+	result->keys[key_code_tab] = (GetAsyncKeyState(VK_TAB) < 0);
 }
