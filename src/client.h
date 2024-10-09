@@ -15,6 +15,8 @@
 #include "map.h"
 #include "map.c"
 #include "dijkstra.c"
+#include "log.h"
+#include "log.c"
 #include "assets.h"
 #include "world.h"
 #include "editor.h"
@@ -27,6 +29,7 @@ typedef struct
 	editor_state_t editor;
 	game_world_t world;
 	command_buffer_t buffers[2];
+	log_t *event_log;
 	memory_t memory;
 	u8 reserved[MB(1)];
 	f64 timestamp;
@@ -43,6 +46,9 @@ fn s32 Startup(client_t *state)
 	command_buffer_t *buffers = state->buffers;
 	buffers[0] = PushCommandBuffer(memory, 1024 * 16);
 	buffers[1] = PushCommandBuffer(memory, 1024);
+	
+	state->event_log = PushStruct(log_t, memory);
+	ZeroStruct(state->event_log);
 	
 	LoadAssets(&state->assets);
 	Setup(&state->world, &state->memory);
@@ -75,10 +81,11 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 	BeginFrame(state);
 	Editor(&state->editor, &state->world, &state->buffers[0], &input);
 	
-	Update(&state->world, dt, input);
+	Update(&state->world, dt, input, state->event_log);
 	DrawFrame(&state->world, &state->buffers[0], dt, &state->assets);
 	EndFrame(state);
 
+	MessageLog(&state->buffers[1], &state->font, V2(10.0f, 200.0f), state->event_log, dt);
 	memset(output, 0, sizeof(*output));
 	PushRenderOutput(output, state->buffers[0]);
 	PushRenderOutput(output, state->buffers[1]); // NOTE(): Debug.

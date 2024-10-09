@@ -210,7 +210,6 @@ fn b32 DoCursor(command_buffer_t *out, b32 exit_key, b32 toggle_key, b32 do_move
 		if (exit_key)
 		{
 			*active = false;
-			goto End;
 		}
 
 		if (do_move)
@@ -219,6 +218,5 @@ fn b32 DoCursor(command_buffer_t *out, b32 exit_key, b32 toggle_key, b32 do_move
 		RenderIsoTile(out, map, *p, SetAlpha(Pink(), 0.8f), true, 0);
 	}
 
-End:
 	return *active;
 }

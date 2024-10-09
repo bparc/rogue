@@ -51,6 +51,14 @@ fn f32 Lerp(f32 a, f32 b, f32 t)
 	return result;
 }
 
+fn f32 Smoothstep(f32 x, f32 edge)
+{
+	f32 result = 0.0f;
+	if (x >= edge)
+		result = (x - edge) / (1.0f - edge);
+	return result;
+}
+
 fn s32 SRandIntFixed(s32 upper, s32 lower, s32 seed) {
 	 if (upper < lower) { //swap upper lower if switched
         s32 temp = upper;
@@ -92,6 +100,12 @@ fn s32 ClampS32(s32 value, s32 min, s32 max)
 fn s32 MinS32(s32 a, s32 b)
 {
 	s32 result = MIN(a, b);
+	return result;
+}
+
+fn s32 MaxS32(s32 a, s32 b)
+{
+	s32 result = MAX(a, b);
 	return result;
 }
 

@@ -59,11 +59,14 @@ fn char ToUpper(char ch);
 #include <math.h>
 #define M_TAU32 (f32)(M_PI * 2.0)
 
-// NOTE(): Numerical.
+// NOTE(): Numerical
 fn f32 Sine(f32 x);
 fn f32 Cosine(f32 x);
 fn f32 SqRoot(f32 x);
+
+// NOTE(): Interpolation
 fn f32 Lerp(f32 a, f32 b, f32 t);
+fn f32 Smoothstep(f32 x, f32 edge);
 
 // Constants for LCG
 #define LCG_A 1664525

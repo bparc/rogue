@@ -3,3 +3,6 @@
 #define TILE_PIXEL_SIZE 100
 
 #define ENABLE_DIAGONAL_MOVEMENT true
+
+// TODO(): To be implemented...
+#define DISABLE_ALL_DEBUG_RENDERING false

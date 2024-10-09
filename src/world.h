@@ -84,7 +84,7 @@ fn void EndGameWorld(game_world_t *state)
 	SetGlobalOffset(Debug.out, V2(0.0f, 0.0f));
 }
 
-fn void Update(game_world_t *state, f32 dt, client_input_t input)
+fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 {
 	BeginGameWorld(state);
 
@@ -143,10 +143,12 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 			{
 				//future position
 				v2s peekPos = AddS(entity -> p, considered_dirs[direction]);
+				
 				//valid move pos
 				if(!IsOutOfBounds(state, peekPos) && !IsWall(state, peekPos))
 				{
 					MoveEntity(map, entity, considered_dirs[direction]);
+
 					state->moves_remaining--;
 					if (state->moves_remaining <= 0)
 					{
