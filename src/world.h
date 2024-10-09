@@ -76,6 +76,7 @@ fn void Setup(game_world_t *state, memory_t *memory)
 fn void BeginGameWorld(game_world_t *state)
 {
 	DebugPrint("Player Controls: WASD; Hold shift for diagonal input.");
+	DebugPrint("Cursor Controls: Press ALT to open the cursor. Press space to close it.");
 	DebugPrint("Moves: %i", state->moves_remaining);
 	// TODO(): This will break DebugPrints!
 	// Let's make a separate output for those.
