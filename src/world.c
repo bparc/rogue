@@ -146,6 +146,16 @@ fn void MoveEntity(map_t *map, entity_t *entity, v2s offset)
 		entity->p.y = map->y - 1;
 }
 
+fn v2 CameraTracking(v2 p, v2 player_world_pos, v2 viewport, f32 dt)
+{
+	v2 player_iso_pos = ScreenToIso(player_world_pos);
+	
+	v2 screen_center = Scale(viewport, 0.5f);
+	v2 camera_offset = Sub(screen_center, player_iso_pos);
+	p = Lerp2(p, camera_offset, 5.0f * dt);
+	return p;
+}
+
 // NOTE(): Turns
 fn void PushTurn(turn_queue_t *queue, entity_t *entity)
 {
@@ -168,6 +178,14 @@ fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)
 	if (queue->num > 0)
 		result = GetEntity(storage, queue->entities[queue->num - 1]);
 	return result;
+}
+
+fn int32_t IsEntityActive_O1(turn_queue_t *queue, entity_storage_t *storage, entity_id_t id)
+{
+	entity_t *result = NextInOrder(queue, storage);
+	if (result)
+		return (result->id == id);
+	return 0;
 }
 
 fn entity_t *PeekNextTurn(turn_queue_t *queue, entity_storage_t *storage)

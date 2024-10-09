@@ -4,5 +4,7 @@
 
 #define ENABLE_DIAGONAL_MOVEMENT true
 
-// TODO(): To be implemented...
-#define DISABLE_ALL_DEBUG_RENDERING false
+#define DISABLE_ALL_DEBUG_RENDERING false // TODO(): To be implemented...
+
+#define TURN_SPEED_NORMAL 1.0
+#define TURN_SPEED_FAST 5.0

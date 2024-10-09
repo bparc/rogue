@@ -30,6 +30,7 @@ typedef struct
 {
 	s32 num;
 	entity_id_t entities[64];
+	f32 time;
 } turn_queue_t;
 
 // NOTE(): Directions
@@ -72,8 +73,8 @@ fn void Setup(game_world_t *state, memory_t *memory)
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->map = CreateMap(20, 20, memory, TILE_PIXEL_SIZE);
 	CreateEntity(state->storage, V2S(10, 5), entity_flags_controllable);
-	CreateEntity(state->storage, V2S(11, 5), entity_flags_controllable);
-	CreateEntity(state->storage, V2S(12, 5), entity_flags_controllable);
+	//CreateEntity(state->storage, V2S(11, 5), entity_flags_controllable);
+	//CreateEntity(state->storage, V2S(12, 5), entity_flags_controllable);
 	state->camera_position = V2(0, 0);
 }
 
@@ -111,22 +112,18 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 	entity_t *entity = NextInOrder(turns, storage);
 	if (entity)
 	{
+		// NOTE(): The turn will "stall" until AcceptTurn() is called.
+
 		// NOTE(): We propably want to render stuff like this from here even
 		// when NOT in the debug mode.
 		#if _DEBUG
 		RenderIsoTile(Debug.out, map, entity->p, Red(), false, 0);
 		#endif
-		// NOTE(): The turn will "stall" until AcceptTurn() is called.
-		if (entity->flags & entity_flags_controllable)
-		{
-			// NOTE(): Track the entity with a camera.
-			v2 player_world_pos = GetTileCenter(state->map, entity->p);
-			v2 player_iso_pos = ScreenToIso(player_world_pos);
-		
-			v2 screen_center = Scale(GetViewport(&input), 0.5f);
-			v2 camera_offset = Sub(screen_center, player_iso_pos);
-			state->camera_position = Lerp2(state->camera_position, camera_offset, 5.0f * dt);
 
+		state->camera_position = CameraTracking(state->camera_position, entity->deferred_p, GetViewport(&input), dt);
+		
+		if (entity->flags & entity_flags_controllable) // NOTE(): The "player" code.
+		{
 			// NOTE(): Listen for the player input.
 			const v2s *considered_dirs = CardinalDirections;
 			#if ENABLE_DIAGONAL_MOVEMENT
@@ -136,17 +133,17 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 			
 			s32 direction = GetDirectionalInput(&input);
 			b32 input_valid = (direction >= 0) && (direction < 4);
-			b32 cursor_mode_active = state->cursor->active;
+			b32 cursor_mode_active = state->cursor->active; // NOTE(): The cursor_active flag needs to be stored *before* calling DoCursor. This is actually the correct order. For reasons.
 			DoCursor(Debug.out, entity, IsKeyPressed(&input, key_code_space), IsKeyPressed(&input, key_code_alt),
 				input_valid, direction, considered_dirs, turns, map, storage, log, state->cursor);
 			
-			#if _DEBUG // NOTE(): Render the "considered_dirs" on the map.
+			// TODO(): Pass a "real" buffer to DoCursor() instead of a Debug one!!
+			#if _DEBUG // NOTE(): Render the considered directions on the map.
 			v2s base_p = cursor_mode_active ? state->cursor->p : entity->p;
 			for (s32 index = 0; index < 4; index++)
 				RenderIsoTile(Debug.out, map, AddS(base_p, considered_dirs[index]), Orange(), true, 0);
 			#endif
-
-			// TODO(): Pass a "real" buffer to DoCursor instead of a Debug one!!
+			
 			//Valid input
 			if (input_valid && (cursor_mode_active == false))
 			{
@@ -158,6 +155,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 				{
 					MoveEntity(map, entity, considered_dirs[direction]);
 
+					// NOTE(): Consume moves
 					state->moves_remaining--;
 					if (state->moves_remaining <= 0)
 					{
@@ -172,18 +170,24 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 			// NOTE(): Enemy behaviour goes here.
 			// switch (entity->behaviour) ... etc.
 
-			// NOTE(): Move the entity in a random direction.
-			#if 1
-			// TODO(): IMPORTANT! We should make our own rand() and stop using
-			// the CRT one altogether. Just in case we'll ever need to have a reliable determinism.
-			MoveEntity(map, entity, CardinalDirections[rand() % 4]);
-			#endif
-			AcceptTurn(turns);
-			// TODO(): We should either have like a few seconds of delay here,
-			// during which an animation plays out,
-			// OR exhaust all of the remaining turns in the queue in this single frame.
-			// Also, the system propably should support doing few entity moves in
-			// a single turn, and smoothly animating each one of those steps.
+			f32 speed_multiplayer = 1.0f;
+			if (IsKeyPressed(&input, key_code_space))
+				speed_multiplayer = TURN_SPEED_FAST;
+
+			turns->time += dt * speed_multiplayer;
+			if (turns->time >= 1.0f)
+			{
+				// NOTE(): Move the entity in a random direction.
+				state->moves_remaining--;
+				turns->time = 0.0f;
+				if (state->moves_remaining > 0)
+					MoveEntity(map, entity, CardinalDirections[rand() % 4]);
+			}
+			if (state->moves_remaining<=0)
+			{
+				AcceptTurn(turns);
+				state->moves_remaining = 4;
+			}
 		}
 	}
 
@@ -251,6 +255,8 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 			v2 bitmap_p = Sub(p, bitmap_aligment);
 			DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
+			if (IsEntityActive_O1(state->turns, storage, entity->id))
+				color = Blue();
 			//DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
 		}
 		
