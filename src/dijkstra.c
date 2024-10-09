@@ -83,7 +83,7 @@ fn v2s FindNearestTile(map_t *map, v2s source)
 	v2s at = source;
 	for (s32 index = 0; index < 4; index++)
 	{
-		const v2s directions[4] = { V2s(-1, +0), V2s(+1, +0), V2s(+0, +1), V2s(+0, -1) };
+		const v2s directions[4] = { V2S(-1, +0), V2S(+1, +0), V2S(+0, +1), V2S(+0, -1) };
 		v2s d = directions[index];
 		
 		s32 x = at.x + d.x;
@@ -92,7 +92,7 @@ fn v2s FindNearestTile(map_t *map, v2s source)
 		if ((neighbor) && (neighbor->distance < min_distance))
 		{
 			min_distance = neighbor->distance;
-			result = V2s(x, y);
+			result = V2S(x, y);
 		}
 	}
 

@@ -24,7 +24,7 @@ fn b32 IsZero(v2s x)
 	return result;
 }
 // NOTE(): Constructors.
-fn v2s V2s(s32 x, s32 y);
+fn v2s V2S(s32 x, s32 y);
 fn v2 V2(f32 x, f32 y);
 fn v2 SV2(s32 x, s32 y);
 fn v4 V4(f32 x, f32 y, f32 z, f32 w);

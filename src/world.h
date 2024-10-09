@@ -37,14 +37,16 @@ static const v2s DiagonalDirections[4] = { {-1, -1}, {1, -1}, {1, +1}, {-1, +1}}
 typedef struct
 {
 	entity_storage_t *storage;
+
 	turn_queue_t *turns;
+	s32 moves_remaining;
 
 	map_t *map;
-	f32 time_elapsed;
-
 	v2 camera_position;
-	s32 moves_remaining;
+	
+	// NOTE(): Cursor_t
 	v2s cursor_p;
+	//v2 cursor_deferred_p;
 	b32 cursor_mode_active;
 } game_world_t;
 
@@ -62,9 +64,9 @@ fn void Setup(game_world_t *state, memory_t *memory)
 	state->turns = PushStruct(turn_queue_t, memory);
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->map = CreateMap(20, 20, memory, TILE_PIXEL_SIZE);
-	CreateEntity(state->storage, V2s(10, 5), entity_flags_controllable);
-	CreateEntity(state->storage, V2s(11, 5), entity_flags_controllable);
-	CreateEntity(state->storage, V2s(12, 5), entity_flags_controllable);
+	CreateEntity(state->storage, V2S(10, 5), entity_flags_controllable);
+	CreateEntity(state->storage, V2S(11, 5), entity_flags_controllable);
+	CreateEntity(state->storage, V2S(12, 5), entity_flags_controllable);
 	state->camera_position = V2(0, 0);
 }
 
@@ -129,10 +131,10 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input)
 			b32 cursor_mode_active = DoCursor(Debug.out, IsKeyPressed(&input, key_code_space), IsKeyPressed(&input, key_code_alt),
 				input_valid, direction, considered_dirs, &state->cursor_p, map, &state->cursor_mode_active, entity->p);
 			
-			v2s considered_p = cursor_mode_active ? state->cursor_p : entity->p;
 			#if _DEBUG // NOTE(): Render the "considered_dirs" on the map.
+			v2s base_p = cursor_mode_active ? state->cursor_p : entity->p;
 			for (s32 index = 0; index < 4; index++)
-				RenderIsoTile(Debug.out, map, AddS(considered_p, considered_dirs[index]), Orange(), true, 0);
+				RenderIsoTile(Debug.out, map, AddS(base_p, considered_dirs[index]), Orange(), true, 0);
 			#endif
 
 			// TODO(): Pass a "real" buffer to DoCursor instead of a Debug one!!
@@ -201,13 +203,13 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				v4 color = White();
 				b32 Filled = 0;
 				f32 height = 0;
-				if (IsWall(state, V2s(x, y)))
+				if (IsWall(state, V2S(x, y)))
 				{
 					Filled = true;
 					height = 80;
 				}
 
-				RenderIsoTile(out, map, V2s(x, y), color, Filled, height);
+				RenderIsoTile(out, map, V2S(x, y), color, Filled, height);
 			}
 		}
 	}
@@ -228,6 +230,10 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		}		
 		else
 		{
+			// TODO(): I'm rendering a hard-coded
+			// slime bitmap here to test things out.
+			// This bitmap should eventually be made into a customizable property of an
+			// entity.
 			bitmap_t *bitmap = &assets->Slime;
 			v2 bitmap_sz = bitmap->scale;
 			v2 bitmap_half_sz = Scale(bitmap_sz, 0.5f);
@@ -236,10 +242,9 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 			v2 bitmap_p = Sub(p, bitmap_aligment);
 			DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
-
 			//DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
 		}
-
+		
 		RenderIsoCubeCentered(out, p, V2(ENTITY_SIZE, ENTITY_SIZE), ENTITY_PIXEL_HEIGHT, color);
 	}
 }

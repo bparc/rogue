@@ -101,7 +101,7 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags)
 
 fn void CreateSlimeI(game_world_t *state, s32 x, s32 y)
 {
-	CreateEntity(state->storage, V2s(x, y), entity_flags_hostile);
+	CreateEntity(state->storage, V2S(x, y), entity_flags_hostile);
 }
 
 fn b32 IsHostile(const entity_t *entity)
@@ -164,7 +164,9 @@ fn void DefaultTurnOrder(turn_queue_t *queue, entity_storage_t *storage)
 
 fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)
 {
-	entity_t *result = GetEntity(storage, queue->entities[queue->num - 1]);
+	entity_t *result = 0;
+	if (queue->num > 0)
+		result = GetEntity(storage, queue->entities[queue->num - 1]);
 	return result;
 }
 

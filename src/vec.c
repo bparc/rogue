@@ -139,7 +139,7 @@ fn b32 CompareVectors(v2s a, v2s b)
 	return result;
 }
 
-fn v2s V2s(s32 x, s32 y)
+fn v2s V2S(s32 x, s32 y)
 {
 	v2s result = {x, y};
 	return result;
@@ -219,20 +219,20 @@ fn v2 ClampToLine(v2 a, v2 b, v2 p)
 
 fn v2s Up(void)
 {
-	return V2s(0, -1);
+	return V2S(0, -1);
 }
 
 fn v2s Down(void)
 {
-	return V2s(0, +1);
+	return V2S(0, +1);
 }
 
 fn v2s Left(void)
 {
-	return V2s(-1, 0);
+	return V2S(-1, 0);
 }
 
 fn v2s Right(void)
 {
-	return V2s(+1, 0);
+	return V2S(+1, 0);
 }
