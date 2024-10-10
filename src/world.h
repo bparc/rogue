@@ -6,6 +6,21 @@ typedef enum
 	entity_flags_hostile = 1 << 1,
 } entity_flags_t;
 
+typedef enum {
+	ITEM_TYPE_WEAPON,
+	ITEM_TYPE_CONSUMABLE,
+	ITEM_TYPE_ARMOR,
+	ITEM_TYPE_MISC,
+} item_type_t;
+
+typedef struct {
+	u32 id;
+	char name[32];
+	item_type_t type;
+	u16 damage, damage_threshold, healing_amount;
+	u16 value, weight;
+} item_t;
+
 typedef struct
 {
 	u8 flags;
@@ -13,8 +28,14 @@ typedef struct
 	v2s p; // A position on the tile map.
 	v2 deferred_p;
 
-	u16 health;
+	u16 health, max_health;
+	u16 max_carry_weight, carried_weight;
 	u16 attack_dmg;
+	u16 attack_turns;
+	item_t* inventory[100]; // MAX_INVENTORY_SIZE couldn't be resolved for some reason todo: fix it
+	item_t* equipped_weapon;
+	item_t* equipped_armor;
+	u8 inventory_count;
 
 } entity_t;
 
@@ -71,9 +92,13 @@ fn void Setup(game_world_t *state, memory_t *memory)
 	state->map = CreateMap(30, 20, memory, TILE_PIXEL_SIZE);
 
 	u16 temp_player_health = 100;
+	u16 temp_player_max_health = 100;
 	u16 temp_attack_dmg = 40;
-	CreateEntity(state->storage, V2S(10, 5), entity_flags_controllable, temp_player_health, temp_attack_dmg);
-	CreateEntity(state->storage, V2S(11, 5), entity_flags_controllable, temp_player_health, temp_attack_dmg);
+	u16 temp_max_carry_weight = 40;
+	CreateEntity(state->storage, V2S(10, 5), entity_flags_controllable,
+		temp_player_health, temp_attack_dmg, temp_max_carry_weight, temp_player_max_health);
+	CreateEntity(state->storage, V2S(11, 5), entity_flags_controllable,
+		temp_player_health, temp_attack_dmg, temp_max_carry_weight, temp_player_max_health);
 	//CreateEntity(state->storage, V2S(12, 5), entity_flags_controllable);
 	state->camera_position = V2(0, 0);
 }
@@ -320,5 +345,68 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		RenderIsoCubeCentered(out, p, V2(ENTITY_SIZE, ENTITY_SIZE), ENTITY_PIXEL_HEIGHT, color);
 	}
 
-
 }
+
+// INVENTORY MANAGEMENT todo: create item instances, render inventory ui, implement item pickups in game world, render items in game world, update hud for quick slots
+fn b32 AddItemToInventory(entity_t *entity, item_t *item) {
+	if (entity->inventory_count < 100) { // todo: use MAX_INVENTORY_COUNT here
+		u16 new_carried_weight = entity->carried_weight + item->weight;
+		if (new_carried_weight <= entity->max_carry_weight) {
+			entity->inventory[entity->inventory_count++] = item;
+			return true;
+		} else return false;
+	} return false;
+}
+
+fn b32 RemoveItemFromInventory(entity_t *entity, u32 item_id) {
+	for (u8 i = 0; i < entity->inventory_count; i++) {
+		item_t *item = entity->inventory[i];
+		if (item != NULL && entity->inventory[i]->id == item_id) {
+			entity->carried_weight -= item->weight;
+
+			for (u8 j = i; j < entity->inventory_count - 1; j++) {
+				entity->inventory[j] = entity->inventory[j + 1];
+			}
+			entity->inventory[entity->inventory_count - 1] = NULL;
+			entity->inventory_count--;
+			return true;
+		}
+	}
+	return false;
+}
+
+// equip, drink, eat, wear, etc.
+fn void UseItem(entity_t *entity, u32 item_id) {
+	for (u32 i = 0; i < entity->inventory_count; i++) {
+		item_t *item = entity->inventory[i];
+		if (item != NULL && item->id == item_id) {
+			switch (item->type) {
+				case ITEM_TYPE_CONSUMABLE:
+					entity->health += item->healing_amount;
+				if (entity->health > entity->max_health) {
+					entity->health = entity->max_health;
+				}
+				RemoveItemFromInventory(entity, item->id);
+					break;
+				case ITEM_TYPE_WEAPON:
+					if (entity->equipped_weapon)
+						AddItemToInventory(entity, entity->equipped_weapon);
+					entity->equipped_weapon = item;
+					entity->attack_dmg = item->damage;
+					break;
+				case ITEM_TYPE_ARMOR:
+					if (entity->equipped_armor)
+						AddItemToInventory(entity, entity->equipped_armor);
+					entity->equipped_armor = item;
+					entity->attack_dmg = item->damage;
+					break;
+				case ITEM_TYPE_MISC:
+					break;
+				default:
+					break;
+			}
+		}
+	}
+}
+
+//-----------------------

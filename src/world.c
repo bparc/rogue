@@ -94,7 +94,8 @@ fn void RenderIsoTile(command_buffer_t *out, const map_t *map, v2s offset, v4 co
 }
 
 // NOTE(): Entities.
-fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags, u16 health_points, u16 attack_dmg)
+fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags,
+	u16 health_points, u16 attack_dmg, u16 max_carry_weight, u16 max_health)
 {
 	entity_t *result = 0;
 	if (storage->num < ArraySize(storage->entities))
@@ -106,7 +107,15 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags, u16 health
 		result->id = storage->next_id++;
 		result->flags = flags;
 		result->health = health_points;
+		result->max_health = max_health;
 		result->attack_dmg = attack_dmg;
+		result->max_carry_weight = max_carry_weight;
+		result->inventory_count = 0;
+		result->equipped_weapon = NULL;
+		result->equipped_armor = NULL;
+		for (int i = 0; i < MAX_INVENTORY_SIZE; i++) {
+			result->inventory[i] = NULL;
+		}
 	}
 	return result;
 }
@@ -114,8 +123,11 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags, u16 health
 fn void CreateSlimeI(game_world_t *state, s32 x, s32 y)
 {
 	u16 slime_hp = 100;
+	u16 slime_max_hp = 100;
 	u16 slime_attack_dmg = 10;
-	CreateEntity(state->storage, V2S(x, y), entity_flags_hostile, slime_hp, slime_attack_dmg);
+	u16 slime_carry_weight = 0;
+	CreateEntity(state->storage, V2S(x, y), entity_flags_hostile,
+		slime_hp, slime_attack_dmg, slime_carry_weight, slime_max_hp);
 }
 
 fn b32 IsHostile(const entity_t *entity)
