@@ -12,9 +12,10 @@ typedef struct
 	entity_id_t id;
 	v2s p; // A position on the tile map.
 	v2 deferred_p;
-	
+
 	u16 health;
-	u8 base_attack_dmg;
+	u16 attack_dmg;
+
 } entity_t;
 
 typedef struct
@@ -68,8 +69,11 @@ fn void Setup(game_world_t *state, memory_t *memory)
 	state->turns = PushStruct(turn_queue_t, memory);
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->map = CreateMap(30, 20, memory, TILE_PIXEL_SIZE);
-	CreateEntity(state->storage, V2S(10, 5), entity_flags_controllable);
-	CreateEntity(state->storage, V2S(11, 5), entity_flags_controllable);
+
+	u16 temp_player_health = 100;
+	u16 temp_attack_dmg = 40;
+	CreateEntity(state->storage, V2S(10, 5), entity_flags_controllable, temp_player_health, temp_attack_dmg);
+	CreateEntity(state->storage, V2S(11, 5), entity_flags_controllable, temp_player_health, temp_attack_dmg);
 	//CreateEntity(state->storage, V2S(12, 5), entity_flags_controllable);
 	state->camera_position = V2(0, 0);
 }
@@ -307,8 +311,14 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				color = Blue();
 
 			//DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
+
+			const f32 MAX_HEALTH = 100.0f;
+			f32 health_percentage = (f32)entity->health / MAX_HEALTH;
+			RenderHealthBar(out, p, health_percentage, assets);
 		}
-		
+
 		RenderIsoCubeCentered(out, p, V2(ENTITY_SIZE, ENTITY_SIZE), ENTITY_PIXEL_HEIGHT, color);
 	}
-}	
+
+
+}

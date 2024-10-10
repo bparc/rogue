@@ -38,7 +38,7 @@ fn void	DoCursor(
 
 		if (Target && WentDown(cons.confirm))
 		{
-			LogLn(log, "Attacked entity %i for %i damage!", Target->id, User->base_attack_dmg);
+			LogLn(log, "Attacked entity %i for %i damage!", Target->id, User->attack_dmg);
 			Target->p.x -= 4;
 			cursor->active = false;
 		}

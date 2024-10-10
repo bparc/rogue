@@ -73,6 +73,16 @@ fn void RenderIsoCubeFilled(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 c
 	}
 }
 
+// todo: Add animation when chunk of health is lost, add art asset
+fn void RenderHealthBar(command_buffer_t *out, v2 position, f32 health_percentage, assets_t *assets) {
+	v2 bar_size = V2(40, 5);
+	v2 bar_position = Sub(position, V2(19.0f, 109.0f));
+
+	DrawRect(out, bar_position, bar_size, Black());
+	v2 health_bar_size = V2(bar_size.x * health_percentage, bar_size.y);
+	DrawRect(out, bar_position, health_bar_size, Green());
+}
+
 fn void RenderIsoTile(command_buffer_t *out, const map_t *map, v2s offset, v4 color, s32 Filled, f32 height)
 {
 	v2 p = MapToScreen(map, offset);
@@ -84,7 +94,7 @@ fn void RenderIsoTile(command_buffer_t *out, const map_t *map, v2s offset, v4 co
 }
 
 // NOTE(): Entities.
-fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags)
+fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags, u16 health_points, u16 attack_dmg)
 {
 	entity_t *result = 0;
 	if (storage->num < ArraySize(storage->entities))
@@ -95,13 +105,17 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags)
 		result->p = p;
 		result->id = storage->next_id++;
 		result->flags = flags;
+		result->health = health_points;
+		result->attack_dmg = attack_dmg;
 	}
 	return result;
 }
 
 fn void CreateSlimeI(game_world_t *state, s32 x, s32 y)
 {
-	CreateEntity(state->storage, V2S(x, y), entity_flags_hostile);
+	u16 slime_hp = 100;
+	u16 slime_attack_dmg = 10;
+	CreateEntity(state->storage, V2S(x, y), entity_flags_hostile, slime_hp, slime_attack_dmg);
 }
 
 fn b32 IsHostile(const entity_t *entity)
@@ -190,7 +204,7 @@ fn void PushTurn(turn_queue_t *queue, entity_t *entity)
 fn void DefaultTurnOrder(turn_queue_t *queue, entity_storage_t *storage)
 {
 	s32 player_count = 0;
-	entity_t *players[16] = {};
+	entity_t *players[16] = {0};
 
 	for (s32 index = 0; index < storage->num; index++)
 	{
