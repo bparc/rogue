@@ -67,6 +67,7 @@ fn f32 Cross(v2 a, v2 b);
 fn f32 LengthSq(v2 v); // NOTE(): LengthSquared
 fn f32 Length(v2 v);
 fn f32 Distance(v2 a, v2 b);
+fn f32 DistanceV2S(v2s a, v2s b);
 
 fn v2 Perp(v2 v); // NOTE(): Perpendicular
 fn v2 Invert(v2 v);
