@@ -204,8 +204,6 @@ fn void DefaultTurnOrder(turn_queue_t *queue, entity_storage_t *storage)
 	Assert(player_count < ArraySize(players));
 	for (s32 index = 0; index < player_count; index++)
 		PushTurn(queue, players[index]);
-
-	queue->moves_remaining = 4;
 }
 
 fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)
@@ -236,6 +234,12 @@ fn void AcceptTurn(turn_queue_t *queue)
 {
 	Assert(queue->num > 0);
 	queue->num--;
+	queue->turn_inited = false;
+}
+
+fn void ConsumeActionPoints(turn_queue_t *queue, s32 count)
+{
+	queue->action_points--;
 }
 
 // NOTE(): World.

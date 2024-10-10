@@ -24,6 +24,7 @@
 
 typedef struct
 {
+	virtual_controls_t virtual_controls;
 	assets_t assets;
 	bmfont_t font;
 	editor_state_t editor;
@@ -32,6 +33,7 @@ typedef struct
 	log_t *event_log;
 	memory_t memory;
 	u8 reserved[MB(1)];
+	u8 keys_prev[256];
 	f64 timestamp;
 } client_t;
 
@@ -66,8 +68,10 @@ fn void BeginFrame(client_t *state)
 	BeginDebugFrame(&state->buffers[1], &state->font);
 }
 
-fn void EndFrame(client_t *state)
+fn void EndFrame(client_t *state, const client_input_t *input)
 {
+	for (s32 index = 0; index < 256; index++)
+		state->keys_prev[index] = input->keys[index];
 	EndDebugFrame();
 }
 
@@ -81,9 +85,10 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 	BeginFrame(state);
 	Editor(&state->editor, &state->world, &state->buffers[0], &input, state->event_log, &state->assets);
 	
-	Update(&state->world, dt, input, state->event_log);
+	virtual_controls_t virtual_cons = MapKeyboardToVirtualCons(&input, state->keys_prev);
+	Update(&state->world, dt, input, state->event_log, &state->assets, virtual_cons);
 	DrawFrame(&state->world, &state->buffers[0], dt, &state->assets);
-	EndFrame(state);
+	EndFrame(state, &input);
 
 	MessageLog(&state->buffers[1], &state->font, V2(10.0f, 200.0f), state->event_log, dt);
 	memset(output, 0, sizeof(*output));

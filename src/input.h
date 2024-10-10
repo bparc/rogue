@@ -1,3 +1,4 @@
+
 typedef enum
 {
 	key_code_alt,
@@ -56,4 +57,67 @@ fn s32 GetDirectionalInput(const client_input_t *input)
 fn b32 IsKeyPressed(const client_input_t *input, u8 key)
 {
 	return input->keys[key];
+}
+
+typedef enum
+{
+	button_transition_none,
+	button_transition_up,
+	button_transition_down,
+} button_transition_t;
+
+typedef struct
+{
+	b32 state;
+	button_transition_t transition;
+} pad_button_t;
+
+typedef struct
+{
+	pad_button_t dpad_up;
+	pad_button_t dpad_right;
+	pad_button_t dpad_down;
+	pad_button_t dpad_left;
+	pad_button_t confirm, cancel;
+	pad_button_t x, y;
+	pad_button_t menu, select;
+} virtual_controls_t;
+
+fn inline b32 WentUp(pad_button_t button)
+{
+	return (button.transition == button_transition_up);
+}
+
+fn inline b32 WentDown(pad_button_t button)
+{
+	return (button.transition == button_transition_down);
+}
+
+fn inline b32 IsDown(pad_button_t button)
+{
+	return (button.state);
+}
+
+fn pad_button_t MapVirtualButton(key_code_t code, const client_input_t *input, u8 keys_prev[256])
+{
+	pad_button_t result = {0};
+	result.state = input->keys[code];
+	if(input->keys[code] && !keys_prev[code])
+		result.transition = button_transition_up;
+	if(!input->keys[code] && keys_prev[code])
+		result.transition = button_transition_down;
+	return result;
+}
+
+fn virtual_controls_t MapKeyboardToVirtualCons(const client_input_t *input, u8 keys_prev[256])
+{
+	virtual_controls_t result = {0};
+	result.dpad_up  	= MapVirtualButton('W', input, keys_prev);
+	result.dpad_right 	= MapVirtualButton('D', input, keys_prev);
+	result.dpad_down 	= MapVirtualButton('S', input, keys_prev);
+	result.dpad_left 	= MapVirtualButton('A', input, keys_prev);
+	result.confirm		= MapVirtualButton('E', input, keys_prev);
+	result.cancel		= MapVirtualButton('Q', input, keys_prev);
+	result.x			= MapVirtualButton('T', input, keys_prev);
+	return result;
 }

@@ -53,7 +53,7 @@ fn void MakeSimpleMap(game_world_t *world)
 fn void ReloadAssets(assets_t *assets, log_t *log)
 {
 	LoadAssets(assets);
-	PushLogLn(log, "editor: reloading \"assets/\"");
+	LogLn(log, "editor: reloading \"assets/\"");
 }
 
 fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *out, const client_input_t *input, log_t *log, assets_t *assets)

@@ -3,7 +3,7 @@ fn log_line_t *GetLogLn(log_t *Log, s32 offset)
 	return &Log->lines[offset % ArraySize(Log->lines)];
 }
 
-fn void PushLogLn(log_t *Log, const char *format, ...)
+fn void LogLn(log_t *Log, const char *format, ...)
 {
 	char buffer[256] = "";
 	va_list args = {0};

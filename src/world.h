@@ -31,12 +31,14 @@ typedef struct
 	s32 num;
 	entity_id_t entities[64];
 	f32 time;
-	s32 moves_remaining;
+
+	s32 action_points;
+	s32 turn_inited;
 } turn_queue_t;
 
 // NOTE(): Directions
-static const v2s CardinalDirections[4] = { {0, -1}, {+1, 0}, {0, +1}, {-1, 0} };
-static const v2s DiagonalDirections[4] = { {-1, -1}, {1, -1}, {1, +1}, {-1, +1}};
+static const v2s cardinal_directions[4] = { {0, -1}, {+1, 0}, {0, +1}, {-1, 0} };
+static const v2s diagonal_directions[4] = { {-1, -1}, {1, -1}, {1, +1}, {-1, +1}};
 
 typedef struct
 {
@@ -58,6 +60,7 @@ typedef struct
 
 #include "world.c"
 #include "cursor.c"
+#include "turn_based.c"
 
 fn void Setup(game_world_t *state, memory_t *memory)
 {
@@ -75,7 +78,7 @@ fn void BeginGameWorld(game_world_t *state)
 {
 	DebugPrint("Player Controls: WASD; Hold shift for diagonal input.");
 	DebugPrint("Cursor Controls: Press ALT to open the cursor. Press space to close it.");
-	DebugPrint("Moves: %i", state->turns->moves_remaining);
+	DebugPrint("Moves: %i", state->turns->action_points);
 	// TODO(): This will break DebugPrints!
 	// Let's make a separate output for those.
 	SetGlobalOffset(Debug.out, state->camera_position);
@@ -86,19 +89,31 @@ fn void EndGameWorld(game_world_t *state)
 	SetGlobalOffset(Debug.out, V2(0.0f, 0.0f));
 }
 
-fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *turns, f32 dt, const client_input_t *input, log_t *log)
+fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *turns, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log)
 {
 	// NOTE(): Process the current turn
 	entity_t *entity = NextInOrder(turns, storage);
 	if (entity == 0)
 	{
 		// NOTE(): We run out of the turns, time to schedule new ones.
-		DefaultTurnOrder(turns, storage);
+		EstablishTurnOrder(state, turns, storage);
+		
 		// NOTE():  Maybe a new turn should be scheduled in *immediately* after the
 		// current one ends?
 	}
 	if (entity)
 	{
+		if ((turns->turn_inited == false))
+		{
+			turns->action_points = (BeginTurn(state, entity) + 1);
+			turns->turn_inited = true;
+			#if ENABLE_TURN_SYSTEM_DEBUG_LOGS
+			LogLn(log, "TurnKernel(): initiating turn for entity#%i", entity->id);
+			#endif
+			// NOTE(): Begin the turn.
+		}
+
+		Assert(turns->turn_inited);
 		// NOTE(): The turn will "stall" until AcceptTurn() is called.
 
 		// NOTE(): We propably want to render stuff like this from here even
@@ -112,18 +127,18 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		if (entity->flags & entity_flags_controllable) // NOTE(): The "player" code.
 		{
 			// NOTE(): Listen for the player input.
-			const v2s *considered_dirs = CardinalDirections;
+			const v2s *considered_dirs = cardinal_directions;
 			#if ENABLE_DIAGONAL_MOVEMENT
 			if (IsKeyPressed(input, key_code_shift))
-				considered_dirs = DiagonalDirections;
+				considered_dirs = diagonal_directions;
 			#endif
 			
 			s32 direction = GetDirectionalInput(input);
 			b32 input_valid = (direction >= 0) && (direction < 4);
 			b32 cursor_mode_active = state->cursor->active; // NOTE(): The cursor_active flag needs to be stored *before* calling DoCursor. This is actually the correct order. For reasons.
 
-			DoCursor(Debug.out, entity, IsKeyPressed(input, key_code_space), IsKeyPressed(input, key_code_alt),
-			IsKeyPressed(input, key_code_tab), input_valid, direction, considered_dirs, turns, map, storage, log, state->cursor);
+			DoCursor(Debug.out, entity, cons, input_valid,
+				direction, considered_dirs, turns, map, storage, log, state->cursor);
 			
 			// TODO(): Pass a "real" buffer to DoCursor() instead of a Debug one!!
 			#if _DEBUG // NOTE(): Render the considered directions on the map.
@@ -141,16 +156,13 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 				//valid move pos
 				if(!IsOutOfBounds(state, peekPos) && !IsWall(state, peekPos))
 				{
-					if (turns->moves_remaining > 0)
+					if (turns->action_points > 0)
 						MoveEntity(map, entity, considered_dirs[direction]);
 
 					// NOTE(): Consume moves
-					turns->moves_remaining--;
-					if (turns->moves_remaining <= 0)
-					{
+					turns->action_points--;
+					if (turns->action_points <= 0)
 						AcceptTurn(turns);
-						turns->moves_remaining = 4;
-					}
 				}
 			}
 		}
@@ -167,16 +179,15 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			if (turns->time >= 1.0f)
 			{
 				// NOTE(): Move the entity in a random direction.
-				turns->moves_remaining--;
 				turns->time = 0.0f;
-				if (turns->moves_remaining > 0) // NOTE(): We can still make moves.
-					MoveEntity(map, entity, CardinalDirections[rand() % 4]);
+				if (turns->action_points > 0) // NOTE(): We can still make moves.
+				{
+					s32 cost = Decide(state, entity);
+						turns->action_points -= cost;
+				}
 			}
-			if (turns->moves_remaining<=0)
-			{
+			if (turns->action_points<=0)
 				AcceptTurn(turns);
-				turns->moves_remaining = 4;
-			}
 		}
 	}
 }
@@ -204,11 +215,12 @@ fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, ent
 	}
 }
 
-fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
+fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log, assets_t *assets, virtual_controls_t cons)
 {
 	BeginGameWorld(state);
-	TurnKernel(state, state->storage, state->map, state->turns, dt, &input, log);	
+	TurnKernel(state, state->storage, state->map, state->turns, dt, &input, cons, log);	
 	EndGameWorld(state);
+	HUD(Debug.out, state, state->turns, state->storage, assets);
 }
 
 fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets)
@@ -299,6 +311,4 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		
 		RenderIsoCubeCentered(out, p, V2(ENTITY_SIZE, ENTITY_SIZE), ENTITY_PIXEL_HEIGHT, color);
 	}
-
-	HUD(Debug.out, state, state->turns, state->storage, assets);
-}
+}	
