@@ -150,7 +150,7 @@ fn v2 CameraTracking(v2 p, v2 player_world_pos, v2 viewport, f32 dt)
 {
 	v2 player_iso_pos = ScreenToIso(player_world_pos);
 	
-	v2 screen_center = Scale(viewport, 0.5f);
+	v2 screen_center = Scale(Scale(viewport, 1.0f / (f32)VIEWPORT_INTEGER_SCALE), 0.5f);
 	v2 camera_offset = Sub(screen_center, player_iso_pos);
 	p = Lerp2(p, camera_offset, 5.0f * dt);
 	return p;
@@ -165,11 +165,23 @@ fn void PushTurn(turn_queue_t *queue, entity_t *entity)
 
 fn void DefaultTurnOrder(turn_queue_t *queue, entity_storage_t *storage)
 {
+	s32 player_count = 0;
+	entity_t *players[16] = {};
+
 	for (s32 index = 0; index < storage->num; index++)
 	{
 		entity_t *entity = &storage->entities[index];
-		PushTurn(queue, entity);
+		if (IsHostile(entity))
+			PushTurn(queue, entity);
+		else
+			players[player_count++] = entity;
 	}
+
+	Assert(player_count < ArraySize(players));
+	for (s32 index = 0; index < player_count; index++)
+		PushTurn(queue, players[index]);
+
+	queue->moves_remaining = 4;
 }
 
 fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)

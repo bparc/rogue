@@ -59,19 +59,12 @@ typedef struct
 #include "world.c"
 #include "cursor.c"
 
-//fn void BeginGameWorld(game_world_t *state);
-//fn void EndGameWorld(game_world_t *state);
-
-//fn void Setup(game_world_t *world, memory_t *memory);
-//fn void Update(game_world_t *state, f32 dt, client_input_t input);
-//fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets);
-
 fn void Setup(game_world_t *state, memory_t *memory)
 {
 	state->cursor = PushStruct(cursor_t, memory);
 	state->turns = PushStruct(turn_queue_t, memory);
 	state->storage = PushStruct(entity_storage_t, memory);
-	state->map = CreateMap(20, 20, memory, TILE_PIXEL_SIZE);
+	state->map = CreateMap(30, 20, memory, TILE_PIXEL_SIZE);
 	CreateEntity(state->storage, V2S(10, 5), entity_flags_controllable);
 	CreateEntity(state->storage, V2S(11, 5), entity_flags_controllable);
 	//CreateEntity(state->storage, V2S(12, 5), entity_flags_controllable);
@@ -93,14 +86,8 @@ fn void EndGameWorld(game_world_t *state)
 	SetGlobalOffset(Debug.out, V2(0.0f, 0.0f));
 }
 
-fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
+fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *turns, f32 dt, const client_input_t *input, log_t *log)
 {
-	BeginGameWorld(state);
-
-	map_t *map = state->map;
-	entity_storage_t *storage = state->storage;
-	turn_queue_t *turns = state->turns;
-	
 	// NOTE(): Process the current turn
 	entity_t *entity = NextInOrder(turns, storage);
 	if (entity == 0)
@@ -120,28 +107,28 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 		RenderIsoTile(Debug.out, map, entity->p, Red(), false, 0);
 		#endif
 
-		state->camera_position = CameraTracking(state->camera_position, entity->deferred_p, GetViewport(&input), dt);
+		state->camera_position = CameraTracking(state->camera_position, entity->deferred_p, GetViewport(input), dt);
 		
 		if (entity->flags & entity_flags_controllable) // NOTE(): The "player" code.
 		{
 			// NOTE(): Listen for the player input.
 			const v2s *considered_dirs = CardinalDirections;
 			#if ENABLE_DIAGONAL_MOVEMENT
-			if (IsKeyPressed(&input, key_code_shift))
+			if (IsKeyPressed(input, key_code_shift))
 				considered_dirs = DiagonalDirections;
 			#endif
 			
-			s32 direction = GetDirectionalInput(&input);
+			s32 direction = GetDirectionalInput(input);
 			b32 input_valid = (direction >= 0) && (direction < 4);
 			b32 cursor_mode_active = state->cursor->active; // NOTE(): The cursor_active flag needs to be stored *before* calling DoCursor. This is actually the correct order. For reasons.
-			DoCursor(Debug.out, entity, IsKeyPressed(&input, key_code_space), IsKeyPressed(&input, key_code_alt),
+			DoCursor(Debug.out, entity, IsKeyPressed(input, key_code_space), IsKeyPressed(input, key_code_alt),
 				input_valid, direction, considered_dirs, turns, map, storage, log, state->cursor);
 			
 			// TODO(): Pass a "real" buffer to DoCursor() instead of a Debug one!!
 			#if _DEBUG // NOTE(): Render the considered directions on the map.
 			v2s base_p = cursor_mode_active ? state->cursor->p : entity->p;
 			for (s32 index = 0; index < 4; index++)
-				RenderIsoTile(Debug.out, map, AddS(base_p, considered_dirs[index]), Orange(), true, 0);
+				RenderIsoTile(Debug.out, map, AddS(base_p, considered_dirs[index]), SetAlpha(Orange(), 0.5f), true, 0);
 			#endif
 			
 			//Valid input
@@ -171,11 +158,11 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 			// NOTE(): Enemy behaviour goes here.
 			// switch (entity->behaviour) ... etc.
 
-			f32 speed_multiplayer = 1.0f;
-			if (IsKeyPressed(&input, key_code_space))
-				speed_multiplayer = TURN_SPEED_FAST;
+			f32 speed_mul = TURN_SPEED_NORMAL;
+			if (IsKeyPressed(input, key_code_space))
+				speed_mul = TURN_SPEED_FAST;
 
-			turns->time += dt * speed_multiplayer;
+			turns->time += dt * speed_mul;
 			if (turns->time >= 1.0f)
 			{
 				// NOTE(): Move the entity in a random direction.
@@ -191,8 +178,24 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 			}
 		}
 	}
+}
 
+fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage)
+{
+	for (s32 index = queue->num - 1; index >= 0; index--)
+	{
+		entity_t *entity = GetEntity(storage, queue->entities[index]);
+		//if (entity)
+			//DrawRect(out, V2(4.0f, 100.0f), V2(40.0f, 40.0f), Black());
+	}
+}
+
+fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
+{
+	BeginGameWorld(state);
+	TurnKernel(state, state->storage, state->map, state->turns, dt, &input, log);	
 	EndGameWorld(state);
+	HUD(Debug.out, state, state->turns, state->storage);
 }
 
 fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets)
@@ -207,6 +210,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 	// NOTE(): Render tiles.
 
+	s32 random_variant = 0;
 	for (s32 y = 0; y < map->y; y++)
 	{
 		for (s32 x = 0; x < map->x; x++)
@@ -224,6 +228,22 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				}
 
 				RenderIsoTile(out, map, V2S(x, y), color, Filled, height);
+
+				#if RENDER_TILE_BITMAPS
+				if (value == 1)
+				{
+					random_variant = SRandInt(random_variant);
+					s32 bitmap_index = (random_variant % ArraySize(assets->Tiles));
+
+					bitmap_t *bitmap = &assets->Tiles[bitmap_index];
+					v2 p = MapToScreen(map, V2S(x, y));
+					p = ScreenToIso(p);
+					//p = Sub(p, Scale(bitmap->scale, 0.5f));
+					p.x -= bitmap->scale.x * 0.5f;
+					DrawBitmap(out, p, bitmap->scale, PureWhite(), bitmap);
+					//DrawRectOutline(out, p, bitmap->scale, Red());
+				}
+				#endif
 			}
 		}
 	}
@@ -237,20 +257,22 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 		v2 p = ScreenToIso(entity->deferred_p);
 		v4 color = Red();
-
+		v2 debug_alignment = V2(0.5f, 0.5f);
+		bitmap_t *bitmap = &assets->Slime;
 		if (entity->flags & entity_flags_controllable)
 		{
 			color = Pink();
+			bitmap = &assets->Player[0];
+			debug_alignment = V2(0.5f, 0.9f);
 		}		
-		else
+		
 		{
 			// TODO(): I'm rendering a hard-coded
-			// slime bitmap here to test things out.
+			// slime OR player bitmap here to test things out.
 			// This bitmap should eventually be made into a customizable property of an
 			// entity.
-			bitmap_t *bitmap = &assets->Slime;
 			v2 bitmap_sz = bitmap->scale;
-			v2 bitmap_half_sz = Scale(bitmap_sz, 0.5f);
+			v2 bitmap_half_sz = Mul(bitmap_sz, debug_alignment);
 			v2 bitmap_aligment = bitmap_half_sz;
 			bitmap_aligment.y += 5.0f;
 

@@ -79,7 +79,7 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 	state->timestamp = input.time;
 
 	BeginFrame(state);
-	Editor(&state->editor, &state->world, &state->buffers[0], &input);
+	Editor(&state->editor, &state->world, &state->buffers[0], &input, state->event_log, &state->assets);
 	
 	Update(&state->world, dt, input, state->event_log);
 	DrawFrame(&state->world, &state->buffers[0], dt, &state->assets);

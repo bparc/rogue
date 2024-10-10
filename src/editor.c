@@ -50,11 +50,29 @@ fn void MakeSimpleMap(game_world_t *world)
 	#undef Y
 }
 
-fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *out, const client_input_t *input)
+fn void ReloadAssets(assets_t *assets, log_t *log)
+{
+	LoadAssets(assets);
+	PushLogLn(log, "editor: reloading \"assets/\"");
+}
+
+fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *out, const client_input_t *input, log_t *log, assets_t *assets)
 {
 	if ((editor->inited == false))
 	{
 		MakeSimpleMap(state);
 		editor->inited = true;
 	}
+
+	s32 count = input->char_count;
+	while (count--)
+	{
+		switch(ToUpper(input->char_queue[count]))
+		{
+			#if ENABLE_ASSET_RELOADING
+			// TODO(): We should technically free the OpenGL handles here, but since this is strictly a debug feature - it doesn't really matter.
+		case 'R': ReloadAssets(assets, log); break;
+			#endif
+		}
+	}	
 }

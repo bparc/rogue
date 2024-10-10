@@ -28,6 +28,7 @@ fn void	DoCursor(
 		if (Target && exit_key)
 		{
 			PushLogLn(log, "Attacked entity %i for %i damage!", Target->id, User->base_attack_dmg);
+			Target->p.x -= 4;
 			cursor->active = false;
 		}
 
