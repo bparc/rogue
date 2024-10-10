@@ -11,4 +11,4 @@
 
 #define ENABLE_ASSET_RELOADING true // NOTE(): Allows for reloading the assets via the 'R' key.
 #define RENDER_TILE_BITMAPS true
-#define VIEWPORT_INTEGER_SCALE 1 // 1, 2, 3,
+#define VIEWPORT_INTEGER_SCALE 2 // 1, 2, 3,

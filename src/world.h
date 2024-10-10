@@ -181,13 +181,26 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 	}
 }
 
-fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage)
+fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets)
 {
+	f32 y = 0.0f;
+	v2 frame_sz = V2(40.f, 40.f);
+
 	for (s32 index = queue->num - 1; index >= 0; index--)
 	{
 		entity_t *entity = GetEntity(storage, queue->entities[index]);
-		//if (entity)
-			//DrawRect(out, V2(4.0f, 100.0f), V2(40.0f, 40.0f), Black());
+		if (entity )
+		{
+			bitmap_t *bitmap = IsHostile(entity) ? &assets->Slime : &assets->Player[0];			
+			v4 frame_color = (index == (queue->num - 1)) ? Red() : Black();
+
+			v2 p = V2(4.0f, 100.0f + y);
+			DrawRect(out, p, frame_sz, V4(0.0f, 0.0f, 0.0f, 0.5f));
+			DrawRectOutline(out, p, frame_sz, frame_color);
+			if (bitmap)
+				DrawBitmap(out, p, frame_sz, PureWhite(), bitmap);
+		}
+		y += (frame_sz.y + 5.0f);
 	}
 }
 
@@ -196,7 +209,6 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log)
 	BeginGameWorld(state);
 	TurnKernel(state, state->storage, state->map, state->turns, dt, &input, log);	
 	EndGameWorld(state);
-	HUD(Debug.out, state, state->turns, state->storage);
 }
 
 fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets)
@@ -279,20 +291,14 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 			v2 bitmap_p = Sub(p, bitmap_aligment);
 			DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
-			if (IsEntityActive_O1(state->turns, storage, entity->id))
-			{
+			if (IsEntityActive(state->turns, storage, entity->id))
 				color = Blue();
-
-				entity_t *next = PeekNextTurn(state->turns, storage);
-				if (next)
-				{
-					DrawLine(out, ScreenToIso(entity->deferred_p), ScreenToIso(next->deferred_p), Orange());
-				}
-			}
 
 			//DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
 		}
 		
 		RenderIsoCubeCentered(out, p, V2(ENTITY_SIZE, ENTITY_SIZE), ENTITY_PIXEL_HEIGHT, color);
 	}
+
+	HUD(Debug.out, state, state->turns, state->storage, assets);
 }

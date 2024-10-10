@@ -142,7 +142,7 @@ fn entity_t *FindNearestEnemy(entity_storage_t *storage, v2s player_pos)
 	{
 		entity_t *entity = &storage->entities[i];
 
-		if (entity->flags & entity_flags_hostile)
+		if (IsHostile(entity))
 		{
 			f32 distance = DistanceV2S(entity->p, player_pos);
 
@@ -216,7 +216,7 @@ fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)
 	return result;
 }
 
-fn int32_t IsEntityActive_O1(turn_queue_t *queue, entity_storage_t *storage, entity_id_t id)
+fn int32_t IsEntityActive(turn_queue_t *queue, entity_storage_t *storage, entity_id_t id)
 {
 	entity_t *result = NextInOrder(queue, storage);
 	if (result)

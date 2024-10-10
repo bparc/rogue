@@ -21,12 +21,18 @@ fn void	DoCursor(
 		if (move_requested)
 			cursor->p = AddS(cursor->p, dirs[direction]);
 
-		if (snap_key) {
+		{
 			entity_t *nearest_enemy = FindNearestEnemy(storage, cursor->p);
-
-			cursor->p = nearest_enemy->p;
+			RenderIsoTile(out, map, nearest_enemy->p, SetAlpha(Red(), 0.8f), true, 0);
+			if (snap_key) {
+				
+				if (nearest_enemy)
+				{
+					cursor->p = nearest_enemy->p;
+					
+				}
+			}
 		}
-
 		// NOTE(): Combat!!
 		entity_t *Target = GetEntityByPosition(storage, cursor->p);
 		if (IsHostile(Target) == false)
