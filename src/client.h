@@ -21,6 +21,7 @@
 #include "world.h"
 #include "editor.h"
 #include "editor.c"
+#include "inventory.h"
 
 typedef struct
 {
