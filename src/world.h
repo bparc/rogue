@@ -231,7 +231,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	entity_storage_t *storage = state->storage;
 
 	SetGlobalOffset(out, V2(0.0f, 0.0f));
-	DrawRect(out, V2(0, 0), V2(1920, 1080), RGB(59, 44, 81)); // NOTE(): Background
+	DrawRect(out, V2(0, 0), V2(1920, 1080), SKY_COLOR); // NOTE(): Background
 
 	SetGlobalOffset(out, state->camera_position);
 

@@ -1,3 +1,4 @@
+#define SKY_COLOR RGB(59, 44, 81)
 #define TILE_PIXEL_SIZE 32
 
 #define ENABLE_DIAGONAL_MOVEMENT true
