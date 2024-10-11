@@ -70,18 +70,15 @@ fn void	DoCursor(
 }
 
 void DrawCursorArea(command_buffer_t *out, map_t *map,v2s center, int radius) {
-	 // Iterate through the square bounding box that contains the circle
     for (s32 y = center.y - radius; y <= center.y + radius; ++y)
     {
         for (s32 x = center.x - radius; x <= center.x + radius; ++x)
         {
-            // Create a point for the current tile
+
             v2s point = {x, y};
 
-            // Check if the point lies within the circle using the IsInsideCircle function
             if (IsInsideCircle(point, center, radius))
             {
-                // Render the tile using the provided RenderIsoTile function
                 RenderIsoTile(out, map, point, SetAlpha(Pink(), 0.5f), true, 0);
             }
         }
