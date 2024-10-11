@@ -189,10 +189,12 @@ fn void DrawQuadv(command_buffer_t *buffer, v2 points[4], v4 color)
 	DrawQuad(buffer, points[0], points[1], points[2], points[3], color);
 }
 
-fn void PushRenderOutput(render_output_t *output, const command_buffer_t buffer)
+fn void PushRenderOutput(render_output_t *output, const command_buffer_t buffer, v4 viewport)
 {
 	Assert(output->count < ArraySize(output->buffers));
-	output->buffers[output->count++] = buffer;
+	output->buffers[output->count] = buffer;
+	output->viewports[output->count] = viewport;
+	output->count++;
 }
 
 fn void SetGlobalOffset(command_buffer_t *buffer, v2 offset)

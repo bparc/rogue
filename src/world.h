@@ -123,8 +123,9 @@ fn void EndGameWorld(game_world_t *state)
 	SetGlobalOffset(Debug.out, V2(0.0f, 0.0f));
 }
 
-fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *turns, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log)
+fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *turns, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out)
 {
+	SetGlobalOffset(out, state->camera_position); // NOTE(): Let's pass the camera position via the PushRenderOutput call instead of this SetGlobalOffset stuff.
 	// NOTE(): Process the current turn
 	entity_t *entity = NextInOrder(turns, storage);
 	if (entity == 0)
@@ -150,10 +151,8 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		Assert(turns->turn_inited);
 		// NOTE(): The turn will "stall" until AcceptTurn() is called.
 
-		// NOTE(): We propably want to render stuff like this from here even
-		// when NOT in the debug mode.
 		#if _DEBUG
-		RenderIsoTile(Debug.out, map, entity->p, Red(), false, 0);
+		RenderIsoTile(out, map, entity->p, Red(), false, 0);
 		#endif
 
 		state->camera_position = CameraTracking(state->camera_position, entity->deferred_p, GetViewport(input), dt);
@@ -171,14 +170,13 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			b32 input_valid = (direction >= 0) && (direction < 4);
 			b32 cursor_mode_active = state->cursor->active; // NOTE(): The cursor_active flag needs to be stored *before* calling DoCursor. This is actually the correct order. For reasons.
 
-			DoCursor(Debug.out, entity, cons, input_valid,
+			DoCursor(out, entity, cons, input_valid,
 				direction, considered_dirs, turns, map, storage, log, state->cursor);
 			
-			// TODO(): Pass a "real" buffer to DoCursor() instead of a Debug one!!
 			#if _DEBUG // NOTE(): Render the considered directions on the map.
 			v2s base_p = cursor_mode_active ? state->cursor->p : entity->p;
 			for (s32 index = 0; index < 4; index++)
-				RenderIsoTile(Debug.out, map, AddS(base_p, considered_dirs[index]), SetAlpha(Orange(), 0.5f), true, 0);
+				RenderIsoTile(out, map, AddS(base_p, considered_dirs[index]), SetAlpha(Orange(), 0.5f), true, 0);
 			#endif
 			
 			//Valid input
@@ -229,7 +227,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets)
 {
 	f32 y = 0.0f;
-	v2 frame_sz = V2(40.f, 40.f);
+	v2 frame_sz = V2(42.f, 42.f);
 
 	for (s32 index = queue->num - 1; index >= 0; index--)
 	{
@@ -249,10 +247,10 @@ fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, ent
 	}
 }
 
-fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log, assets_t *assets, virtual_controls_t cons)
+fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log, assets_t *assets, virtual_controls_t cons, command_buffer_t *out)
 {
 	BeginGameWorld(state);
-	TurnKernel(state, state->storage, state->map, state->turns, dt, &input, cons, log);	
+	TurnKernel(state, state->storage, state->map, state->turns, dt, &input, cons, log, out);	
 	EndGameWorld(state);
 	HUD(Debug.out, state, state->turns, state->storage, assets);
 }
@@ -263,7 +261,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	entity_storage_t *storage = state->storage;
 
 	SetGlobalOffset(out, V2(0.0f, 0.0f));
-	DrawRect(out, V2(0, 0), V2(1920, 1080), DarkBlue()); // NOTE(): Background
+	DrawRect(out, V2(0, 0), V2(1920, 1080), SKY_COLOR); // NOTE(): Background
 
 	SetGlobalOffset(out, state->camera_position);
 
@@ -283,7 +281,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				if (IsWall(state, V2S(x, y)))
 				{
 					Filled = true;
-					height = 80;
+					height = 15;
 				}
 
 				RenderIsoTile(out, map, V2S(x, y), color, Filled, height);
@@ -316,13 +314,13 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 		v2 p = ScreenToIso(entity->deferred_p);
 		v4 color = Red();
-		v2 debug_alignment = V2(0.5f, 0.5f);
-		bitmap_t *bitmap = &assets->Slime;
+		v2 debug_alignment = V2(0.5f, 0.70f);
+		bitmap_t *bitmap = &assets->Player[0];
 		if (entity->flags & entity_flags_controllable)
 		{
 			color = Pink();
-			bitmap = &assets->Player[0];
-			debug_alignment = V2(0.5f, 0.9f);
+			//bitmap = &assets->Player[0];
+			//debug_alignment = V2(0.5f, 0.9f);
 		}		
 		
 		{
@@ -344,10 +342,10 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 			const f32 MAX_HEALTH = 100.0f;
 			f32 health_percentage = (f32)entity->health / MAX_HEALTH;
-			RenderHealthBar(out, p, health_percentage, assets);
+			RenderHealthBar(out, bitmap_p, health_percentage, assets);
 		}
 
-		RenderIsoCubeCentered(out, p, V2(ENTITY_SIZE, ENTITY_SIZE), ENTITY_PIXEL_HEIGHT, color);
+		RenderIsoCubeCentered(out, p, V2(24, 24), 50, color);
 	}
 
 }

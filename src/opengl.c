@@ -10,7 +10,7 @@ fn void OpenGLRenderQuad(v2 min, v2 max, v2 uv_min, v2 uv_max, GLuint texture, v
 	glEnd();
 }
 
-fn void OpenGLDispatchBuffer(const command_buffer_t *buffer)
+fn void OpenGLDispatchBuffer(const command_buffer_t *buffer, v4 viewport)
 {
 	v2 GlobalOffset = V2(0.0f, 0.0f);
 	glEnable(GL_TEXTURE_2D);
@@ -19,7 +19,7 @@ fn void OpenGLDispatchBuffer(const command_buffer_t *buffer)
 
 	glPushMatrix();
 	glLoadIdentity();
-	glOrtho(0.0, 1600.0 / (f32)VIEWPORT_INTEGER_SCALE, 900.0 / (f32)VIEWPORT_INTEGER_SCALE, 0.0, 0.0, 1.0);
+	glOrtho(0.0, viewport.z, viewport.w, 0.0, 0.0, 1.0);
 
 	for (int32_t index = 0; index < buffer->count; index++)
 	{

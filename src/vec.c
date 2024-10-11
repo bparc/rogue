@@ -242,3 +242,10 @@ fn v2s Right(void)
 {
 	return V2S(+1, 0);
 }
+
+fn v4 Scale4(v4 v, f32 scalar)
+{
+	v4 result = { v.x * scalar, v.y * scalar,
+	v.z * scalar, v.w *scalar};
+	return result;
+}

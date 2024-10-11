@@ -102,9 +102,9 @@ fn pad_button_t MapVirtualButton(key_code_t code, const client_input_t *input, u
 {
 	pad_button_t result = {0};
 	result.state = input->keys[code];
-	if(input->keys[code] && !keys_prev[code])
-		result.transition = button_transition_up;
 	if(!input->keys[code] && keys_prev[code])
+		result.transition = button_transition_up;
+	if(input->keys[code] && !keys_prev[code])
 		result.transition = button_transition_down;
 	return result;
 }
@@ -118,6 +118,6 @@ fn virtual_controls_t MapKeyboardToVirtualCons(const client_input_t *input, u8 k
 	result.dpad_left 	= MapVirtualButton('A', input, keys_prev);
 	result.confirm		= MapVirtualButton('E', input, keys_prev);
 	result.cancel		= MapVirtualButton('Q', input, keys_prev);
-	result.x			= MapVirtualButton('T', input, keys_prev);
+	result.x			= MapVirtualButton(key_code_tab, input, keys_prev);
 	return result;
 }
