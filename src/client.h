@@ -32,7 +32,7 @@ typedef struct
 	command_buffer_t buffers[2];
 	log_t *event_log;
 	memory_t memory;
-	u8 reserved[MB(1)];
+	u8 reserved[MB(64)];
 	u8 keys_prev[256];
 	f64 timestamp;
 } client_t;
@@ -53,7 +53,7 @@ fn s32 Startup(client_t *state)
 	ZeroStruct(state->event_log);
 	
 	LoadAssets(&state->assets);
-	Setup(&state->world, &state->memory);
+	Setup(&state->world, &state->memory, state->event_log);
 
 	s32 FontLoaded = LoadBMFont(&state->font, "assets/inconsolata.fnt");
 	Assert(FontLoaded);

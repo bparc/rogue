@@ -84,12 +84,15 @@ typedef struct
 #include "cursor.c"
 #include "turn_based.c"
 
-fn void Setup(game_world_t *state, memory_t *memory)
+fn void Setup(game_world_t *state, memory_t *memory, log_t *log)
 {
 	state->cursor = PushStruct(cursor_t, memory);
 	state->turns = PushStruct(turn_queue_t, memory);
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->map = CreateMap(30, 20, memory, TILE_PIXEL_SIZE);
+
+	// NOTE(): We run out of the memory!
+	Assert(state->cursor && state->turns && state->storage && state->map);
 
 	u16 temp_player_health = 100;
 	u16 temp_player_max_health = 100;
@@ -101,6 +104,8 @@ fn void Setup(game_world_t *state, memory_t *memory)
 		temp_player_health, temp_attack_dmg, temp_max_carry_weight, temp_player_max_health);
 	//CreateEntity(state->storage, V2S(12, 5), entity_flags_controllable);
 	state->camera_position = V2(0, 0);
+	
+	LogLn(log, "Setup(): static memory budget is %i/%i MB", memory->offset / 1024 / 1024, memory->size / 1024 / 1024);
 }
 
 fn void BeginGameWorld(game_world_t *state)
