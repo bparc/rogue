@@ -31,7 +31,6 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 		if(cantMove) {
 			cost = 1; //only costs when can be moved
 			MoveEntity(World->map, requestee, chosenDir);
-			printf("moving on %d attempts", attempts);
 			break;
 		}
 

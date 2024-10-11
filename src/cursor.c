@@ -1,3 +1,5 @@
+void DrawCursorArea(command_buffer_t *out, map_t *map, v2s center, int radius);
+
 fn void	DoCursor(
 	command_buffer_t *out,
 	entity_t *User, // the entity that currently uses the cursor
@@ -16,8 +18,19 @@ fn void	DoCursor(
 
 	if (cursor->active)
 	{
-		if (move_requested)
-			cursor->p = AddS(cursor->p, dirs[direction]);
+		//draw cursorable area
+		DrawCursorArea(out, map, User->p, 5);
+
+
+		if (move_requested){
+			v2s requestedPos = AddS(cursor->p, dirs[direction]);
+			printf("next x= %d, next y= %d\n", requestedPos.x, requestedPos.y);
+			printf("User at:  x= %d,  y= %d\n", User->p.x, User->p.y);
+
+			if(IsInsideCircle(requestedPos, User->p, 5)){
+				cursor->p = AddS(cursor->p, dirs[direction]);
+			}
+		}
 
 		// NOTE(): Targeting/Snaping to an enemy
 		{
@@ -54,4 +67,23 @@ fn void	DoCursor(
 		if (WentDown(cons.cancel))
 			cursor->active = false;
 	}
+}
+
+void DrawCursorArea(command_buffer_t *out, map_t *map,v2s center, int radius) {
+	 // Iterate through the square bounding box that contains the circle
+    for (s32 y = center.y - radius; y <= center.y + radius; ++y)
+    {
+        for (s32 x = center.x - radius; x <= center.x + radius; ++x)
+        {
+            // Create a point for the current tile
+            v2s point = {x, y};
+
+            // Check if the point lies within the circle using the IsInsideCircle function
+            if (IsInsideCircle(point, center, radius))
+            {
+                // Render the tile using the provided RenderIsoTile function
+                RenderIsoTile(out, map, point, SetAlpha(Pink(), 0.5f), true, 0);
+            }
+        }
+    }
 }
