@@ -6,7 +6,7 @@ DRAWABLES = {
     " ": "Out of Bounds",
     "#": "Terrain",
     "W": "Wall",
-   # "i": "Interactable"
+   "S": "Slime"
 }
 
 class MapEditor:
@@ -93,8 +93,8 @@ class MapEditor:
                 fill_color = "white" if self.map_data[r][c] == " " else "green"
                 if self.map_data[r][c] == "W":
                     fill_color = "gray"
-              #  elif self.map_data[r][c] == "i":
-               #     fill_color = "yellow"
+                elif self.map_data[r][c] == "S":
+                    fill_color = "yellow"
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=fill_color, outline="black")
 
     def set_tool(self, tool):
@@ -135,7 +135,7 @@ class MapEditor:
         if file_path:
             try:
                 with open(file_path, 'w') as f:
-                    f.write(f"char Data[{self.rows}][{self.columns}]{{\n")
+                    f.write(f"char Data[{self.rows}][{self.columns}] = {{\n")
                     for r in range(self.rows):
                         row_data = ", ".join(f"'{self.map_data[r][c]}'" for c in range(self.columns))
                         f.write(f"\t{row_data},\n")
