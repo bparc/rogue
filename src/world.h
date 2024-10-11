@@ -21,6 +21,7 @@ typedef struct {
 	u16 value, weight;
 } item_t;
 
+#include "settings.h"
 typedef struct
 {
 	u8 flags;
@@ -32,7 +33,7 @@ typedef struct
 	u16 max_carry_weight, carried_weight;
 	u16 attack_dmg;
 	u16 attack_turns;
-	item_t* inventory[100]; // MAX_INVENTORY_SIZE couldn't be resolved for some reason todo: fix it
+	item_t* inventory[MAX_INVENTORY_SIZE];
 	item_t* equipped_weapon;
 	item_t* equipped_armor;
 	u8 inventory_count;
@@ -68,7 +69,6 @@ typedef struct
 	b32 active; // If active, the player input is redirected to the cursor.
 } cursor_t;
 
-#include "settings.h"
 typedef struct
 {
 	cursor_t *cursor;
@@ -349,10 +349,9 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	}
 
 }
-
 // INVENTORY MANAGEMENT todo: create item instances, render inventory ui, implement item pickups in game world, render items in game world, update hud for quick slots
 fn b32 AddItemToInventory(entity_t *entity, item_t *item) {
-	if (entity->inventory_count < 100) { // todo: use MAX_INVENTORY_COUNT here
+	if (entity->inventory_count < MAX_INVENTORY_SIZE) {
 		u16 new_carried_weight = entity->carried_weight + item->weight;
 		if (new_carried_weight <= entity->max_carry_weight) {
 			entity->inventory[entity->inventory_count++] = item;
