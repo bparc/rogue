@@ -76,7 +76,7 @@ fn void RenderIsoCubeFilled(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 c
 // todo: Add animation when chunk of health is lost, add art asset
 fn void RenderHealthBar(command_buffer_t *out, v2 position, f32 health_percentage, assets_t *assets) {
 	v2 bar_size = V2(40, 5);
-	v2 bar_position = Sub(position, V2(19.0f, 109.0f));
+	v2 bar_position = Sub(position, V2(8.0f, 10.0f));
 
 	DrawRect(out, bar_position, bar_size, Black());
 	v2 health_bar_size = V2(bar_size.x * health_percentage, bar_size.y);

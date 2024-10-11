@@ -118,7 +118,10 @@ fn void SetGlobalOffset(command_buffer_t *buffer, v2 offset);
 typedef struct
 {
 	int32_t count;
-	command_buffer_t buffers[16];
+	#define COUNT 16
+	command_buffer_t buffers[COUNT];
+	v4 viewports[COUNT];
+	#undef COUNT
 } render_output_t;
 
-fn void PushRenderOutput(render_output_t *output, const command_buffer_t buffer);
+fn void PushRenderOutput(render_output_t *output, const command_buffer_t buffer, v4 viewport);

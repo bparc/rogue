@@ -3,7 +3,7 @@ typedef struct
 	bitmap_t Slime;
 	bitmap_t SlimeBig;
 	bitmap_t Player[4];
-	bitmap_t Tiles[4];	
+	bitmap_t Tiles[2];	
 
 	b32 Loaded;
 } assets_t;
@@ -26,8 +26,6 @@ fn b32 LoadAssets(assets_t *assets)
 	Bitmap(assets, &assets->SlimeBig, "assets/SlimeBig_1.png");
 	Bitmap(assets, &assets->Tiles[0], "assets/Tile_1.png");
 	Bitmap(assets, &assets->Tiles[1], "assets/Tile_2.png");
-	Bitmap(assets, &assets->Tiles[2], "assets/Tile_3.png");
-	Bitmap(assets, &assets->Tiles[3], "assets/Tile_4.png");
 	Bitmap(assets, &assets->Player[0], "assets/PlayerFront_1.png");
 	return assets->Loaded;
 }

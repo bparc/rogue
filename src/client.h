@@ -29,13 +29,14 @@ typedef struct
 	bmfont_t font;
 	editor_state_t editor;
 	game_world_t world;
-	command_buffer_t buffers[2];
+	command_buffer_t buffers[3];
 	log_t *event_log;
 	memory_t memory;
-	u8 reserved[MB(1)];
+	u8 reserved[MB(64)];
 	u8 keys_prev[256];
 	f64 timestamp;
-} client_t;
+} 
+client_t;
 
 fn s32 Startup(client_t *state)
 {
@@ -47,8 +48,9 @@ fn s32 Startup(client_t *state)
 
 	command_buffer_t *buffers = state->buffers;
 	buffers[0] = PushCommandBuffer(memory, 1024 * 16);
+	buffers[2] = PushCommandBuffer(memory, 1024 * 16);
 	buffers[1] = PushCommandBuffer(memory, 1024);
-	
+
 	state->event_log = PushStruct(log_t, memory);
 	ZeroStruct(state->event_log);
 	
@@ -86,13 +88,15 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 	Editor(&state->editor, &state->world, &state->buffers[0], &input, state->event_log, &state->assets);
 	
 	virtual_controls_t virtual_cons = MapKeyboardToVirtualCons(&input, state->keys_prev);
-	Update(&state->world, dt, input, state->event_log, &state->assets, virtual_cons);
+	Update(&state->world, dt, input, state->event_log, &state->assets, virtual_cons, &state->buffers[2]);
 	DrawFrame(&state->world, &state->buffers[0], dt, &state->assets);
 	EndFrame(state, &input);
 
 	MessageLog(&state->buffers[1], &state->font, V2(10.0f, 200.0f), state->event_log, dt);
 	memset(output, 0, sizeof(*output));
-	PushRenderOutput(output, state->buffers[0]);
-	PushRenderOutput(output, state->buffers[1]); // NOTE(): Debug.
+
+	PushRenderOutput(output, state->buffers[0], V4(0, 0, 1600 / VIEWPORT_INTEGER_SCALE, 900 / VIEWPORT_INTEGER_SCALE));
+	PushRenderOutput(output, state->buffers[2], V4(0, 0, 1600 / VIEWPORT_INTEGER_SCALE, 900 / VIEWPORT_INTEGER_SCALE));
+	PushRenderOutput(output, state->buffers[1], V4(0, 0, 1600 / 2, 900 / 2)); // NOTE(): Debug.
 	return (0);
 }

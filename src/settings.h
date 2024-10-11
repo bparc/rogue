@@ -1,6 +1,4 @@
-#define ENTITY_SIZE 70
-#define ENTITY_PIXEL_HEIGHT 150
-#define TILE_PIXEL_SIZE 128
+#define TILE_PIXEL_SIZE 32
 
 #define ENABLE_DIAGONAL_MOVEMENT true
 
@@ -11,6 +9,6 @@
 
 #define ENABLE_ASSET_RELOADING true // NOTE(): Allows for reloading the assets via the 'R' key.
 #define RENDER_TILE_BITMAPS true
-#define VIEWPORT_INTEGER_SCALE 2 // 1, 2, 3,
+#define VIEWPORT_INTEGER_SCALE 4 // 1, 2, 3,
 
 #define ENABLE_TURN_SYSTEM_DEBUG_LOGS true
