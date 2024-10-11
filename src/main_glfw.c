@@ -64,7 +64,7 @@ extern int main(void)
 					glClear(GL_COLOR_BUFFER_BIT);
 					glClearColor(0.086f, 0.086f, 0.086f, 0.0f);
 					for (int32_t index = 0; index < output.count; index++)
-						OpenGLDispatchBuffer(&output.buffers[index]);
+						OpenGLDispatchBuffer(&output.buffers[index], output.viewports[index]);
 					glfwSwapBuffers(window);
 					continue;
 				}
