@@ -24,8 +24,6 @@ fn void	DoCursor(
 
 		if (move_requested){
 			v2s requestedPos = AddS(cursor->p, dirs[direction]);
-			printf("next x= %d, next y= %d\n", requestedPos.x, requestedPos.y);
-			printf("User at:  x= %d,  y= %d\n", User->p.x, User->p.y);
 
 			if(IsInsideCircle(requestedPos, User->p, 5)){
 				cursor->p = AddS(cursor->p, dirs[direction]);
