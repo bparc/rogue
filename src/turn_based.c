@@ -30,7 +30,9 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 
 	while(!cantMove && attempts < 5){
 		
-		cantMove = (!IsOutOfBounds(World, peekPos) && !IsWall(World, peekPos) && MoveFitsWithSize(World, requestee->size, peekPos));
+		cantMove = (!IsOutOfBounds(World, peekPos) && !IsWall(World, peekPos)
+		&& !IsOtherEntity(World, peekPos)
+		&& MoveFitsWithSize(World, requestee->size, peekPos));
 		
 		if(cantMove) {
 			cost = 1; //only costs when can be moved

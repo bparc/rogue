@@ -288,4 +288,9 @@ fn b32 IsOutOfBounds(game_world_t *state, v2s p) {
 	return result;
 }
 
+fn b32 IsOtherEntity(game_world_t *state, v2s p) {
+	entity_t *collidingEntity = GetEntityByPosition(state->storage, p);
+	return collidingEntity != NULL;
+}
+
 // NOTE(): Cursor
