@@ -6,7 +6,8 @@ DRAWABLES = {
     " ": "Out of Bounds",
     "#": "Terrain",
     "W": "Wall",
-   "S": "Slime"
+    "S": "Slime",
+    "B": "Big Slime" #has to be 2x2 minimum
 }
 
 class MapEditor:
@@ -95,6 +96,8 @@ class MapEditor:
                     fill_color = "gray"
                 elif self.map_data[r][c] == "S":
                     fill_color = "yellow"
+                elif self.map_data[r][c] == "B":
+                    fill_color = "gold"
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=fill_color, outline="black")
 
     def set_tool(self, tool):

@@ -93,8 +93,5 @@ fn int IsInsideCircle(v2s point, v2s center, s32 radius)
     s32 dx = point.x - center.x;
     s32 dy = point.y - center.y;
     s32 distanceSquared = dx * dx + dy * dy;
-
-    // Compare the squared distance with the squared radius
-    // Using radius * radius for comparison to avoid floating point calculations
     return distanceSquared < radius * radius;
 }
