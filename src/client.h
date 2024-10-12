@@ -44,7 +44,7 @@ fn s32 Startup(client_t *state)
 
 	memory_t *memory = &state->memory;
 	memory->size = ArraySize(state->reserved);
-	memory->memory = state->reserved;
+	memory->_memory = state->reserved;
 
 	command_buffer_t *buffers = state->buffers;
 	buffers[0] = PushCommandBuffer(memory, 1024 * 16);
@@ -55,7 +55,7 @@ fn s32 Startup(client_t *state)
 	ZeroStruct(state->event_log);
 	
 	LoadAssets(&state->assets);
-	Setup(&state->world, &state->memory);
+	Setup(&state->world, &state->memory, state->event_log);
 
 	s32 FontLoaded = LoadBMFont(&state->font, "assets/inconsolata.fnt");
 	Assert(FontLoaded);
@@ -98,5 +98,6 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 	PushRenderOutput(output, state->buffers[0], V4(0, 0, 1600 / VIEWPORT_INTEGER_SCALE, 900 / VIEWPORT_INTEGER_SCALE));
 	PushRenderOutput(output, state->buffers[2], V4(0, 0, 1600 / VIEWPORT_INTEGER_SCALE, 900 / VIEWPORT_INTEGER_SCALE));
 	PushRenderOutput(output, state->buffers[1], V4(0, 0, 1600 / 2, 900 / 2)); // NOTE(): Debug.
+	
 	return (0);
 }

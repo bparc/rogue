@@ -2,8 +2,8 @@ fn command_buffer_t PushCommandBuffer(memory_t *memory, s32 size)
 {
 	command_buffer_t result = {0};
 	result.size = size;
-	result.commands = (command_t *)Push(memory, sizeof(*result.commands) * result.size);
-	result.memory = PartitionMemory(memory, KB(8));
+	result.commands = PushArray(command_t, memory, size);
+	result.memory = Part(memory, KB(8));
 	return result;
 }
 
@@ -156,7 +156,8 @@ fn void DrawText(command_buffer_t *buffer, const bmfont_t *font, v2 p, const cha
 	{
 		command->position = p;
 		command->length = StringLength(string);
-		command->string = (u8 *)Push(&buffer->memory, (command->length + 1));
+		command->string = PushSize(&buffer->memory, (command->length + 1));
+
 		command->font = font;
 		command->color = color;
 		if (command->string)

@@ -13,11 +13,7 @@ fn void LogLn(log_t *Log, const char *format, ...)
 
 	log_line_t *Ln = GetLogLn(Log, Log->offset++);
 	Ln->timestamp = Log->time;
-	char *source = buffer;
-	char *at = Ln->text;
-	while (*source) // TODO(): Safe string copy...
-		*at++ = *source++;
-	*at = 0;
+	strncpy(Ln->text, buffer, ArraySize(Ln->text));
 }
 
 fn void MessageLog(command_buffer_t *out, const bmfont_t *font, v2 p, log_t *Log, f32 dt)

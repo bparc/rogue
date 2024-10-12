@@ -1,3 +1,7 @@
+// TODO(): It could be usefull
+// to have some kind of "step-by-step"/"turn-by-turn"
+// debugging feature.
+
 fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *turns, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out)
 {
 	SetGlobalOffset(out, state->camera_position); // NOTE(): Let's pass the camera position via the PushRenderOutput call instead of this SetGlobalOffset stuff.

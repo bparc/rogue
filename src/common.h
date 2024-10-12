@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <memory.h>
 #include <stdlib.h>
+#include <string.h>
 #include <float.h>
 #include <stdio.h>
 #define fn static
