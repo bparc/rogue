@@ -33,7 +33,7 @@ fn void MessageLog(command_buffer_t *out, const bmfont_t *font, v2 p, log_t *Log
 		index--)
 	{
 		log_line_t *line = GetLogLn(Log, min + index);
-		f32 lifetime = 3.0f;
+		f32 lifetime = LOG_MESSAGE_LIFETIME;
 		f32 seconds_elapsed = (f32)(Log->time - line->timestamp);
 		if (seconds_elapsed <= lifetime)
 		{

@@ -1,3 +1,4 @@
+#include "settings.h"
 #include "common.h"
 #include "common.c"
 #include "memory.h"

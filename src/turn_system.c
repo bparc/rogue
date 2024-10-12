@@ -14,7 +14,6 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 	}
 	if (entity)
 	{
-		DebugPrint("TESTESTESTTST");
 		if ((turns->turn_inited == false))
 		{
 			turns->action_points = (BeginTurn(state, entity) + 1);
@@ -126,8 +125,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 				} break;
 			case interp_attack:
 				{
-					DebugText(Add(ScreenToIso(entity->deferred_p), V2(120.0f, 60.0f)), "(I AM ATTACKING RIGHT NOW)");
-					if ((turns->time >= 2.0f))
+					if ((turns->time >= 0.5f))
 					{
 						turns->interp_state = interp_accept;
 						turns->time = 0.0f;
