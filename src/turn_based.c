@@ -45,7 +45,7 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 fn s32 AttemptAttack(game_world_t *World, entity_t *requestee)
 {
 	// NOTE(): Return true if the attack was successuful.
-	// We'll coul be also returning here some 
+	// We'll could be also returning here some 
 	// additional information regarding the attack move that
 	// took place, but we'll see.
 	s32 result = true;

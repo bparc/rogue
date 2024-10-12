@@ -220,7 +220,6 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 					 	if (turns->action_points > 0)
 					 	{
 					 		turns->interp_state = interp_request;
-					 		turns->action_points--;
 					 	}
 					 	else
 					 	{

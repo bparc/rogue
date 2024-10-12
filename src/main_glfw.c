@@ -44,6 +44,7 @@ extern int main(void)
 					input.keys[key_code_alt] = (u8)glfwGetKey(window, GLFW_KEY_LEFT_ALT);
 					input.keys[key_code_shift] = (u8)glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
 					input.keys[key_code_space] = (u8)glfwGetKey(window, GLFW_KEY_SPACE);
+					input.keys[key_code_tab] = (u8)glfwGetKey(window, GLFW_KEY_TAB);
 					
 					for (s32 index = 0; index < NumEnteredChars; index++)
 						input.char_queue[index] = EnteredChars[index];
