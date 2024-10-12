@@ -57,7 +57,7 @@ fn void MakeSimpleMap(game_world_t *world)
 					v2s size = V2S(2,2);
 					isBig = true;
 					// big slimes can only be 2x2
-					if (IsValidEntity(X, Y, Data, x, y, size, 'B')) {
+					if (IsValidEntity(X, Y, (char *)Data, x, y, size, 'B')) {
 						//exclude the whole square
 						for (int j = y; j < y + 2; j++) {
 							for (int i = x; i < x + 2; i++) {
@@ -112,21 +112,20 @@ fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *ou
 	}	
 }
 
-int IsValidEntity(s32 globalX, s32 globalY, char Data[globalY][globalX], s32 startX, s32 startY, v2s size, char entityChar) {
-
-	s32 n = size.x;
-	s32 m = size.y;
+int IsValidEntity(s32 globalX, s32 globalY, char *Data, s32 startX, s32 startY, v2s size, char entityChar) {
+    s32 n = size.x;
+    s32 m = size.y;
 
     // within bounds?
     if (startX < 0 || startY < 0 || startX + n > globalX || startY + m > globalY) {
         return false;  // Out of bounds
     }
 
-    // is entire requested size filled with entitychar?
+    // is entire requested size filled with entityChar?
     for (int y = startY; y < startY + m; y++) {
         for (int x = startX; x < startX + n; x++) {
-            if (Data[y][x] != entityChar) {
-                return false;  //ex: requested: 1x3 B but available #BB
+            if (Data[y * globalX + x] != entityChar) {
+                return false;  // Mismatch found
             }
         }
     }
