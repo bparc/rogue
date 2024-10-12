@@ -35,7 +35,7 @@ fn void	DoCursor(
 			entity_t *nearest_enemy = FindNearestEnemy(storage, cursor->p);
 			RenderIsoTile(out, map, nearest_enemy->p, SetAlpha(Red(), 0.8f), true, 0);
 			if (WentDown(cons.x)) {
-				if (nearest_enemy)
+				if (nearest_enemy && IsInsideCircle(nearest_enemy->p, User->p, 5))
 				{
 					cursor->p = nearest_enemy->p;
 					
