@@ -5,6 +5,8 @@ fn void EstablishTurnOrder(game_world_t *World, turn_queue_t *queue, entity_stor
 
 fn s32 BeginTurn(game_world_t *World, entity_t *requestee)
 {
+	ProcessStatusEffects(requestee);
+
 	s32 action_point_count = 8;
 	if (IsHostile(requestee))
 		action_point_count = 4 + (rand() % 2);
@@ -31,6 +33,7 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 		if(cantMove) {
 			cost = 1; //only costs when can be moved
 			MoveEntity(World->map, requestee, chosenDir);
+			ApplyTileEffects(requestee->p, World, requestee);
 			break;
 		}
 

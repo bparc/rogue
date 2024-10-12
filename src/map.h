@@ -1,7 +1,15 @@
+typedef enum
+{
+	trap_type_none = 0,
+	trap_type_physical,
+	trap_type_poison,
+} trap_type_t;
+
 typedef struct
 {
 	u8 value;
 	s16 distance;
+	trap_type_t trap_type;
 } tile_t;
 
 typedef struct

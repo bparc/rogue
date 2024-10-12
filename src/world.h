@@ -6,6 +6,18 @@ typedef enum
 	entity_flags_hostile = 1 << 1,
 } entity_flags_t;
 
+typedef enum {
+    status_effect_none = 0,
+    status_effect_poison,
+} status_effect_type_t;
+
+typedef struct {
+    status_effect_type_t type;
+    s32 remaining_turns;
+} status_effect_t;
+
+#define MAX_STATUS_EFFECTS 3
+
 typedef struct
 {
 	u8 flags;
@@ -15,6 +27,8 @@ typedef struct
 
 	u16 health;
 	u16 attack_dmg;
+
+	status_effect_t status_effects[MAX_STATUS_EFFECTS];
 
 } entity_t;
 
@@ -79,6 +93,7 @@ typedef struct
 
 #include "world.c"
 #include "cursor.c"
+#include "gameplay.h"
 #include "turn_based.c"
 #include "turn_system.c"
 
@@ -95,6 +110,15 @@ fn void Setup(game_world_t *state, memory_t *memory)
 	CreateEntity(state->storage, V2S(11, 5), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map);
 	//CreateEntity(state->storage, V2S(12, 5), entity_flags_controllable);
 	state->camera_position = V2(0, 0);
+
+	// Place traps on the map
+    tile_t *tile;
+
+    tile = GetTile(state->map, 12, 5);
+    tile->trap_type = trap_type_physical;
+
+    tile = GetTile(state->map, 13, 5);
+    tile->trap_type = trap_type_poison;
 }
 
 fn void BeginGameWorld(game_world_t *state)
@@ -189,6 +213,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 					//DrawRectOutline(out, p, bitmap->scale, Red());
 				}
 				#endif
+
 			}
 		}
 	}

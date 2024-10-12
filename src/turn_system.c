@@ -66,8 +66,10 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 				//valid move pos
 				if(!IsOutOfBounds(state, peekPos) && !IsWall(state, peekPos))
 				{
-					if (turns->action_points > 0)
-						MoveEntity(map, entity, considered_dirs[direction]);
+					if (turns->action_points > 0) {
+			            MoveEntity(map, entity, considered_dirs[direction]);
+			            ApplyTileEffects(peekPos, state, entity);
+					}
 
 					// NOTE(): Consume moves
 					turns->action_points--;
