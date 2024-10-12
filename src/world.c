@@ -150,13 +150,19 @@ fn entity_t *GetEntity(entity_storage_t *storage, entity_id_t id)
 
 fn entity_t *GetEntityByPosition(entity_storage_t *storage, v2s p)
 {
-	for (s32 index = 0; index < storage->num; index++)
-	{
-		entity_t *entity = &storage->entities[index];
-		if (CompareVectors(entity->p, p))
-			return entity;
-	}
-	return 0;
+	for (s32 index = 0; index < storage->num; index++) {
+        entity_t *entity = &storage->entities[index];
+
+        // "real" pos
+        v2s topLeft = entity->p; 
+        v2s bottomRight = V2S( entity->p.x + entity->size.x - 1, entity->p.y + entity->size.y - 1 );  // bottom right corner (faster? then looping twice)
+
+        if (p.x >= topLeft.x && p.x <= bottomRight.x &&
+            p.y >= topLeft.y && p.y <= bottomRight.y) {
+            return entity;  // point within bounds
+        }
+    }
+    return 0; 
 }
 
 fn entity_t *FindNearestEnemy(entity_storage_t *storage, v2s player_pos)

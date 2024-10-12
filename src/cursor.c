@@ -25,7 +25,7 @@ fn void	DoCursor(
 		if (move_requested){
 			v2s requestedPos = AddS(cursor->p, dirs[direction]);
 
-			if(IsInsideCircle(requestedPos, User->p, 5)){
+			if(IsInsideCircle(requestedPos, V2S(1,1), User->p, 5)){ //default cursor is 1x1 size
 				cursor->p = AddS(cursor->p, dirs[direction]);
 			}
 		}
@@ -33,12 +33,23 @@ fn void	DoCursor(
 		// NOTE(): Targeting/Snaping to an enemy
 		{
 			entity_t *nearest_enemy = FindNearestEnemy(storage, cursor->p);
-			RenderIsoTile(out, map, nearest_enemy->p, SetAlpha(Red(), 0.8f), true, 0);
-			if (WentDown(cons.x)) {
-				if (nearest_enemy && IsInsideCircle(nearest_enemy->p, User->p, 5))
-				{
-					cursor->p = nearest_enemy->p;
-					
+			if(nearest_enemy) { //if found
+				v2s pos = nearest_enemy->p;
+				v2s size = nearest_enemy->size;
+				//render target for all size enemies
+				for (int y = pos.y; y < size.y+pos.y; ++y) {
+					for (int x = pos.y; x < size.x + pos.x; ++x) {
+						RenderIsoTile(out, map, V2S(x,y), SetAlpha(Red(), 0.8f), true, 0);
+					}
+				}
+
+				
+				if (WentDown(cons.x)) {
+					if (nearest_enemy && IsInsideCircle(nearest_enemy->p, nearest_enemy->size, User->p, 5))
+					{
+						cursor->p = nearest_enemy->p;
+						
+					}
 				}
 			}
 		}
@@ -73,9 +84,9 @@ void DrawCursorArea(command_buffer_t *out, map_t *map,v2s center, int radius) {
         for (s32 x = center.x - radius; x <= center.x + radius; ++x)
         {
 
-            v2s point = {x, y};
+            v2s point = V2S(x,y);
 
-            if (IsInsideCircle(point, center, radius))
+            if (IsInsideCircle(point, V2S(1,1), center, radius))
             {
                 RenderIsoTile(out, map, point, SetAlpha(Pink(), 0.5f), true, 0);
             }

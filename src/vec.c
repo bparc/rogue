@@ -249,3 +249,31 @@ fn v4 Scale4(v4 v, f32 scalar)
 	v.z * scalar, v.w *scalar};
 	return result;
 }
+
+
+//radius calc (manhattan distance)
+fn int IsInsideCircle(v2s position, v2s size, v2s center, s32 radius) {
+   s32 radiusSquared = radius * radius;
+    int totalPoints = size.x * size.y;  //all squares
+    int insideCount = 0; 
+
+    for (int y = 0; y < size.y; y++) {
+        for (int x = 0; x < size.x; x++) {
+            v2s point = {position.x + x, position.y + y};  
+
+            s32 dx = point.x - center.x;
+            s32 dy = point.y - center.y;
+            s32 distanceSquared = dx * dx + dy * dy;
+
+            if (distanceSquared < radiusSquared) {
+                insideCount++; 
+            }
+        }
+    }
+
+    float percentageInside = (float)insideCount / totalPoints;
+
+    //if 75% of entity is within circle then its attackable
+    return percentageInside >= 0.75f;
+
+}
