@@ -10,3 +10,4 @@ vs/
 src/external/
 lib/
 x64/
+.vscode/
