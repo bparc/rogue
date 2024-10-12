@@ -22,7 +22,7 @@ fn b32 LoadAssets(assets_t *assets)
 {
 	//assets->Slime = LoadBitmap();
 	assets->Loaded = true;
-	Bitmap(assets, &assets->Slime, "assets/Slime_1.png");
+	Bitmap(assets, &assets->Slime, "assets/enemies/slime_small_front.png");
 	Bitmap(assets, &assets->SlimeBig, "assets/SlimeBig_1.png");
 	Bitmap(assets, &assets->Tiles[0], "assets/Tile_1.png");
 	Bitmap(assets, &assets->Tiles[1], "assets/Tile_2.png");

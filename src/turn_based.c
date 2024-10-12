@@ -7,7 +7,7 @@ fn s32 BeginTurn(game_world_t *World, entity_t *requestee)
 {
 	s32 action_point_count = 8;
 	if (IsHostile(requestee))
-		action_point_count = 1 + (rand() % 2);
+		action_point_count = 4 + (rand() % 2);
 
 	return action_point_count;
 }
@@ -37,10 +37,24 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 		peekPos = AddS(requestee -> p, chosenDir);
 		chosenDir = cardinal_directions[(randomIndex + 1 ) % 4];
 		attempts++;
-		
 	}
 
-	
-	
 	return (cost);
+}
+
+fn s32 AttemptAttack(game_world_t *World, entity_t *requestee)
+{
+	// NOTE(): Return true if the attack was successuful.
+	// We'll coul be also returning here some 
+	// additional information regarding the attack move that
+	// took place, but we'll see.
+	s32 result = true;
+
+	entity_t *target = 0;
+	if (target)
+	{
+		// InflictDamage(requestee, target);
+		result = true;
+	}
+	return result;
 }

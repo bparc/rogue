@@ -94,7 +94,7 @@ fn void RenderIsoTile(command_buffer_t *out, const map_t *map, v2s offset, v4 co
 }
 
 // NOTE(): Entities.
-fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags, u16 health_points, u16 attack_dmg)
+fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags, u16 health_points, u16 attack_dmg, const map_t *map)
 {
 	entity_t *result = 0;
 	if (storage->num < ArraySize(storage->entities))
@@ -103,6 +103,7 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags, u16 health
 	{
 		ZeroStruct(result);
 		result->p = p;
+		result->deferred_p = GetTileCenter(map, result->p);
 		result->id = storage->next_id++;
 		result->flags = flags;
 		result->health = health_points;
@@ -115,7 +116,7 @@ fn void CreateSlimeI(game_world_t *state, s32 x, s32 y)
 {
 	u16 slime_hp = 100;
 	u16 slime_attack_dmg = 10;
-	CreateEntity(state->storage, V2S(x, y), entity_flags_hostile, slime_hp, slime_attack_dmg);
+	CreateEntity(state->storage, V2S(x, y), entity_flags_hostile, slime_hp, slime_attack_dmg, state->map);
 }
 
 fn b32 IsHostile(const entity_t *entity)
@@ -246,6 +247,8 @@ fn entity_t *PeekNextTurn(turn_queue_t *queue, entity_storage_t *storage)
 
 fn void AcceptTurn(turn_queue_t *queue)
 {
+	DebugAssert(queue->turn_inited == true); // NOTE(): Propably a bug?
+
 	Assert(queue->num > 0);
 	queue->num--;
 	queue->turn_inited = false;

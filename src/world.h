@@ -27,14 +27,32 @@ typedef struct
 
 // NOTE(): Stores the turns as an list of entity ids
 // in a *reverse* order (the last turn in the queue will be executed first).
+
+typedef enum
+{
+	interp_request,
+	interp_transit,
+	interp_attack,
+	interp_accept,
+} interpolator_state_t;
+
 typedef struct
 {
 	s32 num;
 	entity_id_t entities[64];
-	f32 time;
 
+	// TODO(): All this stuff
+	// should be cleared to zero
+	// at the start of the turn.
+	// Maybe we could move this out into
+	// some kind of "turn state" to make this a little bit easier.
+	v2s starting_p;
+	interpolator_state_t interp_state;
+	f32 time; // NOTE(): A variable within 0.0 to 1.0 range for interpolating values.
 	s32 action_points;
 	s32 turn_inited;
+
+	f32 time_elapsed; // NOTE(): Time from the start of the turn in seconds.
 } turn_queue_t;
 
 // NOTE(): Directions
@@ -72,8 +90,8 @@ fn void Setup(game_world_t *state, memory_t *memory)
 
 	u16 temp_player_health = 100;
 	u16 temp_attack_dmg = 40;
-	CreateEntity(state->storage, V2S(10, 5), entity_flags_controllable, temp_player_health, temp_attack_dmg);
-	CreateEntity(state->storage, V2S(11, 5), entity_flags_controllable, temp_player_health, temp_attack_dmg);
+	CreateEntity(state->storage, V2S(10, 5), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map);
+	CreateEntity(state->storage, V2S(11, 5), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map);
 	//CreateEntity(state->storage, V2S(12, 5), entity_flags_controllable);
 	state->camera_position = V2(0, 0);
 }
@@ -102,9 +120,6 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 	{
 		// NOTE(): We run out of the turns, time to schedule new ones.
 		EstablishTurnOrder(state, turns, storage);
-		
-		// NOTE():  Maybe a new turn should be scheduled in *immediately* after the
-		// current one ends?
 	}
 	if (entity)
 	{
@@ -112,6 +127,11 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		{
 			turns->action_points = (BeginTurn(state, entity) + 1);
 			turns->turn_inited = true;
+
+			turns->interp_state = interp_request;
+			turns->time = 0.0f;
+			turns->time_elapsed = 0.0f;
+
 			#if ENABLE_TURN_SYSTEM_DEBUG_LOGS
 			LogLn(log, "TurnKernel(): initiating turn for entity#%i", entity->id);
 			#endif
@@ -121,6 +141,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		Assert(turns->turn_inited);
 		// NOTE(): The turn will "stall" until AcceptTurn() is called.
 
+		// NOTE(): DEBUG draw the entity's"discrete" p.
 		#if _DEBUG
 		RenderIsoTile(out, map, entity->p, Red(), false, 0);
 		#endif
@@ -170,26 +191,67 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		}
 		else
 		{
-			// NOTE(): Enemy behaviour goes here.
-			// switch (entity->behaviour) ... etc.
-
+			// NOTE(): Animator
 			f32 speed_mul = TURN_SPEED_NORMAL;
-			if (IsKeyPressed(input, key_code_space))
-				speed_mul = TURN_SPEED_FAST;
-
 			turns->time += dt * speed_mul;
-			if (turns->time >= 1.0f)
+			turns->time_elapsed += dt;
+
+			switch(turns->interp_state)
 			{
-				// NOTE(): Move the entity in a random direction.
-				turns->time = 0.0f;
-				if (turns->action_points > 0) // NOTE(): We can still make moves.
+			case interp_request:
 				{
+					// TODO(): Move the player code somewhere around here maybe?
+					// It could potentially be a better way to structure this.
+					turns->starting_p = entity->p;
+
 					s32 cost = Decide(state, entity);
 						turns->action_points -= cost;
-				}
+					
+					turns->interp_state = interp_transit;
+					turns->time = 0.0f;
+				} break;
+			case interp_transit:
+				{
+					v2 a = GetTileCenter(map, turns->starting_p);
+					v2 b = GetTileCenter(map, entity->p);
+					entity->deferred_p = Lerp2(a, b, turns->time);
+					if ((turns->time >= 1.0f))
+					 {
+					 	if (turns->action_points > 0)
+					 	{
+					 		turns->interp_state = interp_request;
+					 		turns->action_points--;
+					 	}
+					 	else
+					 	{
+					 		s32 attempt = AttemptAttack(state, entity);
+							turns->interp_state = attempt ? interp_attack : interp_accept;	
+					 	}
+						
+						turns->time = 0.0f;
+					}
+				} break;
+			case interp_attack:
+				{
+					DebugText(Add(ScreenToIso(entity->deferred_p), V2(120.0f, 60.0f)), "(I AM ATTACKING RIGHT NOW)");
+					if ((turns->time >= 2.0f))
+					{
+						turns->interp_state = interp_accept;
+						turns->time = 0.0f;
+					}
+				} break;
+			case interp_accept:
+				{
+					if (turns->time > 0.1f)
+					{
+						AcceptTurn(turns);
+
+						#ifdef ENABLE_TURN_SYSTEM_DEBUG_LOGS
+						LogLn(log, "TurnKernel(): turn finished in %.2f seconds", turns->time_elapsed);
+						#endif
+					}
+				} break;
 			}
-			if (turns->action_points<=0)
-				AcceptTurn(turns);
 		}
 	}
 }
@@ -280,17 +342,22 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	for (s32 index = 0; index < storage->num; index++)
 	{
 		entity_t *entity = &storage->entities[index];
-		entity->deferred_p = Lerp2(entity->deferred_p, GetTileCenter(state->map, entity->p), 10.0f * dt);
+
+		// NOTE(): The "deferred_p"s of the 'active' no-player entities are
+		// animated directly in TurnKernel() to allow for
+		// more explicit controls over the entity animation in that section of the code-base.
+		if (!IsEntityActive(state->turns, storage, entity->id) || (entity->flags & entity_flags_controllable))
+			entity->deferred_p = Lerp2(entity->deferred_p, GetTileCenter(state->map, entity->p), 10.0f * dt);
 
 		v2 p = ScreenToIso(entity->deferred_p);
-		v4 color = Red();
+		v4 color = Pink();
 		v2 debug_alignment = V2(0.5f, 0.70f);
 		bitmap_t *bitmap = &assets->Player[0];
-		if (entity->flags & entity_flags_controllable)
+		if (IsHostile(entity))
 		{
-			color = Pink();
-			//bitmap = &assets->Player[0];
-			//debug_alignment = V2(0.5f, 0.9f);
+			color = Red();
+			bitmap = &assets->Slime;
+			debug_alignment = V2(0.50f, 0.50f);
 		}		
 		
 		{
@@ -317,6 +384,4 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 		RenderIsoCubeCentered(out, p, V2(24, 24), 50, color);
 	}
-
-
 }
