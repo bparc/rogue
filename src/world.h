@@ -25,6 +25,8 @@ typedef struct
 	v2s p; // A position on the tile map.
 	v2 deferred_p;
 
+	v2s size; //size in squares, 1x1, 2x1, 1x2, etc
+
 	u16 health;
 	u16 attack_dmg;
 
@@ -106,9 +108,9 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log)
 
 	u16 temp_player_health = 100;
 	u16 temp_attack_dmg = 40;
-	CreateEntity(state->storage, V2S(10, 5), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map);
-	CreateEntity(state->storage, V2S(11, 5), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map);
-	//CreateEntity(state->storage, V2S(12, 5), entity_flags_controllable);
+	CreateEntity(state->storage, V2S(10, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map);
+	CreateEntity(state->storage, V2S(11, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map);
+	//CreateEntity(state->storage, V2S(12, 5), V2S(1, 1), entity_flags_controllable);
 	state->camera_position = V2(0, 0);
 
 	// Place traps on the map
@@ -234,10 +236,18 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		v4 color = Pink();
 		v2 debug_alignment = V2(0.5f, 0.70f);
 		bitmap_t *bitmap = &assets->Player[0];
+
+		int bigSlime = entity->size.x>1 || entity->size.y > 1;
 		if (IsHostile(entity))
 		{
 			color = Red();
-			bitmap = &assets->Slime;
+			if(bigSlime) {
+				bitmap = &assets->SlimeBig;
+			}
+			else {
+				bitmap = &assets->Slime;
+			}
+			
 			debug_alignment = V2(0.50f, 0.50f);
 		}		
 		

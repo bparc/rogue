@@ -16,8 +16,8 @@ fn void MakeSimpleMap(game_world_t *world)
 		'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#',' ',
 		'#','#','S','#','#','#','#','#','#','#','#','#','#','#','W','#','#','S','#',' ',
 		'#','#','#','S','#','#','#','#','#','#','#','#','#','#','W','#','#','#','#',' ',
-		'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','W','#','#','#',' ',
-		' ','#','#','#','#','#','#','#','#','#','#','#','#',' ',' ',' ','#','#','#',' ',
+		'#','#','#','#','#','#','#','#','B','B','#','#','#','#','#','W','#','#','#',' ',
+		' ','#','#','#','#','#','#','#','B','B','#','#','#',' ',' ',' ','#','#','#',' ',
 		' ','#','#','#','#','#','#','#','#','#','#',' ',' ',' ',' ',' ',' ','#','#',' ',
 		' ',' ',' ','#','#','#','#','#','#','#','#',' ',' ',' ',' ',' ',' ',' ',' ',' ',
 		' ',' ',' ',' ','#','#','#','#','#','#','#',' ',' ',' ',' ',' ',' ',' ',' ',' ',
@@ -31,23 +31,58 @@ fn void MakeSimpleMap(game_world_t *world)
 	};
 
 	ClearMap(world->map);
-	for (s32 y = 0; y < Y; y++)
-	{
-		for (s32 x = 0; x < X; x++)
-		{
+
+	int visited[Y][X] = {false}; //needed for compound tiles larger than 1x1
+
+	for (s32 y = 0; y < Y; y++) {
+		for (s32 x = 0; x < X; x++) {
+
+			int isBig = false;
 			u8 value = 1;
-			switch (Data[y][x])
-			{
-			case '#': value = 1; break;
-			case 'W': value = 2; break;
-			case 'S': CreateSlimeI(world, x, y); break;
-			default: value = 0; break;
+
+			if (visited[y][x]) {
+				
+				SetTileValueI(world->map, x, y, value);
+				continue;
+			};  // can only fire for >1x1
+
+			
+			switch (Data[y][x]) {
+				case '#': value = 1; break;
+				case 'W': value = 2; break;
+				case 'S':
+					CreateSlimeI(world, x, y);
+					break;
+				case 'B': {
+					v2s size = V2S(2,2);
+					isBig = true;
+					// big slimes can only be 2x2
+					if (IsValidEntity(X, Y, Data, x, y, size, 'B')) {
+						//exclude the whole square
+						for (int j = y; j < y + 2; j++) {
+							for (int i = x; i < x + 2; i++) {
+								visited[j][i] = true; //dont rerun those
+							}
+						}
+						CreateBigSlimeI(world, x, y); //big slimes are 2x2
+
+					} else {
+						printf("Invalid big slime at position (%d, %d)\n", x, y);
+						visited[y][x] = true;
+					}
+					break;
+				}
+				default:
+					value = 0; break;
 			}
-			SetTileValueI(world->map, x, y, value);
+				SetTileValueI(world->map, x, y, value);
+		
 		}
 	}
+
 	#undef X
 	#undef Y
+
 }
 
 fn void ReloadAssets(assets_t *assets, log_t *log)
@@ -75,4 +110,26 @@ fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *ou
 			#endif
 		}
 	}	
+}
+
+int IsValidEntity(s32 globalX, s32 globalY, char Data[globalY][globalX], s32 startX, s32 startY, v2s size, char entityChar) {
+
+	s32 n = size.x;
+	s32 m = size.y;
+
+    // within bounds?
+    if (startX < 0 || startY < 0 || startX + n > globalX || startY + m > globalY) {
+        return false;  // Out of bounds
+    }
+
+    // is entire requested size filled with entitychar?
+    for (int y = startY; y < startY + m; y++) {
+        for (int x = startX; x < startX + n; x++) {
+            if (Data[y][x] != entityChar) {
+                return false;  //ex: requested: 1x3 B but available #BB
+            }
+        }
+    }
+
+    return true; 
 }
