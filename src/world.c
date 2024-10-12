@@ -93,6 +93,30 @@ fn void RenderIsoTile(command_buffer_t *out, const map_t *map, v2s offset, v4 co
 		RenderIsoCube(out, p, map->tile_sz, height, color);
 }
 
+//NOTE: static combat items
+fn static_entity_t * CreateEffectTile(entity_storage_t *storage, v2s p, v2s size, u8 flags, status_effect_t* status_effects[MAX_STATUS_EFFECTS]) {
+  static_entity_t *result = 0;
+	if (storage->statics_num < ArraySize(storage->static_entities))
+		result = &storage->static_entities[storage->statics_num++];
+	if (result)
+	{
+		ZeroStruct(result); //memset macro
+		result->p = p;
+
+		result->size = size;
+
+		result->id = storage->next_id++;
+		result->flags = flags;
+
+		//array cpy im killing myself
+        for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
+            result->status_effects[i] = status_effects[i];
+        }
+	}
+	
+	return result;
+}
+
 // NOTE(): Entities.
 fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *map)
 {
@@ -130,10 +154,31 @@ fn void CreateBigSlimeI(game_world_t *state, s32 x, s32 y)
 	CreateEntity(state->storage, V2S(x, y), V2S(2, 2),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map);
 }
 
+fn void CreatePoisonTrapI(game_world_t *state, s32 x, s32 y) {
+	u8 flags = static_entity_flags_trap | static_entity_flags_stepon_trigger;
+
+	status_effect_t *status_effects = malloc(sizeof(status_effect_t));;
+	ZeroStruct(status_effects);
+	status_effects->type = status_effect_poison;
+	status_effects->remaining_turns = 3;
+	status_effects-> damage = 1;
+
+	status_effect_t *effects[MAX_STATUS_EFFECTS] = {status_effects, 0, 0};
+
+	CreateEffectTile(state->storage, V2S(x,y), V2S(1,1), flags, effects);
+}
+
 fn b32 IsHostile(const entity_t *entity)
 {
 	if (entity)
 		return entity->flags & entity_flags_hostile;
+	return 0;
+}
+
+fn b32 IsTrap(const static_entity_t *entity)
+{
+	if (entity)
+		return entity->flags & static_entity_flags_trap;
 	return 0;
 }
 

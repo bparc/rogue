@@ -4,6 +4,7 @@ typedef struct
 	bitmap_t SlimeBig;
 	bitmap_t Player[4];
 	bitmap_t Tiles[2];	
+	bitmap_t Traps[3];
 
 	b32 Loaded;
 } assets_t;
@@ -27,5 +28,10 @@ fn b32 LoadAssets(assets_t *assets)
 	Bitmap(assets, &assets->Tiles[0], "assets/Tile_1.png");
 	Bitmap(assets, &assets->Tiles[1], "assets/Tile_2.png");
 	Bitmap(assets, &assets->Player[0], "assets/PlayerFront_1.png");
+
+	Bitmap(assets, &assets->Traps[0], "assets/environment/trap_explosive.png");
+	Bitmap(assets, &assets->Traps[1], "assets/environment/trap_poison.png");
+	Bitmap(assets, &assets->Traps[2], "assets/environment/trap_spike.png");
+
 	return assets->Loaded;
 }

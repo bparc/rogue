@@ -7,13 +7,20 @@ typedef enum
 } entity_flags_t;
 
 typedef enum {
-    status_effect_none = 0,
-    status_effect_poison,
+    status_effect_none = 1 << 0,
+    status_effect_poison = 1 << 1,
+	status_effect_instant_damage = 1 << 2,
 } status_effect_type_t;
+
+typedef enum {
+	static_entity_flags_trap = 1 << 0,
+	static_entity_flags_stepon_trigger = 1 << 1,
+} static_entity_flags;
 
 typedef struct {
     status_effect_type_t type;
     s32 remaining_turns;
+	s32 damage;
 } status_effect_t;
 
 #define MAX_STATUS_EFFECTS 3
@@ -36,10 +43,26 @@ typedef struct
 
 typedef struct
 {
+	u8 flags;
+	entity_id_t id;
+	v2s p; // A position on the tile map.
+	//wont move
+	v2s size; //size in squares, 1x1, 2x1, 1x2, etc
+
+	status_effect_t *status_effects[MAX_STATUS_EFFECTS];
+
+} static_entity_t;
+
+typedef struct
+{
 	s32 num;
+	s32 statics_num;
 	entity_t entities[1024];
+	static_entity_t static_entities[1024];
 	u64 next_id;
 } entity_storage_t;
+
+
 
 // NOTE(): Stores the turns as an list of entity ids
 // in a *reverse* order (the last turn in the queue will be executed first).
@@ -114,12 +137,6 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log)
 
 	// Place traps on the map
     tile_t *tile;
-
-    tile = GetTile(state->map, 12, 5);
-    tile->trap_type = trap_type_physical;
-
-    tile = GetTile(state->map, 13, 5);
-    tile->trap_type = trap_type_poison;
 }
 
 fn void BeginGameWorld(game_world_t *state)
@@ -228,6 +245,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 			entity->deferred_p = Lerp2(entity->deferred_p, GetTileCenter(state->map, entity->p), 10.0f * dt);
 
 		v2 p = ScreenToIso(entity->deferred_p);
+
 		v4 color = Pink();
 		v2 debug_alignment = V2(0.5f, 0.70f);
 		bitmap_t *bitmap = &assets->Player[0];
@@ -267,6 +285,41 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 			f32 health_percentage = (f32)entity->health / MAX_HEALTH;
 			RenderHealthBar(out, bitmap_p, health_percentage, assets);
 		}
+
+		
+
+		RenderIsoCubeCentered(out, p, V2(24, 24), 50, color);
+	}
+
+	//render static combat objects
+	for (s32 index = 0; index < storage->statics_num; index++)
+	{
+		static_entity_t *entity = &storage->static_entities[index];
+
+		v4 color = Lavender();
+		v2 debug_alignment = V2(0.5f, 0.70f);
+		bitmap_t *bitmap = &assets->Traps[1];
+		v2 p = ScreenToIso(V2((float)entity->p.x, (float)entity->p.y));
+
+		if (IsTrap(entity))
+		{
+			
+			debug_alignment = V2(0.50f, 0.50f);
+		}		
+		 //hard coded
+		{
+			v2 bitmap_sz = bitmap->scale;
+			v2 bitmap_half_sz = Mul(bitmap_sz, debug_alignment);
+			v2 bitmap_aligment = bitmap_half_sz;
+			bitmap_aligment.y += 5.0f;
+
+			v2 bitmap_p = Sub(p, bitmap_aligment);
+			DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
+
+			DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
+		}
+
+		
 
 		RenderIsoCubeCentered(out, p, V2(24, 24), 50, color);
 	}

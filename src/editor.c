@@ -22,7 +22,7 @@ fn void MakeSimpleMap(game_world_t *world)
 		' ',' ',' ','#','#','#','#','#','#','#','#',' ',' ',' ',' ',' ',' ',' ',' ',' ',
 		' ',' ',' ',' ','#','#','#','#','#','#','#',' ',' ',' ',' ',' ',' ',' ',' ',' ',
 		' ',' ',' ',' ','#','#','#','#','#','#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
-		' ',' ',' ',' ',' ',' ','#','#','#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
+		' ',' ',' ',' ',' ',' ','T','T','T',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
 		' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
 		' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
 		' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
@@ -37,7 +37,6 @@ fn void MakeSimpleMap(game_world_t *world)
 	for (s32 y = 0; y < Y; y++) {
 		for (s32 x = 0; x < X; x++) {
 
-			int isBig = false;
 			u8 value = 1;
 
 			if (visited[y][x]) {
@@ -55,7 +54,6 @@ fn void MakeSimpleMap(game_world_t *world)
 					break;
 				case 'B': {
 					v2s size = V2S(2,2);
-					isBig = true;
 					// big slimes can only be 2x2
 					if (IsValidEntity(X, Y, (char *)Data, x, y, size, 'B')) {
 						//exclude the whole square
@@ -72,6 +70,9 @@ fn void MakeSimpleMap(game_world_t *world)
 					}
 					break;
 				}
+				case 'T': 
+				CreatePoisonTrapI(world, x, y);
+				 break;
 				default:
 					value = 0; break;
 			}
