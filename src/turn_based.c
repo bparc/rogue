@@ -7,7 +7,7 @@ fn s32 BeginTurn(game_world_t *World, entity_t *requestee)
 {
 	ProcessStatusEffects(requestee);
 
-	s32 action_point_count = 8;
+	s32 action_point_count = 2;
 	if (IsHostile(requestee))
 		action_point_count = 4 + (rand() % 2);
 
@@ -34,6 +34,7 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 			cost = 1; //only costs when can be moved
 			MoveEntity(World->map, requestee, chosenDir);
 			ApplyTileEffects(requestee->p, World, requestee);
+			DebugLog("moving %i %i", peekPos.x, peekPos.y);
 			break;
 		}
 

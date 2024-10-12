@@ -109,6 +109,7 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, u8 flags, u16 health
 		result->health = health_points;
 		result->attack_dmg = attack_dmg;
 	}
+	
 	return result;
 }
 

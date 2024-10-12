@@ -3,17 +3,21 @@ fn log_line_t *GetLogLn(log_t *Log, s32 offset)
 	return &Log->lines[offset % ArraySize(Log->lines)];
 }
 
-fn void LogLn(log_t *Log, const char *format, ...)
+fn void LogLnVariadic(log_t *Log, const char *format, va_list args)
 {
 	char buffer[256] = "";
-	va_list args = {0};
-	va_start(args, format);
 	vsprintf(buffer, format, args);
-	va_end(args);
-
 	log_line_t *Ln = GetLogLn(Log, Log->offset++);
 	Ln->timestamp = Log->time;
 	strncpy(Ln->text, buffer, ArraySize(Ln->text));
+}
+
+fn void LogLn(log_t *Log, const char *format, ...)
+{
+	va_list args = {0};
+	va_start(args, format);
+	LogLnVariadic(Log, format, args);
+	va_end(args);
 }
 
 fn void MessageLog(command_buffer_t *out, const bmfont_t *font, v2 p, log_t *Log, f32 dt)

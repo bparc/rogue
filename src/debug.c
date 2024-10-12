@@ -1,10 +1,11 @@
 
-fn void BeginDebugFrame(command_buffer_t *output, const bmfont_t *font)
+fn void BeginDebugFrame(command_buffer_t *output, const bmfont_t *font, log_t *log)
 {
 	Assert((Debug.out == NULL));
 	Debug.font = font;
 	Debug.out = output;
-
+	Debug.log = log;
+	
 	Debug.print_p = V2(10.0f, 8.0f);
 }
 
@@ -88,4 +89,13 @@ fn void DebugPrint(const char *format, ...)
 	va_end(args);
 	DebugText(Debug.print_p, Debug.format_buffer);
 	Debug.print_p.y += 25.0f;
+}
+
+fn void _DebugLog(const char *prefix, s32 line, const char *format, ...)
+{
+	va_list args = {0};
+	va_start(args, format);
+	sprintf(Debug.format_buffer, "%i %s(): %s", line, prefix, format);
+	LogLnVariadic(Debug.log, Debug.format_buffer, args);
+	va_end(args);
 }

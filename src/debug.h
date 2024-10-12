@@ -1,5 +1,6 @@
 typedef struct
 {
+	log_t *log;
 	command_buffer_t *out;
 	const bmfont_t *font;
 	v2 print_p;
@@ -8,7 +9,7 @@ typedef struct
 
 static debug_state_t Debug;
 
-fn void BeginDebugFrame(command_buffer_t *output, const bmfont_t *font);
+fn void BeginDebugFrame(command_buffer_t *output, const bmfont_t *font, log_t *log);
 fn void EndDebugFrame(void);
 
 fn void DebugPoint(v2 p, v4 color);
@@ -26,3 +27,6 @@ fn void DebugCircleOutline(v2 p, f32 radius, v4 color);
 fn void DebugText(v2 p, const char *string);
 
 fn void DebugPrint(const char *format, ...);
+
+#define DebugLog(Format, ...) _DebugLog(__func__, __LINE__, Format)
+fn void _DebugLog(const char *prefix, s32 line, const char *format, ...);

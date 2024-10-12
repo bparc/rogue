@@ -9,14 +9,14 @@
 #include "bmfont.c"
 #include "renderer.h"
 #include "renderer.c"
+#include "log.h"
+#include "log.c"
 #include "debug.h"
 #include "debug.c"
 #include "input.h"
 #include "map.h"
 #include "map.c"
 #include "dijkstra.c"
-#include "log.h"
-#include "log.c"
 #include "assets.h"
 #include "world.h"
 #include "editor.h"
@@ -34,6 +34,7 @@ typedef struct
 	memory_t memory;
 	u8 reserved[MB(64)];
 	u8 keys_prev[256];
+	b32 inited;
 	f64 timestamp;
 } 
 client_t;
@@ -55,7 +56,6 @@ fn s32 Startup(client_t *state)
 	ZeroStruct(state->event_log);
 	
 	LoadAssets(&state->assets);
-	Setup(&state->world, &state->memory, state->event_log);
 
 	s32 FontLoaded = LoadBMFont(&state->font, "assets/inconsolata.fnt");
 	Assert(FontLoaded);
@@ -67,7 +67,7 @@ fn void BeginFrame(client_t *state)
 {
 	for (s32 index = 0; index < ArraySize(state->buffers); index++)
 		FlushCommandBuffer(&state->buffers[index]);
-	BeginDebugFrame(&state->buffers[1], &state->font);
+	BeginDebugFrame(&state->buffers[1], &state->font, state->event_log);
 }
 
 fn void EndFrame(client_t *state, const client_input_t *input)
@@ -85,6 +85,11 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 	state->timestamp = input.time;
 
 	BeginFrame(state);
+	if (state->inited == 0)
+	{
+		Setup(&state->world, &state->memory, state->event_log);
+		state->inited = TRUE;
+	}
 	Editor(&state->editor, &state->world, &state->buffers[0], &input, state->event_log, &state->assets);
 	
 	virtual_controls_t virtual_cons = MapKeyboardToVirtualCons(&input, state->keys_prev);

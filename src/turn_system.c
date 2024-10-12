@@ -24,7 +24,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			turns->time_elapsed = 0.0f;
 
 			#if ENABLE_TURN_SYSTEM_DEBUG_LOGS
-			LogLn(log, "TurnKernel(): initiating turn for entity#%i", entity->id);
+			DebugLog("initiating turn for entity#%i", entity->id);
 			#endif
 			// NOTE(): Begin the turn.
 		}
@@ -139,7 +139,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 						AcceptTurn(turns);
 
 						#ifdef ENABLE_TURN_SYSTEM_DEBUG_LOGS
-						LogLn(log, "TurnKernel(): turn finished in %.2f seconds", turns->time_elapsed);
+						DebugLog("TurnKernel(): turn finished in %.2f seconds", turns->time_elapsed);
 						#endif
 					}
 				} break;
