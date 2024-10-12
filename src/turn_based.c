@@ -1,3 +1,5 @@
+int MoveFitsWithSize(game_world_t* world, v2s size, v2s requestedPos);
+
 fn void EstablishTurnOrder(game_world_t *World, turn_queue_t *queue, entity_storage_t *storage)
 {
 	DefaultTurnOrder(queue, storage);
@@ -28,7 +30,7 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 
 	while(!cantMove && attempts < 5){
 		
-		cantMove = (!IsOutOfBounds(World, peekPos) && !IsWall(World, peekPos));
+		cantMove = (!IsOutOfBounds(World, peekPos) && !IsWall(World, peekPos) && MoveFitsWithSize(World, requestee->size, peekPos));
 		
 		if(cantMove) {
 			cost = 1; //only costs when can be moved
@@ -60,4 +62,16 @@ fn s32 AttemptAttack(game_world_t *World, entity_t *requestee)
 		result = true;
 	}
 	return result;
+}
+
+int MoveFitsWithSize(game_world_t* world, v2s size, v2s requestedPos) {
+    for (int y = 0; y < size.y; ++y) {
+        for (int x = 0; x < size.x; ++x) {
+            v2s pos = {requestedPos.x + x, requestedPos.y + y};
+            if (IsOutOfBounds(world, pos) || IsWall(world, pos)) {
+                return false; 
+            }
+        }
+    }
+    return true;  // Movement is possible
 }
