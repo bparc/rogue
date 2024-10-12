@@ -16,7 +16,7 @@ PROOF-OF-CONCEPT/VERTICAL SLICE ROADMAP
 - DONE Enemies that can span multiple tiles.
 - Environmental hazards.
 -    How will they work exactly?
-- DONE Status effects.
+- Status effects.
 -    HUD that shows status effects for the player and enemies?
 -    In what order they should be evaluated? The damage from poison is applied at the end or at the start of a turn?
 - A simple behaviour for slime
