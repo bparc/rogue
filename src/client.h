@@ -67,7 +67,7 @@ fn void BeginFrame(client_t *state)
 {
 	for (s32 index = 0; index < ArraySize(state->buffers); index++)
 		FlushCommandBuffer(&state->buffers[index]);
-	BeginDebugFrame(&state->buffers[1], &state->font, state->event_log);
+	BeginDebugFrame(&state->buffers[1], &state->buffers[1], &state->font, state->event_log);
 }
 
 fn void EndFrame(client_t *state, const client_input_t *input)

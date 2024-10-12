@@ -1,9 +1,10 @@
 
-fn void BeginDebugFrame(command_buffer_t *output, const bmfont_t *font, log_t *log)
+fn void BeginDebugFrame(command_buffer_t *output, command_buffer_t *output_top, const bmfont_t *font, log_t *log)
 {
 	Assert((Debug.out == NULL));
 	Debug.font = font;
 	Debug.out = output;
+	Debug.out_top = output_top;
 	Debug.log = log;
 	
 	Debug.print_p = V2(10.0f, 8.0f);
@@ -78,7 +79,7 @@ fn void DebugVolumeOutline(v2 min, v2 max, v4 color)
 
 fn void DebugText(v2 p, const char *string)
 {
-	DrawText(Debug.out, Debug.font, p, string, Yellow());
+	DrawText(Debug.out_top, Debug.font, p, string, Yellow());
 }
 
 fn void DebugPrint(const char *format, ...)

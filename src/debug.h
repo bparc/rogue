@@ -1,7 +1,8 @@
 typedef struct
 {
 	log_t *log;
-	command_buffer_t *out;
+	command_buffer_t *out; // NOTE(): World-space
+	command_buffer_t *out_top; // NOTE(): Screen-space
 	const bmfont_t *font;
 	v2 print_p;
 	char format_buffer[512];
@@ -9,7 +10,7 @@ typedef struct
 
 static debug_state_t Debug;
 
-fn void BeginDebugFrame(command_buffer_t *output, const bmfont_t *font, log_t *log);
+fn void BeginDebugFrame(command_buffer_t *output, command_buffer_t *output_top, const bmfont_t *font, log_t *log);
 fn void EndDebugFrame(void);
 
 fn void DebugPoint(v2 p, v4 color);

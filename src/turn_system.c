@@ -14,6 +14,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 	}
 	if (entity)
 	{
+		DebugPrint("TESTESTESTTST");
 		if ((turns->turn_inited == false))
 		{
 			turns->action_points = (BeginTurn(state, entity) + 1);

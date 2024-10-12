@@ -126,14 +126,11 @@ fn void BeginGameWorld(game_world_t *state)
 	DebugPrint("Player Controls: WASD; Hold shift for diagonal input.");
 	DebugPrint("Cursor Controls: Press E to open the cursor. Press Q to close it.");
 	DebugPrint("Moves: %i", state->turns->action_points);
-	// TODO(): This will break DebugPrints!
-	// Let's make a separate output for those.
-	SetGlobalOffset(Debug.out, state->camera_position);
 }
 
 fn void EndGameWorld(game_world_t *state)
 {
-	SetGlobalOffset(Debug.out, V2(0.0f, 0.0f));
+
 }
 
 fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets)
@@ -174,7 +171,6 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 	SetGlobalOffset(out, V2(0.0f, 0.0f));
 	DrawRect(out, V2(0, 0), V2(1920, 1080), SKY_COLOR); // NOTE(): Background
-
 	SetGlobalOffset(out, state->camera_position);
 
 	// NOTE(): Render tiles.
