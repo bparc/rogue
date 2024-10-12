@@ -25,3 +25,4 @@ enemies: They will walk around the map in random directions and attack the playe
 - A game over state.
 - An attack move that can 'push back' an enemy by some amount of tiles.
 -    Apply additional damage when an enemy collides with a wall?
+- better layering of entities during gameplay - they retain their z indexes from init, leading to unlogical overlaps
