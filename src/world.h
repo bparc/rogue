@@ -82,7 +82,7 @@ typedef struct
 #include "turn_based.c"
 #include "turn_system.c"
 
-fn void Setup(game_world_t *state, memory_t *memory)
+fn void Setup(game_world_t *state, memory_t *memory, log_t *log)
 {
 	state->cursor = PushStruct(cursor_t, memory);
 	state->turns = PushStruct(turn_queue_t, memory);

@@ -81,6 +81,7 @@ typedef struct
 	pad_button_t confirm, cancel;
 	pad_button_t x, y;
 	pad_button_t menu, select;
+	pad_button_t rb;
 } virtual_controls_t;
 
 fn inline b32 WentUp(pad_button_t button)
