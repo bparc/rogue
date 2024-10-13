@@ -12,6 +12,12 @@ fn u8 GetTileValue(const map_t *map, s32 x, s32 y)
 	return (tile ? tile->value : 0);
 }
 
+fn trap_type_t GetTileTrapType(const map_t *map, s32 x, s32 y)
+{
+	tile_t *result = GetTile((map_t *)map, x, y);
+	return (result ? result->trap_type : trap_type_none);
+}
+
 fn b32 IsTraversable(map_t *map, s32 x, s32 y)
 {
 	b32 result = (GetTileValue(map, x, y) > 0);
@@ -25,9 +31,16 @@ fn void SetTileValueI(map_t *map, s32 x, s32 y, u8 value)
 		tile->value = value;
 }
 
-fn void SetTileValue (map_t *map, v2s p, u8 value)
+fn void SetTileValue(map_t *map, v2s p, u8 value)
 {
 	SetTileValueI(map, p.x, p.y, value);
+}
+
+fn void SetTileTrapType (map_t *map, v2s p, trap_type_t type)
+{
+	tile_t *tile = GetTile(map, p.x, p.y);
+	if (tile)
+		tile->trap_type = type;
 }
 
 fn void SetTileDistance(map_t *map, s32 x, s32 y, s16 value)

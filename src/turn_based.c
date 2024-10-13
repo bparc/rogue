@@ -25,7 +25,7 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 	int cantMove = false;
 	int attempts = 0;
 
-	v2s peekPos = AddS(requestee -> p, chosenDir);;
+	v2s peekPos = AddS(requestee -> p, chosenDir);
 	s32 cost = 0;
 
 	while(!cantMove && attempts < 5){

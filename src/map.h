@@ -28,8 +28,10 @@ fn tile_t *GetTile(map_t *map, s32 x, s32 y);
 
 fn void SetTileValueI(map_t *map, s32 x, s32 y, u8 value);
 fn void SetTileValue(map_t *map, v2s p, u8 value);
+fn void SetTileTrapType(map_t *map, v2s p, trap_type_t type);
 
 fn u8 GetTileValue(const map_t *map, s32 x, s32 y);
+fn trap_type_t GetTileTrapType(const map_t *map, s32 x, s32 y);
 
 fn void SetTileDistance(map_t *map, s32 x, s32 y, s16 value);
 fn s16 GetTileDistance(const map_t *map, s32 x, s32 y);

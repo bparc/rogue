@@ -130,11 +130,7 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log)
 	u16 temp_attack_dmg = 40;
 	CreateEntity(state->storage, V2S(10, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map);
 	CreateEntity(state->storage, V2S(11, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map);
-	//CreateEntity(state->storage, V2S(12, 5), V2S(1, 1), entity_flags_controllable);
 	state->camera_position = V2(0, 0);
-
-	// Place traps on the map
-    tile_t *tile;
 }
 
 fn void BeginGameWorld(game_world_t *state)
@@ -227,6 +223,10 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				}
 				#endif
 
+				if (GetTileTrapType(map, x, y) != trap_type_none)
+				{
+					RenderIsoTile(out, map, V2S(x, y), LightGrey(), true, 0);
+				}
 			}
 		}
 	}
