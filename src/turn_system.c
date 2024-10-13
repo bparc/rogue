@@ -37,7 +37,10 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		RenderIsoTile(out, map, entity->p, Red(), false, 0);
 		#endif
 
-		state->camera_position = CameraTracking(state->camera_position, entity->deferred_p, GetViewport(input), dt);
+		// NOTE(): We're focusing the camera either on a cursor or on a player position,
+		// depending on the current mode.
+		v2 focus_p = state->cursor->active ? GetTileCenter(map, state->cursor->p) : entity->deferred_p;
+		state->camera_position = CameraTracking(state->camera_position, focus_p, GetViewport(input), dt);
 		
 		if (entity->flags & entity_flags_controllable) // NOTE(): The "player" code.
 		{
