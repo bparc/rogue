@@ -358,7 +358,7 @@ fn b32 IsWorldPointEmpty(game_world_t *state, v2s p) {
 		return !(tileValue == 0 || tileValue == 2); // Wall or out of bounds
 	}
 
-	//DebugLog("inside IsWorldPointEmpty, return value is = 0");
+	DebugLog("Return value is false, entity collision");
 	return false; // Entity collision
 }
 
