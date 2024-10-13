@@ -299,7 +299,9 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		v4 color = Lavender();
 		v2 debug_alignment = V2(0.5f, 0.70f);
 		bitmap_t *bitmap = &assets->Traps[1];
-		v2 p = ScreenToIso(V2((float)entity->p.x, (float)entity->p.y));
+		v2 p = V2((float)entity->p.x, (float)entity->p.y);
+		p = Mul(p, map->tile_sz); // NOTE(Arc): Project the p from "map" to "world" space.
+ 		p = ScreenToIso(p); // NOTE(Arc): Project the p from "world" to "screen" space.
 
 		if (IsTrap(entity))
 		{
@@ -314,9 +316,10 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 			bitmap_aligment.y += 5.0f;
 
 			v2 bitmap_p = Sub(p, bitmap_aligment);
+			
 			DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
 
-			DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
+			//DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
 		}
 
 		
