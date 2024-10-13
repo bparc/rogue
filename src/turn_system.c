@@ -6,6 +6,11 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 {
 	SetGlobalOffset(out, state->camera_position); // NOTE(): Let's pass the camera position via the PushRenderOutput call instead of this SetGlobalOffset stuff.
 	// NOTE(): Process the current turn
+
+	// TODO(Arc): IMPORTANT! Invalidated IDs aren't handled properly by
+	// the queue! This has to be fixed when we add the ability to
+	// remove an entity from the storage.
+
 	entity_t *entity = NextInOrder(turns, storage);
 	if (entity == 0)
 	{

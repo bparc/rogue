@@ -283,7 +283,10 @@ fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)
 {
 	entity_t *result = 0;
 	if (queue->num > 0)
+	{
 		result = GetEntity(storage, queue->entities[queue->num - 1]);
+		Assert(result);
+	}
 	return result;
 }
 
