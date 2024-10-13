@@ -44,13 +44,11 @@ typedef struct
 typedef struct
 {
 	u8 flags;
-	entity_id_t id;
 	v2s p; // A position on the tile map.
 	//wont move
 	v2s size; //size in squares, 1x1, 2x1, 1x2, etc
 
-	status_effect_t *status_effects[MAX_STATUS_EFFECTS];
-
+	status_effect_t status_effects[MAX_STATUS_EFFECTS];
 } static_entity_t;
 
 typedef struct
@@ -144,6 +142,7 @@ fn void BeginGameWorld(game_world_t *state)
 	DebugPrint("Player Controls: WASD; Hold shift for diagonal input.");
 	DebugPrint("Cursor Controls: Press E to open the cursor. Press Q to close it.");
 	DebugPrint("Moves: %i", state->turns->action_points);
+	DebugPrint("Ent count: %i", state->storage->num);
 }
 
 fn void EndGameWorld(game_world_t *state)
@@ -318,12 +317,6 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 			v2 bitmap_p = Sub(p, bitmap_aligment);
 			
 			DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
-
-			//DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
 		}
-
-		
-
-		RenderIsoCubeCentered(out, p, V2(24, 24), 50, color);
 	}
 }
