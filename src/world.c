@@ -74,13 +74,19 @@ fn void RenderIsoCubeFilled(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 c
 }
 
 // todo: Add animation when chunk of health is lost, add art asset
-fn void RenderHealthBar(command_buffer_t *out, v2 position, f32 health_percentage, assets_t *assets) {
-	v2 bar_size = V2(40, 5);
-	v2 bar_position = Sub(position, V2(8.0f, 10.0f));
+fn void RenderHealthBars(command_buffer_t *out, v2 position, assets_t *assets, entity_storage_t *storage) {
+	for (s32 index = 0; index < storage->num; index++) {
+		entity_t *entity = &storage->entities[index];
 
-	DrawRect(out, bar_position, bar_size, Black());
-	v2 health_bar_size = V2(bar_size.x * health_percentage, bar_size.y);
-	DrawRect(out, bar_position, health_bar_size, Green());
+		f32 health_percentage = (f32)entity->health / entity->max_health;
+
+		v2 bar_size = V2(40, 5);
+		v2 bar_position = Sub(position, V2(8.0f, 10.0f));
+
+		DrawRect(out, bar_position, bar_size, Black());
+		v2 health_bar_size = V2(bar_size.x * health_percentage, bar_size.y);
+		DrawRect(out, bar_position, health_bar_size, Green());
+	}
 }
 
 fn void RenderIsoTile(command_buffer_t *out, const map_t *map, v2s offset, v4 color, s32 Filled, f32 height)
@@ -116,7 +122,7 @@ fn static_entity_t * CreateEffectTile(entity_storage_t *storage, v2s p, v2s size
 }
 
 // NOTE(): Entities.
-fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *map)
+fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *map, u16 max_health_points)
 {
 	entity_t *result = 0;
 	if (storage->num < ArraySize(storage->entities))
@@ -133,6 +139,7 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, 
 		result->flags = flags;
 		result->health = health_points;
 		result->attack_dmg = attack_dmg;
+		result->max_health = max_health_points;
 	}
 	
 	return result;
@@ -141,15 +148,17 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, 
 fn void CreateSlimeI(game_world_t *state, s32 x, s32 y)
 {
 	u16 slime_hp = 100;
+	u16 slime_max_hp = 100;
 	u16 slime_attack_dmg = 10;
-	CreateEntity(state->storage, V2S(x, y), V2S(1, 1),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map);
+	CreateEntity(state->storage, V2S(x, y), V2S(1, 1),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map, slime_max_hp);
 }
 
 fn void CreateBigSlimeI(game_world_t *state, s32 x, s32 y)
 {
 	u16 slime_hp = 400;
+	u16 slime_max_hp = 400;
 	u16 slime_attack_dmg = 25;
-	CreateEntity(state->storage, V2S(x, y), V2S(2, 2),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map);
+	CreateEntity(state->storage, V2S(x, y), V2S(2, 2),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map, slime_max_hp);
 }
 
 fn void CreatePoisonTrapI(game_world_t *state, s32 x, s32 y) {

@@ -35,6 +35,7 @@ typedef struct
 	v2s size; //size in squares, 1x1, 2x1, 1x2, etc
 
 	u16 health;
+	u16 max_health;
 	u16 attack_dmg;
 
 	status_effect_t status_effects[MAX_STATUS_EFFECTS];
@@ -127,9 +128,10 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log)
 	state->map = CreateMap(30, 20, memory, TILE_PIXEL_SIZE);
 
 	u16 temp_player_health = 100;
+	u16 temp_player_max_health = 100;
 	u16 temp_attack_dmg = 40;
-	CreateEntity(state->storage, V2S(10, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map);
-	CreateEntity(state->storage, V2S(11, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map);
+	CreateEntity(state->storage, V2S(10, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map, temp_player_max_health);
+	CreateEntity(state->storage, V2S(11, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map, temp_player_max_health);
 	state->camera_position = V2(0, 0);
 }
 
@@ -280,12 +282,10 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 			//DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
 
-			const f32 MAX_HEALTH = 100.0f;
-			f32 health_percentage = (f32)entity->health / MAX_HEALTH;
-			RenderHealthBar(out, bitmap_p, health_percentage, assets);
+			RenderHealthBars(out, bitmap_p, assets, storage);
 		}
 
-		
+
 
 		RenderIsoCubeCentered(out, p, V2(24, 24), 50, color);
 	}
@@ -304,9 +304,9 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 		if (IsTrap(entity))
 		{
-			
+
 			debug_alignment = V2(0.50f, 0.50f);
-		}		
+		}
 		 //hard coded
 		{
 			v2 bitmap_sz = bitmap->scale;
@@ -315,7 +315,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 			bitmap_aligment.y += 5.0f;
 
 			v2 bitmap_p = Sub(p, bitmap_aligment);
-			
+
 			DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
 		}
 	}
