@@ -76,9 +76,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 				v2s peekPos = AddS(entity -> p, considered_dirs[direction]);
 
 				//valid move pos
-				if(!IsOutOfBounds(state, peekPos)
-					&& !IsWall(state, peekPos)
-					&& !IsOtherEntity(state, peekPos))
+				if (IsWorldPointEmpty(state, peekPos))
 				{
 					if (turns->action_points > 0) {
 			            MoveEntity(map, entity, considered_dirs[direction]);

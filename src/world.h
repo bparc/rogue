@@ -201,6 +201,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				v4 color = White();
 				b32 Filled = 0;
 				f32 height = 0;
+
 				if (IsWall(state, V2S(x, y)))
 				{
 					Filled = true;

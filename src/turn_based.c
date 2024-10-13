@@ -22,19 +22,18 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 	int randomIndex = rand() % 4;
 	v2s chosenDir = cardinal_directions[randomIndex]; //NOTE(): replaced by enemy ai
 	
-	int cantMove = false;
+	int canMove = false;
 	int attempts = 0;
 
 	v2s peekPos = AddS(requestee -> p, chosenDir);
 	s32 cost = 0;
 
-	while(!cantMove && attempts < 5){
+	while(!canMove && attempts < 5){
+		//DebugLog("Inside while loop l31");
+		canMove = IsWorldPointEmpty(World, peekPos)
+		&& MoveFitsWithSize(World, requestee->size, peekPos);
 		
-		cantMove = (!IsOutOfBounds(World, peekPos) && !IsWall(World, peekPos)
-		&& !IsOtherEntity(World, peekPos)
-		&& MoveFitsWithSize(World, requestee->size, peekPos));
-		
-		if(cantMove) {
+		if(canMove) {
 			cost = 1; //only costs when can be moved
 			MoveEntity(World->map, requestee, chosenDir);
 			ApplyTileEffects(requestee->p, World, requestee);
@@ -68,13 +67,18 @@ fn s32 AttemptAttack(game_world_t *World, entity_t *requestee)
 }
 
 int MoveFitsWithSize(game_world_t* world, v2s size, v2s requestedPos) {
+	DebugLog("Peek pos: x=%d, y=%d", requestedPos.x, requestedPos.y);
+
     for (int y = 0; y < size.y; ++y) {
         for (int x = 0; x < size.x; ++x) {
             v2s pos = {requestedPos.x + x, requestedPos.y + y};
-            if (IsOutOfBounds(world, pos) || IsWall(world, pos)) {
+        	DebugLog("Checking pos: x=%d, y=%d", pos.x, pos.y);
+            if (!IsWorldPointEmpty(world, pos)) {
+            	DebugLog("Move doesn't fit at pos: x=%d, y=%d", pos.x, pos.y);
                 return false; 
             }
         }
     }
+	DebugLog("Move fits at requested position");
     return true;  // Movement is possible
 }

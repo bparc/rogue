@@ -346,4 +346,20 @@ fn b32 IsOtherEntity(game_world_t *state, v2s p) {
 	return collidingEntity != NULL;
 }
 
+fn b32 IsWorldPointEmpty(game_world_t *state, v2s p) {
+
+	entity_t *collidingEntity = GetEntityByPosition(state->storage, p);
+
+	if (collidingEntity == NULL) {
+
+		u8 tileValue = GetTileValue(state->map, p.x, p.y);
+		b32 result = !(tileValue == 0 || tileValue == 2);
+		//DebugLog("inside IsWorldPointEmpty, return value is = %d", result);
+		return !(tileValue == 0 || tileValue == 2); // Wall or out of bounds
+	}
+
+	//DebugLog("inside IsWorldPointEmpty, return value is = 0");
+	return false; // Entity collision
+}
+
 // NOTE(): Cursor
