@@ -283,7 +283,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 			//DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
 
-			RenderHealthBars(out, bitmap_p, assets, storage);
+			RenderHealthBar(out, bitmap_p, assets, entity);
 		}
 
 

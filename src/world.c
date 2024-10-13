@@ -72,12 +72,8 @@ fn void RenderIsoCubeFilled(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 c
 		DrawQuad(out, B[2], B[1], A[1], A[2], Blue());
 	}
 }
-
 // todo: Add animation when chunk of health is lost, add art asset
-fn void RenderHealthBars(command_buffer_t *out, v2 position, assets_t *assets, entity_storage_t *storage) {
-	for (s32 index = 0; index < storage->num; index++) {
-		entity_t *entity = &storage->entities[index];
-
+fn void RenderHealthBar(command_buffer_t *out, v2 position, assets_t *assets, entity_t *entity) {
 		f32 health_percentage = (f32)entity->health / entity->max_health;
 
 		v2 bar_size = V2(40, 5);
@@ -86,8 +82,18 @@ fn void RenderHealthBars(command_buffer_t *out, v2 position, assets_t *assets, e
 		DrawRect(out, bar_position, bar_size, Black());
 		v2 health_bar_size = V2(bar_size.x * health_percentage, bar_size.y);
 		DrawRect(out, bar_position, health_bar_size, Green());
+}
+
+//unused for now
+fn void RenderHealthBars(command_buffer_t *out, v2 position, assets_t *assets, entity_storage_t *storage) {
+	for (s32 index = 0; index < storage->num; index++) {
+		entity_t *entity = &storage->entities[index];
+		RenderHealthBar(out,position,assets, entity);
+		
 	}
 }
+
+
 
 fn void RenderIsoTile(command_buffer_t *out, const map_t *map, v2s offset, v4 color, s32 Filled, f32 height)
 {

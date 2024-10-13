@@ -144,7 +144,7 @@ int MoveFitsWithSize(game_world_t* world, entity_t *requestee, v2s requestedPos)
         moveCoords[2] = (v2s){currentX + 2, currentY + 1}; // Right center
         numCoords = 3;
     } else {
-        DebugLog("Invalid movement");
+        //DebugLog("Invalid movement of entity id: %d");
         return false;
     }
 
