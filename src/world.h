@@ -173,6 +173,51 @@ fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, ent
 	}
 }
 
+fn u8 chooseTileBitmap(game_world_t* world, s32 x, s32 y) {
+	
+    u8 up = !IsOutOfBounds(world, V2S(x, y - 1)); //has an up tile
+    u8 down = !IsOutOfBounds(world, V2S(x, y + 1)); //has a down tile
+    u8 left = !IsOutOfBounds(world, V2S(x - 1, y)); //has a left tile
+    u8 right = !IsOutOfBounds(world, V2S(x + 1, y)); //has a righ tile
+
+    if (up && down && left && right) {
+        return tile_center;
+    }
+
+	//TODO: corner top left/right, corner bottom left/right the borders one single for all dirs
+
+    if ((!up && !left) || (!up && !right)) {
+        return tile_corner_top; 
+    }
+    if ((!down && !left) || (!down && !right)) {
+        return tile_corner_bottom; 
+    }
+
+    if (!up && left && right) {
+
+        if (IsOutOfBounds(world, V2S(x - 1, y - 1))) {
+            return tile_border_top_left;
+        } else {
+            return tile_border_top_right;
+        }
+    }
+
+
+    if (!down && left && right) {
+        if (IsOutOfBounds(world, V2S(x - 1, y + 1))) {
+            return tile_border_bottom_left;
+        } else {
+            return tile_border_bottom_right;
+        }
+    }
+
+    // default to center
+    return tile_center;
+
+
+	return 0;
+}
+
 fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log, assets_t *assets, virtual_controls_t cons, command_buffer_t *out)
 {
 	BeginGameWorld(state);
@@ -216,7 +261,8 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				{
 
 					//hardcoded for now
-					bitmap_t *bitmap = &assets->Tilesets[0].Tiles[0][0];
+					u8 tile_type = chooseTileBitmap(state, x, y);
+					bitmap_t* bitmap = &assets->Tilesets[0].Tiles[tile_type][0];
 					
 					v2 p = MapToScreen(map, V2S(x, y));
 					p = ScreenToIso(p);
@@ -297,3 +343,4 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 	
 }
+
