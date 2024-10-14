@@ -8,7 +8,7 @@ typedef struct
 {
 	f64 time;
 	s32 offset;
-	log_line_t lines[16];
+	log_line_t lines[32];
 } log_t;
 
 fn void LogLnVariadic(log_t *Log, const char *format, va_list args);

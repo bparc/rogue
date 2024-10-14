@@ -98,12 +98,12 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 	DrawFrame(&state->world, &state->buffers[0], dt, &state->assets);
 	EndFrame(state, &input);
 
-	MessageLog(&state->buffers[1], &state->font, V2(10.0f, 200.0f), state->event_log, dt);
+	MessageLog(&state->buffers[1], &state->font, V2(10.0f, 650.0f), state->event_log, dt);
 	memset(output, 0, sizeof(*output));
 
 	PushRenderOutput(output, state->buffers[0], V4(0, 0, 1600 / VIEWPORT_INTEGER_SCALE, 900 / VIEWPORT_INTEGER_SCALE));
 	PushRenderOutput(output, state->buffers[2], V4(0, 0, 1600 / VIEWPORT_INTEGER_SCALE, 900 / VIEWPORT_INTEGER_SCALE));
-	PushRenderOutput(output, state->buffers[1], V4(0, 0, 1600 / 2, 900 / 2)); // NOTE(): Debug.
+	PushRenderOutput(output, state->buffers[1], V4(0, 0, 1600, 900)); // NOTE(): Debug.
 	
 	return (0);
 }
