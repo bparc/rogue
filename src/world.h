@@ -219,8 +219,8 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 					bitmap_t *bitmap = &assets->Tiles[bitmap_index];
 					v2 p = MapToScreen(map, V2S(x, y));
 					p = ScreenToIso(p);
-					//p = Sub(p, Scale(bitmap->scale, 0.5f));
-					p.x -= bitmap->scale.x * 0.5f;
+					p = Sub(p, Scale(bitmap->scale, 0.5f));
+					//p.x -= bitmap->scale.x * 0.5f;
 					DrawBitmap(out, p, bitmap->scale, PureWhite(), bitmap);
 					//DrawRectOutline(out, p, bitmap->scale, Red());
 				}
@@ -264,11 +264,13 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		}
 
 		v2 bitmap_sz = bitmap->scale;
-		bitmap_p = ScreenToIso(bitmap_p); // NOTE(): Map to the "camera" space before drawing.
-		bitmap_p = Sub(bitmap_p, bitmap->attachment);
+		
+		bitmap_p = ScreenToIso(bitmap_p);
+		bitmap_p = Sub(bitmap_p, Scale(bitmap_sz, 0.5f)); //center bitmap
+		bitmap_p.y -= bitmap_sz.y * 0.25f; //center bitmap "cube"
+
 		DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
-		//DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
-		//DrawPoint(out, Add(bitmap_p, bitmap->attachment), V2(1, 1), Red());
+
 
 		RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
 		RenderHealthBar(out, ScreenToIso(p), assets, entity);
@@ -280,27 +282,15 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		static_entity_t *entity = &storage->static_entities[index];
 
 		v4 color = Lavender();
-		v2 debug_alignment = V2(0.5f, 0.70f);
 		bitmap_t *bitmap = &assets->Traps[1];
-		v2 p = V2((float)entity->p.x, (float)entity->p.y);
-		p = Mul(p, map->tile_sz); // NOTE(Arc): Project the p from "map" to "world" space.
- 		p = ScreenToIso(p); // NOTE(Arc): Project the p from "world" to "screen" space.
 
-		if (IsTrap(entity))
-		{
+		v2s p = entity->p; 
+		v2 bitmap_p = MapToScreen(state->map, p); 
 
-			debug_alignment = V2(0.50f, 0.50f);
-		}
-		 //hard coded
-		{
-			v2 bitmap_sz = bitmap->scale;
-			v2 bitmap_half_sz = Mul(bitmap_sz, debug_alignment);
-			v2 bitmap_aligment = bitmap_half_sz;
-			bitmap_aligment.y += 5.0f;
+		bitmap_p = ScreenToIso(bitmap_p);
+		v2 bitmap_sz = bitmap->scale;
+		bitmap_p = Sub(bitmap_p, Scale(bitmap_sz, 0.5f)); // center
 
-			v2 bitmap_p = Sub(p, bitmap_aligment);
-
-			DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
-		}
+		DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
 	}
 }

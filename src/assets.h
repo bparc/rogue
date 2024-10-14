@@ -9,6 +9,10 @@ typedef struct
 	b32 Loaded;
 } assets_t;
 
+typedef struct {
+
+} Tile;
+
 fn void Bitmap(assets_t *assets, bitmap_t *bitmap, const char *path, f32 align_x, f32 align_y)
 {
 	*bitmap = LoadBitmapFromFile(path);
@@ -24,11 +28,11 @@ fn b32 LoadAssets(assets_t *assets)
 {
 	//assets->Slime = LoadBitmap();
 	assets->Loaded = true;
-	Bitmap(assets, &assets->Slime, "assets/enemies/slime_small_front.png", 16, 23);
-	Bitmap(assets, &assets->SlimeBig, "assets/enemies/slime_big_front.png", 31, 44);
-	Bitmap(assets, &assets->Tiles[0], "assets/Tile_1.png", 0, 0);
-	Bitmap(assets, &assets->Tiles[1], "assets/Tile_2.png", 0, 0);
-	Bitmap(assets, &assets->Player[0], "assets/PlayerFront_1.png", 7, 22);
+	Bitmap(assets, &assets->Slime, "assets/enemies/slime_small_front.png", 0, 0);
+	Bitmap(assets, &assets->SlimeBig, "assets/enemies/slime_big_front.png", 0, 0);
+	Bitmap(assets, &assets->Tiles[0], "assets/tiles/planet_1/low_center_1.png", 0, 0);
+	Bitmap(assets, &assets->Tiles[1], "assets/tiles/planet_1/low_center_2.png", 0, 0);
+	Bitmap(assets, &assets->Player[0], "assets/player/player_standing_front.png", 0, 0);
 
 	Bitmap(assets, &assets->Traps[0], "assets/environment/trap_explosive.png", 0, 0);
 	Bitmap(assets, &assets->Traps[1], "assets/environment/trap_poison.png", 0, 0);
