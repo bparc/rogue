@@ -77,7 +77,7 @@ fn void DrawRectCentered(command_buffer_t *buffer, v2 p, v2 sz, v4 color)
 
 fn void DrawPoint(command_buffer_t *buffer, v2 p, v2 sz, v4 color)
 {
-	DrawRectCentered(buffer, p, V2(5.0f, 5.0f), color);
+	DrawRectCentered(buffer, p, sz, color);
 }
 
 fn void DrawRectOutlineCentered(command_buffer_t *buffer, v2 p, v2 sz, v4 color)

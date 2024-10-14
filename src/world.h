@@ -39,7 +39,7 @@ typedef struct
 	u16 attack_dmg;
 
 	status_effect_t status_effects[MAX_STATUS_EFFECTS];
-
+	
 } entity_t;
 
 typedef struct
@@ -243,52 +243,34 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		// NOTE(): The "deferred_p"s of the 'active' no-player entities are
 		// animated directly in TurnKernel() to allow for
 		// more explicit controls over the entity animation in that section of the code-base.
-		if (!IsEntityActive(state->turns, storage, entity->id) || (entity->flags & entity_flags_controllable))
+		if ((entity->flags & entity_flags_controllable) ||
+			(IsEntityActive(state->turns, storage, entity->id) == false))
+		{
 			entity->deferred_p = Lerp2(entity->deferred_p, GetTileCenter(state->map, entity->p), 10.0f * dt);
-
-		v2 p = ScreenToIso(entity->deferred_p);
-
-		v4 color = Pink();
-		v2 debug_alignment = V2(0.5f, 0.70f);
-		bitmap_t *bitmap = &assets->Player[0];
-
-		int bigSlime = entity->size.x>1 || entity->size.y > 1;
-		if (IsHostile(entity))
-		{
-			color = Red();
-			if(bigSlime) {
-				bitmap = &assets->SlimeBig;
-			}
-			else {
-				bitmap = &assets->Slime;
-			}
-			
-			debug_alignment = V2(0.50f, 0.50f);
-		}		
-		
-		{
-			// TODO(): I'm rendering a hard-coded
-			// slime OR player bitmap here to test things out.
-			// This bitmap should eventually be made into a customizable property of an
-			// entity.
-			v2 bitmap_sz = bitmap->scale;
-			v2 bitmap_half_sz = Mul(bitmap_sz, debug_alignment);
-			v2 bitmap_aligment = bitmap_half_sz;
-			bitmap_aligment.y += 5.0f;
-
-			v2 bitmap_p = Sub(p, bitmap_aligment);
-			DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
-			if (IsEntityActive(state->turns, storage, entity->id))
-				color = Blue();
-
-			//DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
-
-			RenderHealthBar(out, bitmap_p, assets, entity);
 		}
 
+		v2 p = entity->deferred_p;
+		bitmap_t *bitmap = IsHostile(entity) ? &assets->Slime : &assets->Player[0];
+		v2 bitmap_p = p;
 
+		// TODO(): Still somewhat hard-coded.
+		v2 cube_bb_sz = V2(24, 24);
+		if ((entity->size.x == 2) && (entity->size.y == 2))
+		{
+			bitmap = &assets->SlimeBig;
+			bitmap_p = Add(bitmap_p, Scale(map->tile_sz, 0.5f));
+			p = Add(p, Scale(map->tile_sz, 0.5f));
+			cube_bb_sz = V2(64.0f, 64.0f);
+		}
 
-		RenderIsoCubeCentered(out, p, V2(24, 24), 50, color);
+		v2 bitmap_sz = bitmap->scale;
+		bitmap_p = ScreenToIso(bitmap_p); // NOTE(): Map to the "camera" space before drawing.
+		bitmap_p = Sub(bitmap_p, bitmap->attachment);
+		DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
+		//DrawRectOutline(out, bitmap_p, bitmap_sz, Orange());
+		//DrawPoint(out, Add(bitmap_p, bitmap->attachment), V2(1, 1), Red());
+
+		RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
 	}
 
 	//render static combat objects

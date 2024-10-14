@@ -81,7 +81,10 @@ fn void RenderHealthBar(command_buffer_t *out, v2 position, assets_t *assets, en
 
 		DrawRect(out, bar_position, bar_size, Black());
 		v2 health_bar_size = V2(bar_size.x * health_percentage, bar_size.y);
+		
+		
 		DrawRect(out, bar_position, health_bar_size, Green());
+		DrawRectOutline(out, bar_position, health_bar_size, Black());
 }
 
 //unused for now
