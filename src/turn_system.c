@@ -21,7 +21,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 	{
 		if ((turns->turn_inited == false))
 		{
-			turns->action_points = (BeginTurn(state, entity) + 1);
+			turns->action_points = BeginTurn(state, entity);
 			turns->turn_inited = true;
 
 			turns->interp_state = interp_request;
@@ -76,19 +76,18 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 				v2s peekPos = AddS(entity -> p, considered_dirs[direction]);
 
 				//valid move pos
-				if (IsWorldPointEmpty(state, peekPos))
+				if (IsWorldPointEmpty(state, peekPos) && (turns->action_points > 0))
 				{
-					if (turns->action_points > 0) {
-			            MoveEntity(map, entity, considered_dirs[direction]);
-			            ApplyTileEffects(peekPos, state, entity);
-					}
-
+			        MoveEntity(map, entity, considered_dirs[direction]);
+			        ApplyTileEffects(peekPos, state, entity);
 					// NOTE(): Consume moves
 					turns->action_points--;
-					if (turns->action_points <= 0)
-						AcceptTurn(turns);
 				}
 			}
+
+			// NOTE(): End the turn if we run out of all action points.
+			if (turns->action_points <= 0)
+						AcceptTurn(turns);
 		}
 		else
 		{

@@ -9,9 +9,9 @@ fn s32 BeginTurn(game_world_t *World, entity_t *requestee)
 {
 	ProcessStatusEffects(requestee);
 
-	s32 action_point_count = 4;
+	s32 action_point_count = 3;
 	if (IsHostile(requestee))
-		action_point_count = 4 + (rand() % 2);
+		action_point_count = 2 + (rand() % 2);
 
 	return action_point_count;
 }

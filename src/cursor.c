@@ -1,4 +1,18 @@
-void DrawCursorArea(command_buffer_t *out, map_t *map, v2s center, int radius);
+void DrawCursorArea(command_buffer_t *out, map_t *map,v2s center, int radius) {
+    for (s32 y = center.y - radius; y <= center.y + radius; ++y)
+    {
+        for (s32 x = center.x - radius; x <= center.x + radius; ++x)
+        {
+
+            v2s point = V2S(x,y);
+
+            if (IsInsideCircle(point, V2S(1,1), center, radius))
+            {
+                RenderIsoTile(out, map, point, SetAlpha(Pink(), 0.5f), true, 0);
+            }
+        }
+    }
+}
 
 fn void	DoCursor(
 	command_buffer_t *out,
@@ -69,6 +83,8 @@ fn void	DoCursor(
 			s32 health = MaxS32(0, Target->health - User->attack_dmg);
 			Target->health = (s16)health;
 			cursor->active = false;
+
+			ConsumeActionPoints(queue, 1);
 		}
 
 		RenderIsoTile(out, map, cursor->p, SetAlpha(Pink(), 0.8f), true, 0);
@@ -76,20 +92,4 @@ fn void	DoCursor(
 		if (WentDown(cons.cancel))
 			cursor->active = false;
 	}
-}
-
-void DrawCursorArea(command_buffer_t *out, map_t *map,v2s center, int radius) {
-    for (s32 y = center.y - radius; y <= center.y + radius; ++y)
-    {
-        for (s32 x = center.x - radius; x <= center.x + radius; ++x)
-        {
-
-            v2s point = V2S(x,y);
-
-            if (IsInsideCircle(point, V2S(1,1), center, radius))
-            {
-                RenderIsoTile(out, map, point, SetAlpha(Pink(), 0.5f), true, 0);
-            }
-        }
-    }
 }

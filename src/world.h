@@ -131,7 +131,7 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log)
 	u16 temp_player_max_health = 100;
 	u16 temp_attack_dmg = 40;
 	CreateEntity(state->storage, V2S(10, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map, temp_player_max_health);
-	CreateEntity(state->storage, V2S(11, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map, temp_player_max_health);
+	//CreateEntity(state->storage, V2S(11, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map, temp_player_max_health);
 	state->camera_position = V2(0, 0);
 }
 
@@ -271,6 +271,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		//DrawPoint(out, Add(bitmap_p, bitmap->attachment), V2(1, 1), Red());
 
 		RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
+		RenderHealthBar(out, ScreenToIso(p), assets, entity);
 	}
 
 	//render static combat objects

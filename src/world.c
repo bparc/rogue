@@ -76,8 +76,8 @@ fn void RenderIsoCubeFilled(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 c
 fn void RenderHealthBar(command_buffer_t *out, v2 position, assets_t *assets, entity_t *entity) {
 		f32 health_percentage = (f32)entity->health / entity->max_health;
 
-		v2 bar_size = V2(40, 5);
-		v2 bar_position = Sub(position, V2(8.0f, 10.0f));
+		v2 bar_size = V2(35, 3);
+		v2 bar_position = Sub(position, V2(14.0f, 29.0f));
 
 		DrawRect(out, bar_position, bar_size, Black());
 		v2 health_bar_size = V2(bar_size.x * health_percentage, bar_size.y);
