@@ -93,6 +93,8 @@ typedef struct
 	f32 time_elapsed; // NOTE(): Time from the start of the turn in seconds.
 } turn_queue_t;
 
+
+
 // NOTE(): Directions
 static const v2s cardinal_directions[4] = { {0, -1}, {+1, 0}, {0, +1}, {-1, 0} };
 static const v2s diagonal_directions[4] = { {-1, -1}, {1, -1}, {1, +1}, {-1, +1}};
@@ -190,7 +192,6 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 	// NOTE(): Render tiles.
 
-	s32 random_variant = 0;
 	for (s32 y = 0; y < map->y; y++)
 	{
 		for (s32 x = 0; x < map->x; x++)
@@ -213,10 +214,10 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				#if RENDER_TILE_BITMAPS
 				if (value == 1)
 				{
-					random_variant = SRandInt(random_variant);
-					s32 bitmap_index = (random_variant % ArraySize(assets->Tiles));
 
-					bitmap_t *bitmap = &assets->Tiles[bitmap_index];
+					//hardcoded for now
+					bitmap_t *bitmap = &assets->Tilesets[0].Tiles[0][0];
+					
 					v2 p = MapToScreen(map, V2S(x, y));
 					p = ScreenToIso(p);
 					p = Sub(p, Scale(bitmap->scale, 0.5f));
@@ -232,6 +233,24 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				}
 			}
 		}
+	}
+
+	//render static combat objects
+	for (s32 index = 0; index < storage->statics_num; index++)
+	{
+		static_entity_t *entity = &storage->static_entities[index];
+
+		v4 color = Lavender();
+		bitmap_t *bitmap = &assets->Traps[1];
+
+		v2s p = entity->p; 
+		v2 bitmap_p = MapToScreen(state->map, p); 
+
+		bitmap_p = ScreenToIso(bitmap_p);
+		v2 bitmap_sz = bitmap->scale;
+		bitmap_p = Sub(bitmap_p, Scale(bitmap_sz, 0.5f)); // center
+
+		DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
 	}
 
 	// NOTE(): Render entities.
@@ -276,21 +295,5 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		RenderHealthBar(out, ScreenToIso(p), assets, entity);
 	}
 
-	//render static combat objects
-	for (s32 index = 0; index < storage->statics_num; index++)
-	{
-		static_entity_t *entity = &storage->static_entities[index];
-
-		v4 color = Lavender();
-		bitmap_t *bitmap = &assets->Traps[1];
-
-		v2s p = entity->p; 
-		v2 bitmap_p = MapToScreen(state->map, p); 
-
-		bitmap_p = ScreenToIso(bitmap_p);
-		v2 bitmap_sz = bitmap->scale;
-		bitmap_p = Sub(bitmap_p, Scale(bitmap_sz, 0.5f)); // center
-
-		DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
-	}
+	
 }
