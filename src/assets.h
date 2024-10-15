@@ -1,4 +1,4 @@
-#define TILE_POSITION_COUNT 8
+#define TILE_POSITION_COUNT 14
 #define TILE_VARIATIONS_COUNT_MAX 5
 
 typedef struct {
@@ -23,14 +23,28 @@ typedef struct
 
 
 typedef enum {
-	tile_center = 0,
+	tile_center = 0, //all 4 cardinal surrounding tiles connect to this
 	tile_full,
+
+	//three sides to connect with one being the border _direction
+	tile_border_top,
+	tile_border_bottom,
+	tile_border_left,
+	tile_border_right,
+
+	//two sides connect, two borders facing _direction
 	tile_corner_top,
 	tile_corner_bottom,
-	tile_border_top_left,
-	tile_border_top_right,
-	tile_border_bottom_left,
-	tile_border_bottom_right //could be mirrored tile_border_down_left
+	tile_corner_left,
+	tile_corner_right,
+
+	//one side connects at _direction, three are unconnected
+	tile_single_connect_top,
+	tile_single_connect_bottom,
+	tile_single_connect_left,
+	tile_single_connect_right,
+
+
 	
 } tile_position;
 
@@ -50,18 +64,25 @@ fn b32 LoadAssets(assets_t *assets)
 	//assets->Slime = LoadBitmap();
 	assets->Loaded = true;
 	Bitmap(assets, &assets->Slime, "assets/enemies/slime_small_front.png", 0, 0);
-	Bitmap(assets, &assets->SlimeBig, "assets/enemies/slime_big_front.png", 0, 0);	//tiles loading (do it automatically somehow)
+	Bitmap(assets, &assets->SlimeBig, "assets/enemies/slime_big_front.png", 0, 0);	//TODO: tiles loading (do it automatically somehow)
 	Bitmap(assets, &assets->Tilesets[0].Tiles[0][0], "assets/tiles/planet_1/low_center_1.png", 0, 0);
 	Bitmap(assets, &assets->Tilesets[0].Tiles[0][1], "assets/tiles/planet_1/low_center_2.png", 0, 0);
 	Bitmap(assets, &assets->Tilesets[0].Tiles[1][0], "assets/tiles/planet_1/low_full_1.png", 0, 0);
-	Bitmap(assets, &assets->Tilesets[0].Tiles[2][0], "assets/tiles/planet_1/low_corner_top_1.png", 0, 0);
 
-	
-	Bitmap(assets, &assets->Tilesets[0].Tiles[3][0], "assets/tiles/planet_1/low_corner_bottom_1.png", 0, 0);
-	Bitmap(assets, &assets->Tilesets[0].Tiles[4][0], "assets/tiles/planet_1/low_border_top_left_1.png", 0, 0);
-	Bitmap(assets, &assets->Tilesets[0].Tiles[5][0], "assets/tiles/planet_1/low_border_top_right_1.png", 0, 0);
-	Bitmap(assets, &assets->Tilesets[0].Tiles[6][0], "assets/tiles/planet_1/low_border_bottom_left_1.png", 0, 0);
-	Bitmap(assets, &assets->Tilesets[0].Tiles[7][0], "assets/tiles/planet_1/low_border_bottom_right_1.png", 0, 0);
+	Bitmap(assets, &assets->Tilesets[0].Tiles[2][0], "assets/tiles/planet_1/low_border_top_1.png", 0, 0);
+	Bitmap(assets, &assets->Tilesets[0].Tiles[3][0], "assets/tiles/planet_1/low_border_bottom_1.png", 0, 0);
+	Bitmap(assets, &assets->Tilesets[0].Tiles[4][0], "assets/tiles/planet_1/low_border_left_1.png", 0, 0);
+	Bitmap(assets, &assets->Tilesets[0].Tiles[5][0], "assets/tiles/planet_1/low_border_right_1.png", 0, 0);
+
+	Bitmap(assets, &assets->Tilesets[0].Tiles[6][0], "assets/tiles/planet_1/low_corner_top_1.png", 0, 0);
+	Bitmap(assets, &assets->Tilesets[0].Tiles[7][0], "assets/tiles/planet_1/low_corner_bottom_1.png", 0, 0);
+	Bitmap(assets, &assets->Tilesets[0].Tiles[8][0], "assets/tiles/planet_1/low_corner_left_1.png", 0, 0);
+	Bitmap(assets, &assets->Tilesets[0].Tiles[9][0], "assets/tiles/planet_1/low_corner_right_1.png", 0, 0);
+
+	Bitmap(assets, &assets->Tilesets[0].Tiles[10][0], "assets/tiles/planet_1/low_three_border_no_top_1.png", 0, 0);
+	Bitmap(assets, &assets->Tilesets[0].Tiles[11][0], "assets/tiles/planet_1/low_three_border_no_bottom_1.png", 0, 0);
+	Bitmap(assets, &assets->Tilesets[0].Tiles[12][0], "assets/tiles/planet_1/low_three_border_no_left_1.png", 0, 0);
+	Bitmap(assets, &assets->Tilesets[0].Tiles[13][0], "assets/tiles/planet_1/low_three_border_no_right_1.png", 0, 0);
 
 
 	Bitmap(assets, &assets->Player[0], "assets/player/player_standing_front.png", 0, 0);
