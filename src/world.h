@@ -354,10 +354,10 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 					//DrawRectOutline(out, p, bitmap->scale, Red());
 				}
 				#endif
-
-				if (GetTileTrapType(map, x, y) != trap_type_none){
+				u8 tileValue = GetTileTrapType(map, x, y);
+				if ( tileValue != trap_type_none){
 						//RenderIsoTile(out, map, V2S(x, y), LightGrey(), true, 0);
-						bitmap_t* bitmap = &assets->Traps[2];
+						bitmap_t* bitmap = &assets->Traps[tileValue - 1];
 						
 						v2 p = MapToScreen(map, V2S(x, y));
 						p = ScreenToIso(p);

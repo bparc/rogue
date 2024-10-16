@@ -123,9 +123,9 @@ fn b32 LoadAssets(assets_t *assets, bmfont_t *font)
 	Bitmap(assets, &assets->LowTiles[0], "assets/tiles/planet_1/low_center_1.png", 0, 0);
 	Bitmap(assets, &assets->LowTiles[1], "assets/tiles/planet_1/low_center_2.png", 0, 0);
 
-	Bitmap(assets, &assets->Traps[0], "assets/environment/trap_poison.png", 0, 0);
-	Bitmap(assets, &assets->Traps[1], "assets/environment/trap_explosive.png", 0, 0);
-	Bitmap(assets, &assets->Traps[2], "assets/environment/trap_spike.png", 0, 0);
+	Bitmap(assets, &assets->Traps[0], "assets/environment/trap_spike.png", 0, 0);
+	Bitmap(assets, &assets->Traps[1], "assets/environment/trap_poison.png", 0, 0);
+	Bitmap(assets, &assets->Traps[2], "assets/environment/trap_explosive.png", 0, 0);
 
 	Bitmap(assets, &assets->SlimeBall, "assets/enemies/slime_ranged_attack.png", 0, 0);
 
