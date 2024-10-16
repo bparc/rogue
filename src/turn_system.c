@@ -73,7 +73,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		Assert(queue->turn_inited);
 		// NOTE(): The turn will "stall" until AcceptTurn() is called.
 
-		// NOTE(): DEBUG draw the entity's"discrete" p.
+		// NOTE(): DEBUG draw the "discrete" p.
 		#if _DEBUG
 		RenderIsoTile(out, map, entity->p, Red(), (queue->interp_state == interp_wait_for_input), 0);
 		#endif
