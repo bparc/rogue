@@ -7,7 +7,7 @@ fn void BreakModePanel(turn_queue_t *queue, const virtual_controls_t *cons)
 		"ACT %i | BRK (F1): %s %s %s",
 		(queue->action_points),
 		(queue->break_mode_enabled ? "ON" : "OFF"),
-		(queue->interp_state == interp_wait_for_input) ? " | CONTINUE (F2) ->" : "",
+		(queue->interp_state == interp_wait_for_input) ? " | STEP (F2) ->" : "",
 		(queue->interp_state == interp_wait_for_input) ? interpolator_state_t_names[queue->requested_step] : "");
 
 	if ((queue->interp_state == interp_wait_for_input) && WentDown(cons->debug02))
