@@ -173,7 +173,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 					 	else
 					 	{
 					 		s32 attempt = AttemptAttack(state, entity);
-							ChangeQueueState(queue, attempt ? interp_attack : interp_accept);	
+							ChangeQueueState(queue, attempt ? interp_attack : interp_accept);
 					 	}
 					}
 				} break;
@@ -188,7 +188,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 					{
 						AcceptTurn(queue);
 						#ifdef ENABLE_TURN_SYSTEM_DEBUG_LOGS
-						DebugLog("TurnKernel(): turn finished in %.2f seconds", queue->time_elapsed);
+						DebugLog("turn finished in %.2f seconds", queue->time_elapsed);
 						#endif
 					}
 				} break;
