@@ -320,7 +320,6 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				if (value == 1)
 				{
 
-					//hardcoded for now
 					u8 tile_type = chooseTileBitmap(state, x, y);
 					bitmap_t* bitmap = &assets->Tilesets[0].LowTiles[tile_type][0];
 					
@@ -332,7 +331,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 					//DrawRectOutline(out, p, bitmap->scale, Red());
 				}
 				#endif
-
+				
 				#if ENABLE_DEBUG_PATHFINDING
 				if (!height)
 				{
@@ -346,6 +345,18 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				
 				if (GetTileTrapType(map, x, y) != trap_type_none)
 					RenderIsoTile(out, map, V2S(x, y), LightGrey(), true, 0);
+
+				u8 tileValue = GetTileTrapType(map, x, y);
+				if ( tileValue != trap_type_none){
+						//RenderIsoTile(out, map, V2S(x, y), LightGrey(), true, 0);
+						bitmap_t* bitmap = &assets->Traps[tileValue - 1];
+						
+						v2 p = MapToScreen(map, V2S(x, y));
+						p = ScreenToIso(p);
+						p = Sub(p, Scale(bitmap->scale, 0.5f));
+						//p.x -= bitmap->scale.x * 0.5f;
+						DrawBitmap(out, p, bitmap->scale, PureWhite(), bitmap);
+				}
 			}
 		}
 	}

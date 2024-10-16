@@ -5,7 +5,7 @@ static const v2s diagonal_directions[4] = { {-1, -1}, {1, -1}, {1, +1}, {-1, +1}
 typedef enum
 {
 	trap_type_none = 0,
-	trap_type_physical,
+	trap_type_physical = 1,
 	trap_type_poison,
 } trap_type_t;
 

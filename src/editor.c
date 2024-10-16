@@ -71,7 +71,7 @@ fn void MakeSimpleMap(game_world_t *world)
 					}
 					break;
 				}
-				case 'T': CreatePoisonTrapI(world, x, y); break;
+				case 'T': SetTileTrapType(world->map, V2S(x, y), trap_type_poison); break;
 				case 'P': SetTileTrapType(world->map, V2S(x, y), trap_type_physical); break;
 				default:
 					value = 0; break;
