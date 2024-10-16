@@ -24,6 +24,7 @@ typedef struct
 	bitmap_t Player[4];
 	bitmap_t LowTiles[2];	
 	bitmap_t Traps[3];
+	bitmap_t SlimeBall;
 
 	combat_ui_t CombatUI;
 	terrain_tileset_t Tilesets[1]; //replace with macro PLANETS_MAX_VARIATIONS or something
@@ -114,6 +115,8 @@ fn b32 LoadAssets(assets_t *assets, bmfont_t *font)
 	Bitmap(assets, &assets->Traps[0], "assets/environment/trap_explosive.png", 0, 0);
 	Bitmap(assets, &assets->Traps[1], "assets/environment/trap_explosive.png", 0, 0);
 	Bitmap(assets, &assets->Traps[2], "assets/environment/trap_spike.png", 0, 0);
+
+	Bitmap(assets, &assets->SlimeBall, "assets/enemies/slime_ranged_attack.png", 0, 0);
 
 	return assets->Loaded;
 }

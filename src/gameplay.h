@@ -39,8 +39,8 @@ fn void InflictDamage(entity_t *entity, u16 damage) {
         // todo: handle entity death
     } else {
         entity->health -= damage;
-        entity->blink_time = 1.0f;
     }
+    entity->blink_time = 1.0f;
 }
 
 fn void AddStatusEffect(entity_t *entity, status_effect_type_t status_effect, s32 duration) {

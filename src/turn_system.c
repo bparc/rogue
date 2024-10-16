@@ -38,7 +38,7 @@ fn inline s32 ChangeQueueState(turn_queue_t *queue, interpolator_state_t state)
 	return result;
 }
 
-fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out)
+fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
 	SetGlobalOffset(out, state->camera_position); // NOTE(): Let's pass the camera position via the PushRenderOutput call instead of this SetGlobalOffset stuff.
 	// NOTE(): Process the current turn
@@ -182,7 +182,18 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 				} break;
 			case interp_attack:
 				{
-					if ((queue->time >= 0.5f))
+					entity_t *target = GetEntity(storage, queue->attack_target);
+					b32 finish = true;
+
+					if (target)
+					{
+						f32 distance = Distance(entity->deferred_p, target->deferred_p);
+						f32 t = queue->time / (distance * 0.005f);
+						finish = t >= 1.0f;
+						AnimateAttack(state, entity, target, t, dt, assets, out, finish);
+					}
+
+					if (finish)
 						ChangeQueueState(queue, interp_accept);
 				} break;
 			case interp_accept:

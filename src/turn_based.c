@@ -8,12 +8,12 @@ fn void EstablishTurnOrder(game_world_t *World, turn_queue_t *queue, entity_stor
 	DefaultTurnOrder(queue, storage);
 }
 
-fn s32 BeginTurn(game_world_t *World, entity_t *requestee)
+fn s32 BeginTurn(game_world_t *World, entity_t *entity)
 {
-	ProcessStatusEffects(requestee);
+	ProcessStatusEffects(entity);
 
 	s32 action_point_count = 3;
-	if (IsHostile(requestee))
+	if (IsHostile(entity))
 		action_point_count = 2 + (rand() % 2);
 
 	return action_point_count;
@@ -57,6 +57,7 @@ fn s32 AttemptAttack(game_world_t *World, entity_t *requestee)
 	// took place, but we'll see.
 	s32 result = true;
 
+	// TODO(): This should be like, a nearest player in range.
 	entity_t *target = 0;
 	for (s32 index = 0; index < World->storage->num; index++)
 	{
@@ -70,9 +71,24 @@ fn s32 AttemptAttack(game_world_t *World, entity_t *requestee)
 
 	if (target)
 	{
-		DebugLog("target found #%i", target->id);
-		InflictDamage(target, requestee->attack_dmg);
 		result = true;
+		DebugLog("target found #%i", target->id);
 	}
 	return result;
+}
+
+fn void AnimateAttack(game_world_t *World, entity_t *entity, entity_t *target, f32 time, f32 dt, assets_t *assets, command_buffer_t *out, b32 inflict_damage){
+	v2 from = entity->deferred_p;
+	v2 to = Sub(target->deferred_p, V2(20.0f, 20.0f));
+
+	// TODO(): Move this out to RenderCenteredIsoBitmap() or whatnot.
+	bitmap_t *bitmap = &assets->SlimeBall;
+	v2 bitmap_p = Lerp2(from, to, time);
+	bitmap_p = ScreenToIso(bitmap_p);
+	bitmap_p = Sub(bitmap_p, Scale(bitmap->scale, 0.5f));
+
+	if (inflict_damage)
+		InflictDamage(target, entity->attack_dmg);
+
+	DrawBitmap(out, bitmap_p, bitmap->scale,  PureWhite(), bitmap);
 }

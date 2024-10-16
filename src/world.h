@@ -93,6 +93,7 @@ typedef struct
 	// Maybe we could move this out into
 	// some kind of "turn state" to make this a little bit easier.
 	v2s starting_p;
+	entity_id_t attack_target;
 	interpolator_state_t interp_state;
 	f32 time; // NOTE(): A variable within 0.0 to 1.0 range for interpolating values.
 	s32 action_points;
@@ -249,7 +250,7 @@ fn u8 chooseTileBitmap(game_world_t* world, s32 x, s32 y) {
 fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log, assets_t *assets, virtual_controls_t cons, command_buffer_t *out)
 {
 	BeginGameWorld(state);
-	TurnKernel(state, state->storage, state->map, state->turns, dt, &input, cons, log, out);	
+	TurnKernel(state, state->storage, state->map, state->turns, dt, &input, cons, log, out, assets);	
 	EndGameWorld(state);
 	HUD(Debug.out, state, state->turns, state->storage, assets);
 }
@@ -361,7 +362,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		bitmap_p = Sub(bitmap_p, Scale(bitmap_sz, 0.5f)); //center bitmap
 		bitmap_p.y -= bitmap_sz.y * 0.25f; //center bitmap "cube"
 
-		// NOTE(): Animate
+		// NOTE(): Flickering
 		entity->blink_time -= dt * 1.5f;
 		if (entity->blink_time <= 0)
 			entity->blink_time = 0;
@@ -374,9 +375,8 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 			if (fmodf(t, blink_rate) >= (blink_rate * 0.5f))
 				bitmap_color = Red();
 			else
-				bitmap_color = Blue();
+				bitmap_color = SetAlpha(Blue(), 0.9f);
 		}
-		
 
 		DrawBitmap(out, bitmap_p, bitmap_sz, bitmap_color, bitmap);
 
