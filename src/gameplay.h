@@ -36,6 +36,7 @@ fn void InflictDamage(entity_t *entity, u16 damage) {
 
     if (damage >= entity->health) {
         entity->health = 0;
+        entity->flags |= entity_flags_deleted;
         // todo: handle entity death
     } else {
         entity->health -= damage;

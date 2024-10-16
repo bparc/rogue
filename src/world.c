@@ -144,7 +144,7 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, 
 
 		result->size = size;
 
-		result->id = storage->next_id++;
+		result->id = (0xff + (storage->next_id++));
 		result->flags = flags;
 		result->health = health_points;
 		result->attack_dmg = attack_dmg;
@@ -198,11 +198,14 @@ fn b32 IsTrap(const static_entity_t *entity)
 
 fn entity_t *GetEntity(entity_storage_t *storage, entity_id_t id)
 {
-	for (s32 index = 0; index < storage->num; index++)
+	if (id > 0)
 	{
-		entity_t *entity = &storage->entities[id];
-		if (entity->id == id)
-			return entity;
+		for (s32 index = 0; index < storage->num; index++)
+		{
+			entity_t *entity = &storage->entities[index];
+			if (entity->id == id)
+				return entity;
+		}
 	}
 	return (0);
 }
@@ -303,7 +306,8 @@ fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)
 	if (queue->num > 0)
 	{
 		result = GetEntity(storage, queue->entities[queue->num - 1]);
-		Assert(result);
+		if (!result)
+			queue->num--; // NOTE(): The ID is invalid, pull it from the queue.
 	}
 	return result;
 }

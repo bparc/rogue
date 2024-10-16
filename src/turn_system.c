@@ -1,10 +1,11 @@
-fn void ControlPanel(turn_queue_t *queue, const virtual_controls_t *cons)
+fn void ControlPanel(turn_queue_t *queue, const virtual_controls_t *cons, entity_storage_t *storage)
 {
 	if (WentDown(cons->debug01)) // Toggle
 		queue->break_mode_enabled = !queue->break_mode_enabled;
 
 	DebugPrint(
-		"ACT %i | BRK (F1): %s %s %s",
+		"NUM %i | ACT %i | BRK (F1): %s %s %s",
+		(storage->num),
 		(queue->action_points),
 		(queue->break_mode_enabled ? "ON" : "OFF"),
 		(queue->interp_state == interp_wait_for_input) ? " | STEP (F2) ->" : "",
@@ -38,14 +39,23 @@ fn inline s32 ChangeQueueState(turn_queue_t *queue, interpolator_state_t state)
 	return result;
 }
 
+fn void GarbageCollect(entity_storage_t *storage)
+{
+	// TODO(): This will mess up the turn oder...
+	#if 1
+	for (s32 index = 0; index < storage->num; index++)
+	{
+		entity_t *entity = &storage->entities[index];
+		if (entity->flags & entity_flags_deleted)
+			storage->entities[index--] = storage->entities[--storage->num];
+	}
+	#endif
+}
+
 fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
 	SetGlobalOffset(out, state->camera_position); // NOTE(): Let's pass the camera position via the PushRenderOutput call instead of this SetGlobalOffset stuff.
 	// NOTE(): Process the current turn
-
-	// TODO(Arc): IMPORTANT! Invalidated IDs aren't handled properly by
-	// the queue! This has to be fixed when we add the ability to
-	// remove an entity from the storage.
 
 	entity_t *entity = NextInOrder(queue, storage);
 	if (entity == 0)
@@ -97,7 +107,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			b32 cursor_mode_active = state->cursor->active; // NOTE(): The cursor_active flag needs to be stored *before* calling DoCursor. This is actually the correct order. For reasons.
 
 			DoCursor(out, entity, cons, input_valid,
-				direction, considered_dirs, queue, map, storage, log, state->cursor);
+				direction, considered_dirs, queue, map, storage, log, state->cursor, state->slot_bar);
 			
 			#if _DEBUG // NOTE(): Render the considered directions on the map.
 			v2s base_p = cursor_mode_active ? state->cursor->p : entity->p;
@@ -118,6 +128,14 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			        ApplyTileEffects(peekPos, state, entity);
 					// NOTE(): Consume moves
 					queue->action_points--;
+
+#if ENABLE_DEBUG_PATHFINDING
+					static u8 debug_memory[MB(4)] = {};
+					memory_t memory = {0};
+					memory.size = ArraySize(debug_memory);
+					memory._memory = debug_memory;
+					ComputeDistances(state->map, entity->p.x, entity->p.y, memory);
+#endif
 				}
 			}
 
@@ -125,9 +143,8 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			if (queue->action_points <= 0)
 						AcceptTurn(queue);
 		}
-		else
+		else // NOTE(): Animator
 		{
-			// NOTE(): Animator
 			f32 speed_mul = TURN_SPEED_NORMAL;
 			queue->time += dt * speed_mul;
 			queue->time_elapsed += dt;
@@ -175,8 +192,16 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 					 	}
 					 	else
 					 	{
-					 		s32 attempt = AttemptAttack(state, entity);
-							ChangeQueueState(queue, attempt ? interp_attack : interp_accept);
+					 		entity_id_t target = AttemptAttack(state, entity);
+					 		if (target)
+					 		{
+								ChangeQueueState(queue, interp_attack);
+								queue->attack_target = target;
+							}
+							else
+							{
+								ChangeQueueState(queue, interp_accept);
+							}
 					 	}
 					}
 				} break;
@@ -209,4 +234,6 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			}
 		}
 	}
+
+	GarbageCollect(storage);
 }

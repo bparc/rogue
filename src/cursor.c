@@ -19,7 +19,8 @@ fn void	DoCursor(
 	entity_t *User, // the entity that currently uses the cursor
 	virtual_controls_t cons,
 	b32 move_requested, s32 direction, const v2s dirs[4], // the player wants to move
-	turn_queue_t *queue, map_t *map, entity_storage_t *storage, log_t *log, cursor_t *cursor)
+	turn_queue_t *queue, map_t *map, entity_storage_t *storage, log_t *log, cursor_t *cursor,
+	slot_bar_t bar)
 {
 	Assert(User);
 	if ((cursor->active == false) && WentDown(cons.confirm))
@@ -32,7 +33,6 @@ fn void	DoCursor(
 
 	if (cursor->active)
 	{
-		//draw cursorable area
 		DrawCursorArea(out, map, User->p, 5);
 		if (move_requested){
 			v2s requestedPos = AddS(cursor->p, dirs[direction]);

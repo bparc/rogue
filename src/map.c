@@ -20,7 +20,7 @@ fn trap_type_t GetTileTrapType(const map_t *map, s32 x, s32 y)
 
 fn b32 IsTraversable(map_t *map, s32 x, s32 y)
 {
-	b32 result = (GetTileValue(map, x, y) > 0);
+	b32 result = (GetTileValue(map, x, y) == 1);
 	return result;
 }
 

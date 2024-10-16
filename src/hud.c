@@ -44,6 +44,32 @@ fn void RenderSlotBar(game_world_t *state, command_buffer_t *out, assets_t *asse
     }
 }
 
+fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets)
+{
+    f32 y = 100.0f;
+    v2 frame_sz = V2(64.f, 64.f);
+
+    // Renderowanie kolejki
+    for (s32 index = queue->num - 1; index >= 0; index--)
+    {
+        entity_t *entity = GetEntity(storage, queue->entities[index]);
+        if (entity)
+        {
+            bitmap_t *bitmap = IsHostile(entity) ? &assets->Slime : &assets->Player[0];         
+            v4 frame_color = (index == (queue->num - 1)) ? Red() : Black();
+
+            v2 p = V2(8.0f, 100.0f + y);
+            DrawRect(out, p, frame_sz, Black());
+            DrawRectOutline(out, p, frame_sz, frame_color);
+            if (bitmap)
+                DrawBitmap(out, Add(p, V2(0.0f, 5.0f)), frame_sz, PureWhite(), bitmap);
+            y += (frame_sz.y + 5.0f);
+        }
+    }
+
+    RenderSlotBar(state, out, assets);
+}
+
 // todo: waiting for comabt revamp before finishing this method
 /*fn void ActivateSlotAction(game_world_t *state, s32 slot_number, command_buffer_t *out) {
     if (slot_number < 1 || slot_number > 9)
