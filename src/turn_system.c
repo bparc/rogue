@@ -1,7 +1,3 @@
-// TODO(): It could be usefull
-// to have some kind of "step-by-step"/"turn-by-turn"
-// debugging feature.
-
 fn void BreakModePanel(turn_queue_t *queue, const virtual_controls_t *cons)
 {
 	if (WentDown(cons->debug01)) // Toggle
