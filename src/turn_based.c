@@ -14,7 +14,7 @@ fn s32 BeginTurn(game_world_t *World, entity_t *requestee)
 
 	s32 action_point_count = 3;
 	if (IsHostile(requestee))
-		action_point_count = 6 + (rand() % 2);
+		action_point_count = 2 + (rand() % 2);
 
 	return action_point_count;
 }
@@ -37,7 +37,7 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 			cost = 1; //only costs when can be moved
 			MoveEntity(World->map, requestee, chosenDir);
 			ApplyTileEffects(requestee->p, World, requestee);
-			DebugLog("moving %i %i", peekPos.x, peekPos.y);
+			//DebugLog("moving %i %i", peekPos.x, peekPos.y);
 			break;
 		}
 
@@ -58,9 +58,20 @@ fn s32 AttemptAttack(game_world_t *World, entity_t *requestee)
 	s32 result = true;
 
 	entity_t *target = 0;
+	for (s32 index = 0; index < World->storage->num; index++)
+	{
+		entity_t *entity = &World->storage->entities[index];
+		if (entity->flags & entity_flags_controllable)
+		{
+			target = entity;
+			break;
+		}
+	}
+
 	if (target)
 	{
-		// InflictDamage(requestee, target);
+		DebugLog("target found #%i", target->id);
+		InflictDamage(target, requestee->attack_dmg);
 		result = true;
 	}
 	return result;

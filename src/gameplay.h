@@ -11,6 +11,7 @@ fn void ApplyTileEffects(v2s peekPos, game_world_t *state, entity_t *entity) {
         ApplyTrapEffects(tile, entity);
     }
 
+
     // todo: cover mechanics stuff
     //if (tile->cover_type != cover_type_none) {
     //	ApplyCoverBonus(entity);
@@ -38,6 +39,7 @@ fn void InflictDamage(entity_t *entity, u16 damage) {
         // todo: handle entity death
     } else {
         entity->health -= damage;
+        entity->blink_time = 1.0f;
     }
 }
 

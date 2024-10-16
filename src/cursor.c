@@ -74,14 +74,7 @@ fn void	DoCursor(
 
 		if (Target && WentDown(cons.confirm))
 		{
-			LogLn(log, "Attacked entity %i for %i damage!", (s32)Target->id, (s32)User->attack_dmg);
-			// Target->p.x -= 4;
-
-			// NOTE(): The health is stored in a signed integer -
-			// we need to compute in an intermediate register
-			// so that we won't underflow.
-			s32 health = MaxS32(0, Target->health - User->attack_dmg);
-			Target->health = (s16)health;
+			InflictDamage(Target, User->attack_dmg);
 			cursor->active = false;
 
 			ConsumeActionPoints(queue, 1);

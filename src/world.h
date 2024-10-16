@@ -34,12 +34,13 @@ typedef struct
 
 	v2s size; //size in squares, 1x1, 2x1, 1x2, etc
 
+	f32 blink_time;
 	u16 health;
 	u16 max_health;
 	u16 attack_dmg;
 
 	status_effect_t status_effects[MAX_STATUS_EFFECTS];
-	
+
 } entity_t;
 
 typedef struct
@@ -60,8 +61,6 @@ typedef struct
 	static_entity_t static_entities[1024];
 	u64 next_id;
 } entity_storage_t;
-
-
 
 // NOTE(): Stores the turns as an list of entity ids
 // in a *reverse* order (the last turn in the queue will be executed first).
@@ -124,8 +123,8 @@ typedef struct
 } game_world_t;
 
 #include "world.c"
-#include "cursor.c"
 #include "gameplay.h"
+#include "cursor.c"
 #include "turn_based.c"
 #include "turn_system.c"
 
@@ -157,7 +156,7 @@ fn void EndGameWorld(game_world_t *state)
 fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets)
 {
 	f32 y = 100.0f;
-	v2 frame_sz = V2(42.f, 42.f);
+	v2 frame_sz = V2(64.f, 64.f);
 
 	for (s32 index = queue->num - 1; index >= 0; index--)
 	{
@@ -168,10 +167,10 @@ fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, ent
 			v4 frame_color = (index == (queue->num - 1)) ? Red() : Black();
 
 			v2 p = V2(8.0f, 100.0f + y);
-			DrawRect(out, p, frame_sz, V4(0.0f, 0.0f, 0.0f, 0.5f));
+			DrawRect(out, p, frame_sz, Black());
 			DrawRectOutline(out, p, frame_sz, frame_color);
 			if (bitmap)
-				DrawBitmap(out, p, frame_sz, PureWhite(), bitmap);
+				DrawBitmap(out, Add(p, V2(0.0f, 5.0f)), frame_sz, PureWhite(), bitmap);
 		}
 		y += (frame_sz.y + 5.0f);
 	}
@@ -355,13 +354,31 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 			cube_bb_sz = V2(64.0f, 64.0f);
 		}
 
+		// NOTE(): Bitmap
+		v4 bitmap_color = PureWhite();
 		v2 bitmap_sz = bitmap->scale;
-		
 		bitmap_p = ScreenToIso(bitmap_p);
 		bitmap_p = Sub(bitmap_p, Scale(bitmap_sz, 0.5f)); //center bitmap
 		bitmap_p.y -= bitmap_sz.y * 0.25f; //center bitmap "cube"
 
-		DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
+		// NOTE(): Animate
+		entity->blink_time -= dt * 1.5f;
+		if (entity->blink_time <= 0)
+			entity->blink_time = 0;
+		if (entity->blink_time > 0)
+		{
+			f32 t = entity->blink_time;
+			t = t * t;
+
+			f32 blink_rate = 0.4f;
+			if (fmodf(t, blink_rate) >= (blink_rate * 0.5f))
+				bitmap_color = Red();
+			else
+				bitmap_color = Blue();
+		}
+		
+
+		DrawBitmap(out, bitmap_p, bitmap_sz, bitmap_color, bitmap);
 
 
 		RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
