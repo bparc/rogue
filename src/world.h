@@ -290,7 +290,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 					//hardcoded for now
 					u8 tile_type = chooseTileBitmap(state, x, y);
-					bitmap_t* bitmap = &assets->Tilesets[0].Tiles[tile_type][0];
+					bitmap_t* bitmap = &assets->Tilesets[0].LowTiles[tile_type][0];
 					
 					v2 p = MapToScreen(map, V2S(x, y));
 					p = ScreenToIso(p);
