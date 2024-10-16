@@ -129,6 +129,19 @@ fn v2 Lerp2(v2 a, v2 b, f32 t)
 	return result;
 }
 
+fn v2 EaseIn2(v2 a, v2 b, f32 t)
+{
+	v2 result = Lerp2(a, b, t * t * t);
+	return result;
+}
+
+fn v2 EaseOut2(v2 a, v2 b, f32  t)
+{
+	t = 1.0f - t;
+	v2 result = Lerp2(b, a, t * t);
+	return result;
+}
+
 fn v4 Lerp4(v4 a, v4 b, f32 t)
 {
 	v4 result = {0};

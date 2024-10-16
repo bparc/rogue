@@ -122,7 +122,7 @@ fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *ou
 	s32 y = (s32)cursor_p.y;
 	//DebugPrint("%i %i", x, y);
 
-	BreakModePanel(state->turns, cons);
+	ControlPanel(state->turns, cons);
 }
 
 int IsValidEntity(s32 globalX, s32 globalY, char *Data, s32 startX, s32 startY, v2s size, char entityChar) {

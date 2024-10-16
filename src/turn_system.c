@@ -1,4 +1,4 @@
-fn void BreakModePanel(turn_queue_t *queue, const virtual_controls_t *cons)
+fn void ControlPanel(turn_queue_t *queue, const virtual_controls_t *cons)
 {
 	if (WentDown(cons->debug01)) // Toggle
 		queue->break_mode_enabled = !queue->break_mode_enabled;
@@ -8,7 +8,7 @@ fn void BreakModePanel(turn_queue_t *queue, const virtual_controls_t *cons)
 		(queue->action_points),
 		(queue->break_mode_enabled ? "ON" : "OFF"),
 		(queue->interp_state == interp_wait_for_input) ? " | STEP (F2) ->" : "",
-		(queue->interp_state == interp_wait_for_input) ? interpolator_state_t_names[queue->requested_step] : "");
+		(queue->interp_state == interp_wait_for_input) ? interpolator_state_t_names[queue->requested_state] : "");
 
 	if ((queue->interp_state == interp_wait_for_input) && WentDown(cons->debug02))
 		queue->request_step = true;
@@ -28,7 +28,7 @@ fn inline s32 ChangeQueueState(turn_queue_t *queue, interpolator_state_t state)
 	else
 	{
 		queue->interp_state = interp_wait_for_input;
-		queue->requested_step = state;
+		queue->requested_state = state;
 		queue->request_step = false;
 	}
 	#else
@@ -75,7 +75,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 
 		// NOTE(): DEBUG draw the entity's"discrete" p.
 		#if _DEBUG
-		RenderIsoTile(out, map, entity->p, Red(), false, 0);
+		RenderIsoTile(out, map, entity->p, Red(), (queue->interp_state == interp_wait_for_input), 0);
 		#endif
 
 		// NOTE(): We're focusing the camera either on a cursor or on a player position,
@@ -136,9 +136,11 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			{
 			case interp_wait_for_input:
 				{
+					DebugWait(state, entity, queue->requested_state, out);
+
 					if (queue->request_step)
 					{
-						queue->interp_state = queue->requested_step;
+						queue->interp_state = queue->requested_state;
 						queue->time = 0.0f;
 					}
 				} break;
@@ -161,6 +163,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 					v2 a = GetTileCenter(map, queue->starting_p);
 					v2 b = GetTileCenter(map, entity->p);
 					entity->deferred_p = Lerp2(a, b, queue->time);
+
 					if ((queue->time >= 1.0f))
 					{
 						queue->time = 0.0f;

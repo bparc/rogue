@@ -102,7 +102,7 @@ typedef struct
 	f32 time_elapsed; // NOTE(): Time from the start of the turn in seconds.
 
 	s32 break_mode_enabled;
-	interpolator_state_t requested_step;
+	interpolator_state_t requested_state;
 	s32 request_step;
 } turn_queue_t;
 
