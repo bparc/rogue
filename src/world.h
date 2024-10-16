@@ -146,10 +146,7 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log)
 
 fn void BeginGameWorld(game_world_t *state)
 {
-	DebugPrint("Player Controls: WASD; Hold shift for diagonal input.");
-	DebugPrint("Cursor Controls: Press E to open the cursor. Press Q to close it.");
-	DebugPrint("Moves: %i", state->turns->action_points);
-	DebugPrint("Ent count: %i", state->storage->num);
+	//DebugPrint("Moves: %i", state->turns->action_points);
 }
 
 fn void EndGameWorld(game_world_t *state)

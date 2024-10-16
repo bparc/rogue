@@ -8,6 +8,7 @@ typedef struct {
 
 typedef struct
 {
+	bmfont_t *Font;
 	bitmap_t Slime;
 	bitmap_t SlimeBig;
 	bitmap_t Player[4];
@@ -59,10 +60,14 @@ fn void Bitmap(assets_t *assets, bitmap_t *bitmap, const char *path, f32 align_x
 	}
 }
 
-fn b32 LoadAssets(assets_t *assets)
+fn b32 LoadAssets(assets_t *assets, bmfont_t *font)
 {
 	//assets->Slime = LoadBitmap();
 	assets->Loaded = true;
+
+	if (font)
+		assets->Font = font;
+	
 	Bitmap(assets, &assets->Slime, "assets/enemies/slime_small_front.png", 0, 0);
 	Bitmap(assets, &assets->SlimeBig, "assets/enemies/slime_big_front.png", 0, 0);	//TODO: tiles loading (do it automatically somehow)
 	Bitmap(assets, &assets->Tilesets[0].Tiles[0][0], "assets/tiles/planet_1/low_center_1.png", 0, 0);

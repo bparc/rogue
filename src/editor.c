@@ -88,7 +88,7 @@ fn void MakeSimpleMap(game_world_t *world)
 
 fn void ReloadAssets(assets_t *assets, log_t *log)
 {
-	LoadAssets(assets);
+	LoadAssets(assets, NULL);
 	LogLn(log, "editor: reloading \"assets/\"");
 }
 

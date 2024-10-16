@@ -56,7 +56,7 @@ fn s32 Startup(client_t *state)
 	state->event_log = PushStruct(log_t, memory);
 	ZeroStruct(state->event_log);
 	
-	LoadAssets(&state->assets);
+	LoadAssets(&state->assets, &state->font);
 
 	s32 FontLoaded = LoadBMFont(&state->font, "assets/inconsolata.fnt");
 	Assert(FontLoaded);

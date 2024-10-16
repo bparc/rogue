@@ -149,6 +149,16 @@ fn void DrawCircleOutline(command_buffer_t *buffer, v2 p, f32 radius, v4 color)
 	}
 }
 
+fn void DrawFormat(command_buffer_t *buffer, const bmfont_t *font, v2 p, v4 color, const char *format, ...)
+{
+	char string[256] = "";
+	va_list args = {0};
+	va_start(args, format);
+	vsprintf(string, format, args);
+	va_end(args);
+	DrawText(buffer, font, p, string, color);
+}
+
 fn void DrawText(command_buffer_t *buffer, const bmfont_t *font, v2 p, const char string[], v4 color)
 {
 	command_text_t *command = (command_text_t *)PushCommand(buffer, command_t_text);
