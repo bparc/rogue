@@ -17,6 +17,12 @@ typedef enum {
 	static_entity_flags_stepon_trigger = 1 << 1,
 } static_entity_flags;
 
+typedef enum {
+	action_none = 0,
+	action_melee_attack,
+	action_ranged_attack,
+} action_type_t;
+
 typedef struct {
     status_effect_type_t type;
     s32 remaining_turns;
@@ -24,6 +30,18 @@ typedef struct {
 } status_effect_t;
 
 #define MAX_STATUS_EFFECTS 3
+
+typedef struct {
+	action_type_t action;
+	bitmap_t *icon;
+} slot_t;
+
+#define MAX_SLOTS 9
+
+typedef struct {
+	slot_t slots[MAX_SLOTS];
+	s32 selected_slot;
+} slot_bar_t;
 
 typedef struct
 {
@@ -121,6 +139,8 @@ typedef struct
 
 	map_t *map;
 	v2 camera_position;
+
+	slot_bar_t slot_bar;
 } game_world_t;
 
 #include "world.c"
@@ -128,6 +148,7 @@ typedef struct
 #include "cursor.c"
 #include "turn_based.c"
 #include "turn_system.c"
+#include "hud.h"
 
 fn void Setup(game_world_t *state, memory_t *memory, log_t *log)
 {
@@ -142,6 +163,15 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log)
 	CreateEntity(state->storage, V2S(10, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map, temp_player_max_health);
 	//CreateEntity(state->storage, V2S(11, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map, temp_player_max_health);
 	state->camera_position = V2(0, 0);
+
+	for (s32 i = 0; i < 9; i++) {
+		state->slot_bar.slots[i].action = action_none;
+		state->slot_bar.slots[i].icon = NULL;
+	}
+
+	state->slot_bar.slots[0].action = action_ranged_attack;
+
+	state->slot_bar.selected_slot = 1;
 }
 
 fn void BeginGameWorld(game_world_t *state)
@@ -159,6 +189,7 @@ fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, ent
 	f32 y = 100.0f;
 	v2 frame_sz = V2(64.f, 64.f);
 
+	// Renderowanie kolejki
 	for (s32 index = queue->num - 1; index >= 0; index--)
 	{
 		entity_t *entity = GetEntity(storage, queue->entities[index]);
@@ -175,6 +206,8 @@ fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, ent
 		}
 		y += (frame_sz.y + 5.0f);
 	}
+
+	RenderSlotBar(state, out, assets);
 }
 
 fn u8 chooseTileBitmap(game_world_t* world, s32 x, s32 y) {
@@ -253,6 +286,27 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log, as
 	TurnKernel(state, state->storage, state->map, state->turns, dt, &input, cons, log, out, assets);	
 	EndGameWorld(state);
 	HUD(Debug.out, state, state->turns, state->storage, assets);
+
+	// Update selected slot
+	const key_code_t keyCodes[] = {
+		key_code_1,
+		key_code_2,
+		key_code_3,
+		key_code_4,
+		key_code_5,
+		key_code_6,
+		key_code_7,
+		key_code_8,
+		key_code_9
+	};
+
+	for (u8 i = 0; i < 9; i++) {
+		if (IsKeyPressed(&input, keyCodes[i])) {
+			state->slot_bar.selected_slot = i + 1;
+		}
+	}
+
+
 }
 
 fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets)
@@ -379,7 +433,6 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		}
 
 		DrawBitmap(out, bitmap_p, bitmap_sz, bitmap_color, bitmap);
-
 
 		RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
 		RenderHealthBar(out, ScreenToIso(p), assets, entity);

@@ -34,7 +34,6 @@ fn void	DoCursor(
 	{
 		//draw cursorable area
 		DrawCursorArea(out, map, User->p, 5);
-		
 		if (move_requested){
 			v2s requestedPos = AddS(cursor->p, dirs[direction]);
 

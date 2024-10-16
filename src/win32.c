@@ -65,6 +65,15 @@ fn void Win32GetInput(client_input_t *result, HWND window)
 	result->keys[key_code_shift] = (GetAsyncKeyState(VK_SHIFT) < 0);
 	result->keys[key_code_space] = (GetAsyncKeyState(VK_SPACE) < 0);
 	result->keys[key_code_tab] = (GetAsyncKeyState(VK_TAB) < 0);
+	result->keys[key_code_1] = (GetAsyncKeyState(0x31) < 0);
+	result->keys[key_code_2] = (GetAsyncKeyState(0x32) < 0);
+	result->keys[key_code_3] = (GetAsyncKeyState(0x33) < 0);
+	result->keys[key_code_4] = (GetAsyncKeyState(0x34) < 0);
+	result->keys[key_code_5] = (GetAsyncKeyState(0x35) < 0);
+	result->keys[key_code_6] = (GetAsyncKeyState(0x36) < 0);
+	result->keys[key_code_7] = (GetAsyncKeyState(0x37) < 0);
+	result->keys[key_code_8] = (GetAsyncKeyState(0x38) < 0);
+	result->keys[key_code_9] = (GetAsyncKeyState(0x39) < 0);
 	result->keys[key_code_f1] = (GetAsyncKeyState(VK_F1) < 0);
 	result->keys[key_code_f2] = (GetAsyncKeyState(VK_F2) < 0);
 }
