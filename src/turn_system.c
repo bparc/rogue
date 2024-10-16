@@ -2,6 +2,45 @@
 // to have some kind of "step-by-step"/"turn-by-turn"
 // debugging feature.
 
+fn void BreakModePanel(turn_queue_t *queue, const virtual_controls_t *cons)
+{
+	if (WentDown(cons->debug01)) // Toggle
+		queue->break_mode_enabled = !queue->break_mode_enabled;
+
+	DebugPrint(
+		"BRK (F1): %s %s %s",
+		(queue->break_mode_enabled ? "ON" : "OFF"),
+		(queue->interp_state == interp_wait_for_input) ? " | CONTINUE (F2) ->" : "",
+		(queue->interp_state == interp_wait_for_input) ? interpolator_state_t_names[queue->requested_step] : "");
+
+	if ((queue->interp_state == interp_wait_for_input) && WentDown(cons->debug02))
+		queue->request_step = true;
+}
+
+fn inline s32 ChangeQueueState(turn_queue_t *queue, interpolator_state_t state)
+{
+	s32 result = false;
+	queue->time = 0.0f;
+
+	#if _DEBUG
+	result = (queue->break_mode_enabled == false);
+	if (result)
+	{
+		queue->interp_state = state;
+	}
+	else
+	{
+		queue->interp_state = interp_wait_for_input;
+		queue->requested_step = state;
+		queue->request_step = false;
+	}
+	#else
+	queue->interp_state = state;
+	result = true;
+	#endif
+	return result;
+}
+
 fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *turns, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out)
 {
 	SetGlobalOffset(out, state->camera_position); // NOTE(): Let's pass the camera position via the PushRenderOutput call instead of this SetGlobalOffset stuff.
@@ -98,6 +137,15 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 
 			switch(turns->interp_state)
 			{
+			case interp_wait_for_input:
+				{
+					if (turns->request_step)
+					{
+						turns->interp_state = turns->requested_step;
+						turns->time = 0.0f;
+					}
+				} break;
+			Request:
 			case interp_request:
 				{
 					// TODO(): Move the player code somewhere around here maybe?
@@ -107,43 +155,41 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 					s32 cost = Decide(state, entity);
 						turns->action_points -= cost;
 					
-					turns->interp_state = interp_transit;
-					turns->time = 0.0f;
-				} break;
+					if (!ChangeQueueState(turns, interp_transit))
+						break;
+					turns->time = dt;
+				}; // NOTE(): Intentional fall-through. We want to start handling transit immediatly, instead of waiting an addidional frame.
 			case interp_transit:
 				{
 					v2 a = GetTileCenter(map, turns->starting_p);
 					v2 b = GetTileCenter(map, entity->p);
 					entity->deferred_p = Lerp2(a, b, turns->time);
 					if ((turns->time >= 1.0f))
-					 {
+					{
+						turns->time = 0.0f;
+
 					 	if (turns->action_points > 0)
 					 	{
 					 		turns->interp_state = interp_request;
+					 		goto Request;
 					 	}
 					 	else
 					 	{
 					 		s32 attempt = AttemptAttack(state, entity);
-							turns->interp_state = attempt ? interp_attack : interp_accept;	
+							ChangeQueueState(turns, attempt ? interp_attack : interp_accept);	
 					 	}
-						
-						turns->time = 0.0f;
 					}
 				} break;
 			case interp_attack:
 				{
 					if ((turns->time >= 0.5f))
-					{
-						turns->interp_state = interp_accept;
-						turns->time = 0.0f;
-					}
+						ChangeQueueState(turns, interp_accept);
 				} break;
 			case interp_accept:
 				{
 					if (turns->time > 0.1f)
 					{
 						AcceptTurn(turns);
-
 						#ifdef ENABLE_TURN_SYSTEM_DEBUG_LOGS
 						DebugLog("TurnKernel(): turn finished in %.2f seconds", turns->time_elapsed);
 						#endif

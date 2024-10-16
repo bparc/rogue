@@ -24,6 +24,12 @@ fn b32 IsTraversable(map_t *map, s32 x, s32 y)
 	return result;
 }
 
+fn b32 IsEmpty(const map_t *map, s32 x, s32 y)
+{
+	b32 result = (GetTileValue(map, x, y) == 0);
+	return result;
+}
+
 fn void SetTileValueI(map_t *map, s32 x, s32 y, u8 value)
 {
 	tile_t *tile= GetTile(map, x, y);
@@ -84,4 +90,40 @@ fn void ClearMap(map_t *map)
 {
 	for (s32 index = 0; index < map->x * map->y; index++)
 		ZeroStruct(&map->tiles[index]);
+}
+
+fn s32 IsCorner(const map_t *map, v2s offset, s32 Index)
+{
+	v2s direction = diagonal_directions[Index];
+	s32 result = (
+		IsEmpty(map, offset.x + direction.x, offset.y + direction.y) &&
+		IsEmpty(map, offset.x + direction.x, offset.y) &&
+		IsEmpty(map, offset.x, offset.y + direction.y));
+	return result;
+}
+
+fn s32 IsEdge(const map_t *map, v2s offset, s32 Index)
+{
+	v2s direction = cardinal_directions[Index];
+	s32 result = (
+		IsEmpty(map, offset.x + direction.x, offset.y + direction.y) &&
+		!IsEmpty(map, offset.x + direction.y, offset.y + direction.x) &&
+		!IsEmpty(map, offset.x - direction.y, offset.y - direction.x));
+	return result;
+}
+
+fn s32 DetectCorner(const map_t *map, v2s offset)
+{
+	for (s32 index = 0; index < 4; index++)
+		if (IsCorner(map, offset, index))
+			return index;
+	return -1;
+}
+
+fn s32 DetectEdge(const map_t *map, v2s offset)
+{
+	for (s32 index = 0; index < 4; index++)
+		if (IsEdge(map, offset, index))
+			return index;
+	return -1;
 }

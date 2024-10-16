@@ -1,3 +1,7 @@
+// NOTE(): Directions
+static const v2s cardinal_directions[4] = { {0, -1}, {+1, 0}, {0, +1}, {-1, 0} };
+static const v2s diagonal_directions[4] = { {-1, -1}, {1, -1}, {1, +1}, {-1, +1}};
+
 typedef enum
 {
 	trap_type_none = 0,
@@ -36,8 +40,14 @@ fn trap_type_t GetTileTrapType(const map_t *map, s32 x, s32 y);
 fn void SetTileDistance(map_t *map, s32 x, s32 y, s16 value);
 fn s16 GetTileDistance(const map_t *map, s32 x, s32 y);
 
-// NOTE(): Queries
+// NOTE(): Tile queries
 fn b32 IsTraversable(map_t *map, s32 x, s32 y);
+fn b32 IsEmpty(const map_t *map, s32 x, s32 y);
+
+fn s32 IsCorner(const map_t *map, v2s offset, s32 Index);
+fn s32 IsEdge(const map_t *map, v2s offset, s32 Index);
+fn s32 DetectCorner(const map_t *map, v2s offset);
+fn s32 DetectEdge(const map_t *map, v2s offset);
 
 // NOTE(): Geometric queries
 fn bb_t GetTileBounds(const map_t *map, s32 x, s32 y);

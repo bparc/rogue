@@ -26,7 +26,7 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 	int attempts = 0;
 
 	v2s peekPos = AddS(requestee -> p, chosenDir);
-	s32 cost = 0;
+	s32 cost = 1;
 
 	while(!canMove && attempts < 5){
 		canMove = MoveFitsWithSize(World, requestee, peekPos);

@@ -368,5 +368,3 @@ fn b32 IsWorldPointEmpty(game_world_t *state, v2s p) {
 
 	return false; // Entity collision
 }
-
-// NOTE(): Cursor

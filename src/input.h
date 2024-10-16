@@ -5,6 +5,8 @@ typedef enum
 	key_code_shift,	
 	key_code_space,
 	key_code_tab,
+	key_code_f1,
+	key_code_f2,
 	// NOTE(): Key codes for letter keys
 	// are the same as the coresponding
 	// ASCII characters.
@@ -82,6 +84,8 @@ typedef struct
 	pad_button_t x, y;
 	pad_button_t menu, select;
 	pad_button_t rb;
+
+	pad_button_t debug01, debug02;
 } virtual_controls_t;
 
 fn inline b32 WentUp(pad_button_t button)
@@ -119,6 +123,8 @@ fn virtual_controls_t MapKeyboardToVirtualCons(const client_input_t *input, u8 k
 	result.dpad_left 	= MapVirtualButton('A', input, keys_prev);
 	result.confirm		= MapVirtualButton('E', input, keys_prev);
 	result.cancel		= MapVirtualButton('Q', input, keys_prev);
+	result.debug01		= MapVirtualButton(key_code_f1, input, keys_prev);
+	result.debug02		= MapVirtualButton(key_code_f2, input, keys_prev);
 	result.x			= MapVirtualButton(key_code_tab, input, keys_prev);
 	return result;
 }

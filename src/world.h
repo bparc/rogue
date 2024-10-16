@@ -72,7 +72,16 @@ typedef enum
 	interp_transit,
 	interp_attack,
 	interp_accept,
+	interp_wait_for_input,
 } interpolator_state_t;
+
+const char *interpolator_state_t_names[] = {
+	"Request",
+	"Transit",
+	"Attack",
+	"Accept",
+	"Break",
+};
 
 typedef struct
 {
@@ -91,13 +100,11 @@ typedef struct
 	s32 turn_inited;
 
 	f32 time_elapsed; // NOTE(): Time from the start of the turn in seconds.
+
+	s32 break_mode_enabled;
+	interpolator_state_t requested_step;
+	s32 request_step;
 } turn_queue_t;
-
-
-
-// NOTE(): Directions
-static const v2s cardinal_directions[4] = { {0, -1}, {+1, 0}, {0, +1}, {-1, 0} };
-static const v2s diagonal_directions[4] = { {-1, -1}, {1, -1}, {1, +1}, {-1, +1}};
 
 typedef struct
 {
@@ -299,9 +306,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				#endif
 
 				if (GetTileTrapType(map, x, y) != trap_type_none)
-				{
 					RenderIsoTile(out, map, V2S(x, y), LightGrey(), true, 0);
-				}
 			}
 		}
 	}

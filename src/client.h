@@ -91,11 +91,12 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 		Setup(&state->world, &state->memory, state->event_log);
 		state->inited = TRUE;
 	}
-	Editor(&state->editor, &state->world, &state->buffers[0], &input, state->event_log, &state->assets);
-	
+
 	virtual_controls_t virtual_cons = MapKeyboardToVirtualCons(&input, state->keys_prev);
 	Update(&state->world, dt, input, state->event_log, &state->assets, virtual_cons, &state->buffers[2]);
 	DrawFrame(&state->world, &state->buffers[0], dt, &state->assets);
+
+	Editor(&state->editor, &state->world, &state->buffers[0], &input, state->event_log, &state->assets, &virtual_cons);
 	EndFrame(state, &input);
 
 	MessageLog(&state->buffers[1], &state->font, V2(10.0f, 650.0f), state->event_log, dt);

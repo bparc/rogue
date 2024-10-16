@@ -65,4 +65,6 @@ fn void Win32GetInput(client_input_t *result, HWND window)
 	result->keys[key_code_shift] = (GetAsyncKeyState(VK_SHIFT) < 0);
 	result->keys[key_code_space] = (GetAsyncKeyState(VK_SPACE) < 0);
 	result->keys[key_code_tab] = (GetAsyncKeyState(VK_TAB) < 0);
+	result->keys[key_code_f1] = (GetAsyncKeyState(VK_F1) < 0);
+	result->keys[key_code_f2] = (GetAsyncKeyState(VK_F2) < 0);
 }

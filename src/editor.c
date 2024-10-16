@@ -1,4 +1,3 @@
-
 fn void MakeSimpleMap(game_world_t *world)
 {
 	#define X 20
@@ -17,7 +16,7 @@ fn void MakeSimpleMap(game_world_t *world)
 		'#','#','S','#','#','#','#',' ',' ',' ','#','#','#',' ',' ',' ','#','#','#',' ',
 		'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#',' ',
 		'#','#','#','#','#','#','#','#','#','T','#','#','#','#','W','#','#','#','#',' ',
-		'#','#','#','#','#','#','#','#','#','#','#','#','#','#','W','#','#','#','#',' ',
+		'#','#','S','#','#','#','#','#','#','#','#','#','#','#','W','#','#','#','#',' ',
 		'#','#','#','#','#','#','#','#','B','B','#','#','#','#','#','W','#','#','#',' ',
 		' ','#','#','#','#','#','#','T','B','B','#','#','#',' ',' ',' ','#','#','#',' ',
 		' ','#','#','#','#','T','#','#','#','#','#',' ',' ',' ',' ',' ',' ','#','#',' ',
@@ -93,7 +92,7 @@ fn void ReloadAssets(assets_t *assets, log_t *log)
 	LogLn(log, "editor: reloading \"assets/\"");
 }
 
-fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *out, const client_input_t *input, log_t *log, assets_t *assets)
+fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *out, const client_input_t *input, log_t *log, assets_t *assets, const virtual_controls_t *cons)
 {
 	if ((editor->inited == false))
 	{
@@ -112,6 +111,18 @@ fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *ou
 			#endif
 		}
 	}	
+
+	v2 cursor_p = GetCursorP(input);
+	cursor_p = Div(cursor_p, V2(VIEWPORT_INTEGER_SCALE, VIEWPORT_INTEGER_SCALE));
+	cursor_p = Sub(cursor_p, state->camera_position);
+	cursor_p = IsoToScreen(cursor_p);
+	cursor_p = Div(cursor_p, state->map->tile_sz);
+
+	s32 x = (s32)cursor_p.x;
+	s32 y = (s32)cursor_p.y;
+	//DebugPrint("%i %i", x, y);
+
+	BreakModePanel(state->turns, cons);
 }
 
 int IsValidEntity(s32 globalX, s32 globalY, char *Data, s32 startX, s32 startY, v2s size, char entityChar) {
