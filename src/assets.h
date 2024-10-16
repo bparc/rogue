@@ -20,8 +20,9 @@ typedef struct
 {
 	bmfont_t *Font;
 	bitmap_t Slime;
-	bitmap_t SlimeMelee;
-	bitmap_t SlimeRanged; //16x16x
+	bitmap_t SmallSlimeMelee;
+	bitmap_t BigSlimeMelee;
+	bitmap_t SlimeRangedProjectile; //16x16x
 
 	bitmap_t SlimeBig;
 	bitmap_t Player[4];
@@ -86,9 +87,9 @@ fn b32 LoadAssets(assets_t *assets, bmfont_t *font)
 	Bitmap(assets, &assets->SlimeBig, "assets/enemies/slime_big_front.png", 0, 0);
 	
 
-	Bitmap(assets, &assets->SlimeMelee, "assets/enemies/slime_small_front_attack.png", 0, 0);
-
-	Bitmap(assets, &assets->SlimeRanged, "assets/enemies/slime_ranged_attack.png", 0, 0); //16x16px
+	Bitmap(assets, &assets->SmallSlimeMelee, "assets/enemies/slime_small_front_attack.png", 0, 0);
+	Bitmap(assets, &assets->BigSlimeMelee, "assets/enemies/slime_big_front_attack.png", 0, 0);
+	Bitmap(assets, &assets->SlimeRangedProjectile, "assets/enemies/slime_ranged_attack.png", 0, 0); //16x16px
 	
 		//TODO: tiles loading (do it automatically somehow)
 	Bitmap(assets, &assets->Tilesets[0].LowTiles[0][0], "assets/tiles/planet_1/low_center_1.png", 0, 0);
