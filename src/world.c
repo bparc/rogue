@@ -96,8 +96,6 @@ fn void RenderHealthBars(command_buffer_t *out, v2 position, assets_t *assets, e
 	}
 }
 
-
-
 fn void RenderIsoTile(command_buffer_t *out, const map_t *map, v2s offset, v4 color, s32 Filled, f32 height)
 {
 	v2 p = MapToScreen(map, offset);
@@ -106,6 +104,15 @@ fn void RenderIsoTile(command_buffer_t *out, const map_t *map, v2s offset, v4 co
 		RenderIsoCubeFilled(out, p, map->tile_sz, height, color);
 	else
 		RenderIsoCube(out, p, map->tile_sz, height, color);
+}
+
+fn void RenderIsoTileArea(command_buffer_t *out, map_t *map, v2s min, v2s max, v4 color)
+{
+	for (int y = min.y; y < max.y; y++)
+	{
+		for (int x = min.x; x < max.x; x++)
+			RenderIsoTile(out, map, V2S(x,y), color, true, 0);
+	}
 }
 
 //NOTE: static combat items
@@ -158,7 +165,7 @@ fn void CreateSlimeI(game_world_t *state, s32 x, s32 y)
 {
 	u16 slime_hp = 100;
 	u16 slime_max_hp = 100;
-	u16 slime_attack_dmg = 10;
+	u16 slime_attack_dmg = 1;
 	CreateEntity(state->storage, V2S(x, y), V2S(1, 1),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map, slime_max_hp);
 }
 
@@ -227,7 +234,7 @@ fn entity_t *GetEntityByPosition(entity_storage_t *storage, v2s p)
     return 0; 
 }
 
-fn entity_t *FindNearestEnemy(entity_storage_t *storage, v2s player_pos)
+fn entity_t *FindClosestHostile(entity_storage_t *storage, v2s player_pos)
 {
 	entity_t *nearest_enemy = 0;
 	f32 nearest_distance = FLT_MAX;
@@ -235,11 +242,9 @@ fn entity_t *FindNearestEnemy(entity_storage_t *storage, v2s player_pos)
 	for (s32 i = 0; i < storage->num; i++)
 	{
 		entity_t *entity = &storage->entities[i];
-
 		if (IsHostile(entity))
 		{
 			f32 distance = DistanceV2S(entity->p, player_pos);
-
 			if (distance < nearest_distance)
 			{
 				nearest_enemy = entity;

@@ -1,11 +1,26 @@
-fn void RenderSlotBar(game_world_t *state, command_buffer_t *out, assets_t *assets) {
+fn void DefaultActionBar(slot_bar_t *bar)
+{
+    // NOTE(Arc): I'm calling this from Setup()!
+
+    for (s32 i = 0; i < 9; i++) {
+        bar->slots[i].action = action_none;
+        bar->slots[i].icon = NULL;
+    }
+
+    bar->slots[0].action = action_ranged_attack;
+    bar->slots[1].action = action_melee_attack;
+
+    bar->selected_slot = 1;
+}
+
+fn void RenderSlotBar(game_world_t *state, command_buffer_t *out, assets_t *assets, const client_input_t *input) {
     v2 action_bar_size = V2(540.0f, 60.0f);
     v2 slot_size = V2(50.0f, 50.0f);
     f32 padding = 10.0f;
     f32 total_width = 9 * slot_size.x + 8 * padding;
 
-    f32 screen_width = 1600.0f;
-    f32 screen_height = 900.0f;
+    f32 screen_width = input->viewport[0];
+    f32 screen_height = input->viewport[1];
     f32 start_pos_x = (screen_width - action_bar_size.x) / 2.0f; // 530 pikseli
     f32 start_pos_y = screen_height - action_bar_size.y - 10.0f; // 830 pikseli
     v2 action_bar_pos = V2(start_pos_x, start_pos_y); // (530, 830)
@@ -22,39 +37,33 @@ fn void RenderSlotBar(game_world_t *state, command_buffer_t *out, assets_t *asse
 
         DrawRectOutline(out, slot_pos, slot_size, border_color);
 
-        if (state->slot_bar.slots[i].icon) {
+        if (state->slot_bar.slots[i].icon)
+        {
             DrawBitmap(out, slot_pos, slot_size, PureWhite(), state->slot_bar.slots[i].icon);
-        } else {
-            char *label;
-            switch(state->slot_bar.slots[i].action) {
-                case action_ranged_attack:
-                    label = "attack";
-                break;
-                default:
-                    label = "none";
-                break;
-            }
-            if (label[0] != '\0') {
-                v2 text_pos = slot_pos;
-                text_pos.x += 1;
-
-                DrawText(out, assets->Font, text_pos, label, Black());
-            }
         }
+        else
+        {
+            action_type_t type = state->slot_bar.slots[i].action;
+            v2 text_p = Add(slot_pos, V2(2.0f, 0.0f));
+            DrawText(out, assets->Font, text_p, action_type_t_names[type], Black());
+        }
+
+        if (IsKeyPressed(input, key_code_1 + (u8)i))
+            state->slot_bar.selected_slot = i + 1;
     }
 }
 
-fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets)
+fn void 
+HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets, const client_input_t *input)
 {
     f32 y = 100.0f;
-    v2 frame_sz = V2(64.f, 64.f);
-
     // Renderowanie kolejki
     for (s32 index = queue->num - 1; index >= 0; index--)
     {
         entity_t *entity = GetEntity(storage, queue->entities[index]);
         if (entity)
         {
+            v2 frame_sz = V2(64.f, 64.f);
             bitmap_t *bitmap = IsHostile(entity) ? &assets->Slime : &assets->Player[0];         
             v4 frame_color = (index == (queue->num - 1)) ? Red() : Black();
 
@@ -67,22 +76,10 @@ fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, ent
         }
     }
 
-    RenderSlotBar(state, out, assets);
+    //if ((state->cursor->active == false)) //NOTE(): Hide the action bar if the cursor is open?
+        RenderSlotBar(state, out, assets, input);
 }
 
 // todo: waiting for comabt revamp before finishing this method
-/*fn void ActivateSlotAction(game_world_t *state, s32 slot_number, command_buffer_t *out) {
-    if (slot_number < 1 || slot_number > 9)
-        return;
-
-    slot_t *slot = &state->slot_bar.slots[slot_number - 1];
-
-    switch(slot->action) {
-        case action_ranged_attack:
-            PerformAttack(state, out);
-            break;
-        case action_none:
-        default:
-            break;
-    }
-}*/
+fn void ActivateSlotAction(entity_t *user, entity_t *target, action_type_t action);
+// NOTE(Arc): This has to be implemented in "cursor.c" for now.

@@ -90,7 +90,14 @@ typedef struct
 	pad_button_t dpad_down;
 	pad_button_t dpad_left;
 	pad_button_t confirm, cancel;
-	pad_button_t x, y;
+
+	union
+	{
+		pad_button_t x;
+		pad_button_t snap_cursor;
+	};
+
+	pad_button_t y;
 	pad_button_t menu, select;
 	pad_button_t rb;
 

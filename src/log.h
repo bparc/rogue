@@ -1,7 +1,7 @@
 typedef struct
 {
 	f64 timestamp;
-	char text[256];
+	char text[512];
 } log_line_t;
 
 typedef struct

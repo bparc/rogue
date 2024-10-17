@@ -24,6 +24,13 @@ typedef enum {
 	action_ranged_attack,
 } action_type_t;
 
+const char *action_type_t_names[] =
+{
+	"None",
+	"Melee",
+	"Ranged",
+};
+
 typedef struct {
     status_effect_type_t type;
     s32 remaining_turns;
@@ -34,6 +41,7 @@ typedef struct {
 
 typedef struct {
 	action_type_t action;
+
 	bitmap_t *icon;
 } slot_t;
 
@@ -136,12 +144,11 @@ typedef struct
 	cursor_t *cursor;
 	entity_storage_t *storage;
 
+	slot_bar_t slot_bar;
 	turn_queue_t *turns;
 
 	map_t *map;
 	v2 camera_position;
-
-	slot_bar_t slot_bar;
 } game_world_t;
 
 // TODO(): Those should propably be eventually included
@@ -159,22 +166,13 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log)
 	state->turns = PushStruct(turn_queue_t, memory);
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->map = CreateMap(30, 20, memory, TILE_PIXEL_SIZE);
+	DefaultActionBar(&state->slot_bar);
 
-	u16 temp_player_health = 100;
-	u16 temp_player_max_health = 100;
-	u16 temp_attack_dmg = 40;
-	CreateEntity(state->storage, V2S(10, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map, temp_player_max_health);
-	//CreateEntity(state->storage, V2S(11, 5), V2S(1, 1), entity_flags_controllable, temp_player_health, temp_attack_dmg, state->map, temp_player_max_health);
+	u16 player_health = 400;
+	u16 player_max_health = 400;
+	u16 attack_dmg = 40;
+	CreateEntity(state->storage, V2S(10, 5), V2S(1, 1), entity_flags_controllable, player_health, attack_dmg, state->map, player_max_health);
 	state->camera_position = V2(0, 0);
-
-	for (s32 i = 0; i < 9; i++) {
-		state->slot_bar.slots[i].action = action_none;
-		state->slot_bar.slots[i].icon = NULL;
-	}
-
-	state->slot_bar.slots[0].action = action_ranged_attack;
-
-	state->slot_bar.selected_slot = 1;
 }
 
 fn void BeginGameWorld(game_world_t *state)
@@ -262,28 +260,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log, as
 	BeginGameWorld(state);
 	TurnKernel(state, state->storage, state->map, state->turns, dt, &input, cons, log, out, assets);	
 	EndGameWorld(state);
-	HUD(Debug.out, state, state->turns, state->storage, assets);
-
-	// Update selected slot
-	const key_code_t keyCodes[] = {
-		key_code_1,
-		key_code_2,
-		key_code_3,
-		key_code_4,
-		key_code_5,
-		key_code_6,
-		key_code_7,
-		key_code_8,
-		key_code_9
-	};
-
-	for (u8 i = 0; i < 9; i++) {
-		if (IsKeyPressed(&input, keyCodes[i])) {
-			state->slot_bar.selected_slot = i + 1;
-		}
-	}
-
-
+	HUD(Debug.out, state, state->turns, state->storage, assets, &input);
 }
 
 fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets)
