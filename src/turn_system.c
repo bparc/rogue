@@ -107,7 +107,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			b32 cursor_mode_active = state->cursor->active; // NOTE(): The cursor_active flag needs to be stored *before* calling DoCursor. This is actually the correct order. For reasons.
 
 			DoCursor(out, entity, cons, input_valid,
-				direction, considered_dirs, queue, map, storage, log, state->cursor, state->slot_bar);
+				direction, considered_dirs, queue, map, storage, log, state->cursor, state->slot_bar, state);
 			
 			#if _DEBUG // NOTE(): Render the considered directions on the map.
 			v2s base_p = cursor_mode_active ? state->cursor->p : entity->p;
@@ -146,7 +146,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		else // NOTE(): Animator
 		{
 			s32 range = ENEMY_DEBUG_RANGE;
-			DrawCursorArea(out, map, entity->p, range); // Range
+			DrawHighlightArea(out, map, entity->p, range, Green()); // Range
 
 			f32 speed_mul = TURN_SPEED_NORMAL;
 			queue->time += dt * speed_mul;

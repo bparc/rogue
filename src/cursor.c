@@ -1,4 +1,4 @@
-fn void DrawCursorArea(command_buffer_t *out, map_t *map,v2s center, int radius) {
+fn void DrawHighlightArea(command_buffer_t *out, map_t *map,v2s center, int radius, v4 color) {
     for (s32 y = center.y - radius; y <= center.y + radius; ++y)
     {
         for (s32 x = center.x - radius; x <= center.x + radius; ++x)
@@ -8,13 +8,42 @@ fn void DrawCursorArea(command_buffer_t *out, map_t *map,v2s center, int radius)
 
             if (IsInsideCircle(point, V2S(1,1), center, radius))
             {
-                RenderIsoTile(out, map, point, SetAlpha(Pink(), 0.5f), true, 0);
+                RenderIsoTile(out, map, point, SetAlpha(color, 0.5f), true, 0);
             }
         }
     }
 }
 
-fn void ActivateSlotAction(entity_t *user, entity_t *target, action_type_t action)
+#define GRENADE_EXPLOSION_RADIUS 3	// temp value
+#define GRENADE_DAMAGE 50			// temp value
+// todo: Make walls and out of boundary zone protect entities from explosions
+fn void ActivateSlotActionNoTarget(entity_t *user, action_type_t action,
+                            cursor_t *cursor, entity_storage_t *storage,
+                            map_t *map, command_buffer_t *out, game_world_t *state)
+{
+        switch(action) {
+    	case action_throw:
+    	{
+    			s32 radius = GRENADE_EXPLOSION_RADIUS;
+				v2s explosion_center = cursor->p;
+
+				for (u8 i = 0; i < storage->num; i++) {
+					entity_t *entity = &storage->entities[i];
+					if (IsInsideCircle(entity->p, entity->size, explosion_center, radius)) {
+						InflictDamage(entity, GRENADE_DAMAGE);
+					}
+				}
+	        break;
+		}
+
+        case action_none:
+        default:
+            break;
+    }
+}
+
+fn void ActivateSlotAction(entity_t *user, entity_t *target, action_type_t action,
+                            cursor_t *cursor, entity_storage_t *storage, map_t *map, command_buffer_t *out)
 {
     switch(action) {
         case action_ranged_attack:
@@ -25,9 +54,27 @@ fn void ActivateSlotAction(entity_t *user, entity_t *target, action_type_t actio
         case action_melee_attack:
         	{
         		InflictDamage(target, user->attack_dmg);
-        		target->p.x -= 4; // NOTE(): Push-back
+        		//target->p.x -= 4; // NOTE(): Push-back
         		break;
         	}
+    	case action_throw:
+    		{
+    			s32 radius = GRENADE_EXPLOSION_RADIUS;
+				v2s explosion_center = cursor->p;
+
+				for (u8 i = 0; i < storage->num; i++) {
+					entity_t *entity = &storage->entities[i];
+					if (IsInsideCircle(entity->p, entity->size, explosion_center, radius)) {
+						InflictDamage(entity, GRENADE_DAMAGE);
+					}
+				}
+	        break;
+			}
+		case action_push:
+    		{
+
+	        break;
+			}
         case action_heal_self:
         	{
         		if (target == user)
@@ -54,7 +101,7 @@ fn void	DoCursor(
 	virtual_controls_t cons,
 	b32 move_requested, s32 direction, const v2s dirs[4], // the player wants to move
 	turn_queue_t *queue, map_t *map, entity_storage_t *storage, log_t *log, cursor_t *cursor,
-	slot_bar_t bar)
+	slot_bar_t bar, game_world_t *state)
 {
 	Assert(user);
 	if ((cursor->active == false) && WentDown(cons.confirm))
@@ -83,7 +130,7 @@ fn void	DoCursor(
 		if ((equipped == action_heal_self)) // NOTE(): Some skills could activate directly from the bar?
 		{
 			if (WentDown(cons.confirm))
-				ActivateSlotAction(user, user, equipped);
+				ActivateSlotAction(user, user, equipped, cursor, storage, map, out);
 			else
 				cursor->active = false;
 			return;
@@ -92,11 +139,17 @@ fn void	DoCursor(
 		// currently  equipped ability.
 		// NOTE(): We can have like different cursor patterns here or whatnot.
 		s32 Range = equipped == action_ranged_attack ? 4 :
-					equipped == action_melee_attack  ? 2
-					: 0;
+					equipped == action_melee_attack  ? 2 :
+					equipped == action_throw ? 4 :
+					equipped == action_push ? 2 :
+					0;
 
 		// NOTE(): Draw the maximum range of the cursor.
-		DrawCursorArea(out, map, user->p, Range);
+		DrawHighlightArea(out, map, user->p, Range, Pink());
+		// NOTE() : Draw the explosion radius.
+		if (equipped == action_throw) {
+			DrawHighlightArea(out, map, cursor->p, GRENADE_EXPLOSION_RADIUS, Red());
+		}
 		// NOTE(): Draw the cursor.
 		RenderIsoTile(out, map, cursor->p, SetAlpha(Pink(), 0.8f), true, 0);
 
@@ -126,12 +179,21 @@ fn void	DoCursor(
 			}
 		}
 
-		// NOTE(): Pick the target under the cursor and perform the "slot action" on it.
+		// NOTE(): Pick the target under the cursor and perform the "slot action" on it (only if it isn't a thrown action).
+		if (equipped != action_throw) {
 		entity_t *Target = GetEntityByPosition(storage, cursor->p);
-		if (IsHostile(Target) && WentDown(cons.confirm))
+			if (IsHostile(Target) && WentDown(cons.confirm))
+			{
+				ActivateSlotAction(user, Target, equipped, cursor, storage, map, out);
+				cursor->active = false;
+			}
+		} else
 		{
-			ActivateSlotAction(user, Target, equipped);
-			cursor->active = false;
+		entity_t *Target = GetEntityByPosition(storage, cursor->p);
+			if (WentDown(cons.confirm) && (IsWorldPointEmpty(state, cursor->p) || IsHostile(Target))) {
+				ActivateSlotActionNoTarget(user, equipped, cursor, storage, map, out, state);
+				cursor->active = false;
+			}
 		}
 	}
 }

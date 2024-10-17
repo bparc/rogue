@@ -9,7 +9,9 @@ fn void DefaultActionBar(slot_bar_t *bar)
 
     bar->slots[0].action = action_ranged_attack;
     bar->slots[1].action = action_melee_attack;
-    bar->slots[2].action = action_heal_self;
+    bar->slots[2].action = action_throw;
+    bar->slots[3].action = action_push;
+    bar->slots[4].action = action_heal_self;
 
     bar->selected_slot = 1;
 }
@@ -82,5 +84,5 @@ HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_stor
 }
 
 // todo: waiting for comabt revamp before finishing this method
-fn void ActivateSlotAction(entity_t *user, entity_t *target, action_type_t action);
+//fn void ActivateSlotAction(entity_t *user, entity_t *target, action_type_t action);
 // NOTE(Arc): This has to be implemented in "cursor.c" for now.
