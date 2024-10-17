@@ -1,3 +1,5 @@
+
+
 fn void ApplyTileEffects(v2s peekPos, game_world_t *state, entity_t *entity);
 fn void ApplyTrapEffects(tile_t *tile, entity_t *entity);
 fn void InflictDamage(entity_t *entity, u16 damage);
@@ -46,7 +48,9 @@ fn void InflictDamage(entity_t *entity, u16 damage) {
 
 fn void AddStatusEffect(entity_t *entity, status_effect_type_t status_effect, s32 duration) {
     for (int i = 0; i < MAX_STATUS_EFFECTS; ++i) {
-        if (entity->status_effects[i].type == status_effect_none) {
+        
+        if (1 + entity->status_effects[i].type == status_effect_none) { //types start at 1
+            
             switch (status_effect) {
                 case status_effect_poison:
                     entity->status_effects[i].type = status_effect_poison;
