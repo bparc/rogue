@@ -145,6 +145,9 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		}
 		else // NOTE(): Animator
 		{
+			s32 range = ENEMY_DEBUG_RANGE;
+			DrawCursorArea(out, map, entity->p, range); // Range
+
 			f32 speed_mul = TURN_SPEED_NORMAL;
 			queue->time += dt * speed_mul;
 			queue->time_elapsed += dt;
@@ -192,7 +195,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 					 	}
 					 	else
 					 	{
-					 		entity_id_t target = AttemptAttack(state, entity);
+					 		entity_id_t target = AttemptAttack(state, entity, range);
 					 		if (target)
 					 		{
 								ChangeQueueState(queue, interp_attack);

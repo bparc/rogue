@@ -80,10 +80,12 @@ fn void	DoCursor(
 			cursor->active = false;
 			return;
 		}
-		if (equipped == action_heal_self) // NOTE(): Some skills could activate directly from the bar?
+		if ((equipped == action_heal_self)) // NOTE(): Some skills could activate directly from the bar?
 		{
-			ActivateSlotAction(user, user, equipped);
-			cursor->active = false;
+			if (WentDown(cons.confirm))
+				ActivateSlotAction(user, user, equipped);
+			else
+				cursor->active = false;
 			return;
 		}
 		// NOTE(): Load up a "cursor specification" from the

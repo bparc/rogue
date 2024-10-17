@@ -54,7 +54,7 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 	return 1;
 }
 
-fn entity_id_t AttemptAttack(game_world_t *World, entity_t *requestee)
+fn entity_id_t AttemptAttack(game_world_t *World, entity_t *requestee, s32 effective_range)
 {
 	entity_id_t result = 0;
 
@@ -70,7 +70,7 @@ fn entity_id_t AttemptAttack(game_world_t *World, entity_t *requestee)
 		}
 	}
 
-	if (target)
+	if (target && IsInsideCircle(target->p, target->size, requestee->p, effective_range))
 	{
 		result = target->id;
 		DebugLog("target found #%i", target->id);
@@ -84,7 +84,6 @@ fn void AnimateAttack(game_world_t *World, entity_t *entity, entity_t *target, f
 
 	// TODO(): Move this out to RenderCenteredIsoBitmap() or whatnot.
 	
-
 	if (inflict_damage)
 		InflictDamage(target, entity->attack_dmg);
 
