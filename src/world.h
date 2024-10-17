@@ -22,6 +22,7 @@ typedef enum {
 	action_none = 0,
 	action_melee_attack,
 	action_ranged_attack,
+	action_heal_self,
 } action_type_t;
 
 const char *action_type_t_names[] =
@@ -29,6 +30,7 @@ const char *action_type_t_names[] =
 	"None",
 	"Melee",
 	"Ranged",
+	"Heal",
 };
 
 typedef struct {

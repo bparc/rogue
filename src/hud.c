@@ -9,6 +9,7 @@ fn void DefaultActionBar(slot_bar_t *bar)
 
     bar->slots[0].action = action_ranged_attack;
     bar->slots[1].action = action_melee_attack;
+    bar->slots[2].action = action_heal_self;
 
     bar->selected_slot = 1;
 }

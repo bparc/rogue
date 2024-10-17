@@ -28,6 +28,20 @@ fn void ActivateSlotAction(entity_t *user, entity_t *target, action_type_t actio
         		target->p.x -= 4; // NOTE(): Push-back
         		break;
         	}
+        case action_heal_self:
+        	{
+        		if (target == user)
+        		{
+        			s32 hp = 10;
+        			target->health += 10;
+        			DebugLog("healed up for %i hp", hp);
+        		}
+        		else
+        		{
+        			DebugLog("invalid target! (%s) #%i->#%i",
+        				action_type_t_names[action], user ? user->id : -1, target ? target->id : -1);
+        		}
+        	} break;
         case action_none:
         default:
             break;
@@ -36,19 +50,19 @@ fn void ActivateSlotAction(entity_t *user, entity_t *target, action_type_t actio
 
 fn void	DoCursor(
 	command_buffer_t *out,
-	entity_t *User, // the entity that currently uses the cursor
+	entity_t *user, // the entity that currently uses the cursor
 	virtual_controls_t cons,
 	b32 move_requested, s32 direction, const v2s dirs[4], // the player wants to move
 	turn_queue_t *queue, map_t *map, entity_storage_t *storage, log_t *log, cursor_t *cursor,
 	slot_bar_t bar)
 {
-	Assert(User);
+	Assert(user);
 	if ((cursor->active == false) && WentDown(cons.confirm))
 	{
 		// NOTE(): The cursor was just activated.
 		// Setup a starting state.
 		cursor->active = true;
-		cursor->p = User->p;
+		cursor->p = user->p;
 	}
 
 	if (cursor->active)
@@ -66,7 +80,12 @@ fn void	DoCursor(
 			cursor->active = false;
 			return;
 		}
-
+		if (equipped == action_heal_self) // NOTE(): Some skills could activate directly from the bar?
+		{
+			ActivateSlotAction(user, user, equipped);
+			cursor->active = false;
+			return;
+		}
 		// NOTE(): Load up a "cursor specification" from the
 		// currently  equipped ability.
 		// NOTE(): We can have like different cursor patterns here or whatnot.
@@ -75,7 +94,7 @@ fn void	DoCursor(
 					: 0;
 
 		// NOTE(): Draw the maximum range of the cursor.
-		DrawCursorArea(out, map, User->p, Range);
+		DrawCursorArea(out, map, user->p, Range);
 		// NOTE(): Draw the cursor.
 		RenderIsoTile(out, map, cursor->p, SetAlpha(Pink(), 0.8f), true, 0);
 
@@ -83,21 +102,21 @@ fn void	DoCursor(
 		v2s requestedPos = AddS(cursor->p, move_requested ? dirs[direction] : V2S(0, 0));
 
 		b32 in_range = false;
-		in_range = IsInsideCircle(requestedPos, V2S(1,1), User->p, Range);
+		in_range = IsInsideCircle(requestedPos, V2S(1,1), user->p, Range);
 		if (move_requested && in_range)
 				cursor->p = requestedPos;
 		// NOTE(): If the cursor somehow ended up out of its range -
 		// move it back to the user.
-		in_range = IsInsideCircle(cursor->p, V2S(1,1), User->p, Range);
+		in_range = IsInsideCircle(cursor->p, V2S(1,1), user->p, Range);
 		if ((in_range == false))
-			cursor->p = User->p;
+			cursor->p = user->p;
 
 		// NOTE(): Find the closest hostile to the cursor, draw
 		// tiles underneath them, then snap to them if the button went down.
 		entity_t *Enemy = FindClosestHostile(storage, cursor->p);
 		if (Enemy)
 		{ 
-			if (IsInsideCircle(Enemy->p, Enemy->size, User->p, Range))
+			if (IsInsideCircle(Enemy->p, Enemy->size, user->p, Range))
 			{
 				RenderIsoTileArea(out, map, Enemy->p, AddS(Enemy->p, Enemy->size), SetAlpha(Red(), 0.8f)); //render target for all size enemies
 				if (WentDown(cons.snap_cursor))
@@ -109,7 +128,7 @@ fn void	DoCursor(
 		entity_t *Target = GetEntityByPosition(storage, cursor->p);
 		if (IsHostile(Target) && WentDown(cons.confirm))
 		{
-			ActivateSlotAction(User, Target, equipped);
+			ActivateSlotAction(user, Target, equipped);
 			cursor->active = false;
 		}
 	}
