@@ -138,7 +138,8 @@ fn static_entity_t * CreateEffectTile(entity_storage_t *storage, v2s p, v2s size
 }
 
 // NOTE(): Entities.
-fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *map, u16 max_health_points)
+fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, u16 health_points,
+	u16 attack_dmg, const map_t *map, u16 max_health_points, s32 accuracy, s32 evasion)
 {
 	entity_t *result = 0;
 	if (storage->num < ArraySize(storage->entities))
@@ -156,6 +157,9 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, 
 		result->health = health_points;
 		result->attack_dmg = attack_dmg;
 		result->max_health = max_health_points;
+		result->melee_accuracy = accuracy;
+		result->ranged_accuracy = accuracy;
+		result->evasion = evasion;
 	}
 	
 	return result;
@@ -166,7 +170,9 @@ fn void CreateSlimeI(game_world_t *state, s32 x, s32 y)
 	u16 slime_hp = 100;
 	u16 slime_max_hp = 100;
 	u16 slime_attack_dmg = 1;
-	CreateEntity(state->storage, V2S(x, y), V2S(1, 1),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map, slime_max_hp);
+	s32 slime_accuracy = 30; // Applying this value for both melee and ranged accuracy
+	s32 slime_evasion = 80;
+	CreateEntity(state->storage, V2S(x, y), V2S(1, 1),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map, slime_max_hp, slime_accuracy, slime_evasion);
 }
 
 fn void CreateBigSlimeI(game_world_t *state, s32 x, s32 y)
@@ -174,7 +180,9 @@ fn void CreateBigSlimeI(game_world_t *state, s32 x, s32 y)
 	u16 slime_hp = 400;
 	u16 slime_max_hp = 400;
 	u16 slime_attack_dmg = 25;
-	CreateEntity(state->storage, V2S(x, y), V2S(2, 2),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map, slime_max_hp);
+	s32 slime_accuracy = 45; // Applying this value for both melee and ranged accuracy
+	s32 slime_evasion = 40;
+	CreateEntity(state->storage, V2S(x, y), V2S(2, 2),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map, slime_max_hp, slime_accuracy, slime_evasion);
 }
 
 fn void CreatePoisonTrapI(game_world_t *state, s32 x, s32 y) {

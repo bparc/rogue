@@ -72,6 +72,10 @@ typedef struct
 	u16 max_health;
 	u16 attack_dmg;
 
+	s32 ranged_accuracy;
+	s32 melee_accuracy;
+	s32 evasion;
+
 	status_effect_t status_effects[MAX_STATUS_EFFECTS];
 
 } entity_t;
@@ -223,7 +227,10 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log)
 	u16 player_health = 400;
 	u16 player_max_health = 400;
 	u16 attack_dmg = 40;
-	CreateEntity(state->storage, V2S(10, 5), V2S(1, 1), entity_flags_controllable, player_health, attack_dmg, state->map, player_max_health);
+	s32 player_accuracy = 75; // Applying this value for both melee and ranged accuracy
+	s32 player_evasion = 20;
+	CreateEntity(state->storage, V2S(10, 5), V2S(1, 1), entity_flags_controllable,
+		player_health, attack_dmg, state->map, player_max_health, player_accuracy, player_evasion);
 	state->camera_position = V2(0, 0);
 }
 

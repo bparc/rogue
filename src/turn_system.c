@@ -67,7 +67,7 @@ fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
 		b32 input_valid = (direction >= 0) && (direction < 4);
 		b32 cursor_mode_active = state->cursor->active; // NOTE(): The cursor_active flag needs to be stored *before* calling DoCursor. This is actually the correct order. For reasons.
 		DoCursor(out, entity, cons, input_valid,
-			direction, directions, queue, map, storage, log, state->cursor, state->slot_bar, state);
+			direction, directions, queue, map, storage, log, state->cursor, state->slot_bar, state, assets);
 		
 		#if _DEBUG // NOTE(): Render the input directions on the map.
 		v2s base_p = cursor_mode_active ? state->cursor->p : entity->p;
