@@ -72,6 +72,7 @@ HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_stor
 
             v2 p = V2(8.0f, 100.0f + y);
             DrawRect(out, p, frame_sz, Black());
+            DrawBitmap(out, p, frame_sz, PureWhite(), &assets->CombatUI.action_bar_elements[0]);
             DrawRectOutline(out, p, frame_sz, frame_color);
             if (bitmap)
                 DrawBitmap(out, Add(p, V2(0.0f, 5.0f)), frame_sz, PureWhite(), bitmap);
@@ -83,6 +84,5 @@ HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_stor
         RenderSlotBar(state, out, assets, input);
 }
 
-// todo: waiting for comabt revamp before finishing this method
 //fn void ActivateSlotAction(entity_t *user, entity_t *target, action_type_t action);
 // NOTE(Arc): This has to be implemented in "cursor.c" for now.

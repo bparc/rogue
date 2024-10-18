@@ -89,6 +89,7 @@ typedef struct
 	pad_button_t dpad_right;
 	pad_button_t dpad_down;
 	pad_button_t dpad_left;
+
 	pad_button_t confirm, cancel;
 
 	union

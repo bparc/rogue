@@ -18,15 +18,15 @@ fn trap_type_t GetTileTrapType(const map_t *map, s32 x, s32 y)
 	return (result ? result->trap_type : trap_type_none);
 }
 
-fn b32 IsTraversable(map_t *map, s32 x, s32 y)
+fn b32 IsTraversable(map_t *map, v2s p)
 {
-	b32 result = (GetTileValue(map, x, y) == 1);
+	b32 result = (GetTileValue(map, p.x, p.y) == 1);
 	return result;
 }
 
-fn b32 IsEmpty(const map_t *map, s32 x, s32 y)
+fn b32 IsEmpty(const map_t *map, v2s p)
 {
-	b32 result = (GetTileValue(map, x, y) == 0);
+	b32 result = (GetTileValue(map, p.x, p.y) == 0);
 	return result;
 }
 
@@ -96,9 +96,9 @@ fn s32 IsCorner(const map_t *map, v2s offset, s32 Index)
 {
 	v2s direction = diagonal_directions[Index];
 	s32 result = (
-		IsEmpty(map, offset.x + direction.x, offset.y + direction.y) &&
-		IsEmpty(map, offset.x + direction.x, offset.y) &&
-		IsEmpty(map, offset.x, offset.y + direction.y));
+		IsEmpty(map, V2S(offset.x + direction.x, offset.y + direction.y)) &&
+		IsEmpty(map, V2S(offset.x + direction.x, offset.y)) &&
+		IsEmpty(map, V2S(offset.x, offset.y + direction.y)));
 	return result;
 }
 
@@ -106,9 +106,9 @@ fn s32 IsEdge(const map_t *map, v2s offset, s32 Index)
 {
 	v2s direction = cardinal_directions[Index];
 	s32 result = (
-		IsEmpty(map, offset.x + direction.x, offset.y + direction.y) &&
-		!IsEmpty(map, offset.x + direction.y, offset.y + direction.x) &&
-		!IsEmpty(map, offset.x - direction.y, offset.y - direction.x));
+		 IsEmpty(map, V2S(offset.x + direction.x, offset.y + direction.y)) &&
+		!IsEmpty(map, V2S(offset.x + direction.y, offset.y + direction.x)) &&
+		!IsEmpty(map, V2S(offset.x - direction.y, offset.y - direction.x)));
 	return result;
 }
 

@@ -17,78 +17,51 @@ fn void DrawHighlightArea(command_buffer_t *out, map_t *map,v2s center, int radi
 #define GRENADE_EXPLOSION_RADIUS 3	// temp value
 #define GRENADE_DAMAGE 50			// temp value
 // todo: Make walls and out of boundary zone protect entities from explosions
-fn void ActivateSlotActionNoTarget(entity_t *user, action_type_t action,
-                            cursor_t *cursor, entity_storage_t *storage,
-                            map_t *map, command_buffer_t *out, game_world_t *state)
-{
-        switch(action) {
-    	case action_throw:
-    	{
-    			s32 radius = GRENADE_EXPLOSION_RADIUS;
-				v2s explosion_center = cursor->p;
-
-				for (u8 i = 0; i < storage->num; i++) {
-					entity_t *entity = &storage->entities[i];
-					if (IsInsideCircle(entity->p, entity->size, explosion_center, radius)) {
-						InflictDamage(entity, GRENADE_DAMAGE);
-					}
-				}
-	        break;
-		}
-
-        case action_none:
-        default:
-            break;
-    }
-}
-
 fn void ActivateSlotAction(entity_t *user, entity_t *target, action_type_t action,
-                            cursor_t *cursor, entity_storage_t *storage, map_t *map, command_buffer_t *out)
+cursor_t *cursor, entity_storage_t *storage, map_t *map)
 {
     switch(action) {
         case action_ranged_attack:
-        	{
-            	InflictDamage(target, user->attack_dmg);
-            	break;
-        	}
+        {
+           	InflictDamage(target, user->attack_dmg);
+           	break;
+        }
         case action_melee_attack:
-        	{
-        		InflictDamage(target, user->attack_dmg);
-        		//target->p.x -= 4; // NOTE(): Push-back
-        		break;
-        	}
+        {
+        	InflictDamage(target, user->attack_dmg);
+        	break;
+        }
     	case action_throw:
-    		{
-    			s32 radius = GRENADE_EXPLOSION_RADIUS;
-				v2s explosion_center = cursor->p;
-
-				for (u8 i = 0; i < storage->num; i++) {
-					entity_t *entity = &storage->entities[i];
-					if (IsInsideCircle(entity->p, entity->size, explosion_center, radius)) {
-						InflictDamage(entity, GRENADE_DAMAGE);
-					}
+    	{
+    		s32 radius = GRENADE_EXPLOSION_RADIUS;
+			v2s explosion_center = cursor->p;
+			for (u8 i = 0; i < storage->num; i++) {
+				entity_t *entity = &storage->entities[i];
+				if (IsInsideCircle(entity->p, entity->size, explosion_center, radius)) {
+					InflictDamage(entity, GRENADE_DAMAGE);
 				}
-	        break;
 			}
+	       break;
+		}
 		case action_push:
-    		{
-
-	        break;
-			}
+    	{
+    		target->p.x -= 4; // NOTE(): Push-back
+	       break;
+		}
         case action_heal_self:
+        {
+        	if (target == user)
         	{
-        		if (target == user)
-        		{
-        			s32 hp = 10;
-        			target->health += 10;
-        			DebugLog("healed up for %i hp", hp);
-        		}
-        		else
-        		{
-        			DebugLog("invalid target! (%s) #%i->#%i",
-        				action_type_t_names[action], user ? user->id : -1, target ? target->id : -1);
-        		}
-        	} break;
+        		s32 hp = 10;
+        		target->health += 10;
+        		DebugLog("healed up for %i hp", hp);
+        	}
+        	else
+        	{
+        		DebugLog("invalid target! (%s) #%i->#%i",
+        			action_type_t_names[action], user ? user->id : -1, target ? target->id : -1);
+        	}
+        } break;
         case action_none:
         default:
             break;
@@ -130,7 +103,7 @@ fn void	DoCursor(
 		if ((equipped == action_heal_self)) // NOTE(): Some skills could activate directly from the bar?
 		{
 			if (WentDown(cons.confirm))
-				ActivateSlotAction(user, user, equipped, cursor, storage, map, out);
+				ActivateSlotAction(user, user, equipped, cursor, storage, map);
 			else
 				cursor->active = false;
 			return;
@@ -180,18 +153,18 @@ fn void	DoCursor(
 		}
 
 		// NOTE(): Pick the target under the cursor and perform the "slot action" on it (only if it isn't a thrown action).
-		if (equipped != action_throw) {
-		entity_t *Target = GetEntityByPosition(storage, cursor->p);
-			if (IsHostile(Target) && WentDown(cons.confirm))
-			{
-				ActivateSlotAction(user, Target, equipped, cursor, storage, map, out);
-				cursor->active = false;
-			}
-		} else
+		if (WentUp(cons.confirm))
 		{
-		entity_t *Target = GetEntityByPosition(storage, cursor->p);
-			if (WentDown(cons.confirm) && (IsWorldPointEmpty(state, cursor->p) || IsHostile(Target))) {
-				ActivateSlotActionNoTarget(user, equipped, cursor, storage, map, out, state);
+			entity_t *target = GetEntityByPosition(storage, cursor->p);
+
+			b32 target_valid = IsHostile(target);
+			if (equipped == action_throw) // NOTE(): "action_throw" can also target traversable tiles.
+				target_valid |= IsTraversable(map, cursor->p); 
+
+			b32 positioned_on_user = CompareVectors(cursor->p, user->p);
+			if (target_valid && (positioned_on_user == false))
+			{
+				ActivateSlotAction(user, target, equipped, cursor, storage, map);
 				cursor->active = false;
 			}
 		}

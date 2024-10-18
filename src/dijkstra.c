@@ -52,7 +52,7 @@ fn inline void Flood(flood_stack_t *stack, flood_fill_node_t source, s32 x, s32 
 {
 	x = (source.x + x);
 	y = (source.y + y);
-	if ((GetTileDistance(stack->map, x, y) == NOT_VISITED) && IsTraversable(stack->map, x, y))
+	if ((GetTileDistance(stack->map, x, y) == NOT_VISITED) && IsTraversable(stack->map, V2S(x, y)))
 		Visit(stack, x, y, (source.distance + 1));
 }
 

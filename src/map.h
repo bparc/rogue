@@ -41,8 +41,8 @@ fn void SetTileDistance(map_t *map, s32 x, s32 y, s16 value);
 fn s16 GetTileDistance(const map_t *map, s32 x, s32 y);
 
 // NOTE(): Tile queries
-fn b32 IsTraversable(map_t *map, s32 x, s32 y);
-fn b32 IsEmpty(const map_t *map, s32 x, s32 y);
+fn b32 IsTraversable(map_t *map, v2s p);
+fn b32 IsEmpty(const map_t *map, v2s p);
 
 fn s32 IsCorner(const map_t *map, v2s offset, s32 Index);
 fn s32 IsEdge(const map_t *map, v2s offset, s32 Index);
