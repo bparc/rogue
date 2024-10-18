@@ -16,7 +16,7 @@ fn void AddStatusEffect(entity_t *entity, status_effect_type_t status_effect, s3
 
 }
 
-fn void InflictDamage(entity_t *entity, u16 damage) {
+fn void InflictDamage(entity_t *entity, s16 damage) {
     if (entity == NULL) return;
 
     if (damage >= entity->health) {
@@ -27,6 +27,16 @@ fn void InflictDamage(entity_t *entity, u16 damage) {
         entity->health -= damage;
     }
     entity->blink_time = 1.0f;
+}
+
+fn void Heal(entity_t *entity, s16 healed_hp) {
+    if (entity == NULL) return;
+
+    if (entity->health >= healed_hp) {
+        entity->health = entity->max_health;
+    } else {
+        entity->health += healed_hp;
+    }
 }
 
 fn void ApplyTrapEffects(tile_t *tile, entity_t *entity) {

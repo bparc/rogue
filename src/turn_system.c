@@ -99,8 +99,8 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 		async_action_t *action = &queue->actions[index];
 		b32 Finished = false;
 
-		if ((action->type == action_ranged_attack) ||
-			(action->type == action_throw))
+		if ((action->action_type.type == action_ranged_attack) ||
+			(action->action_type.type == action_throw))
 		{
 			v2 target_p = GetTileCenter(map, action->target_p);
 			f32 distance = Distance(user->deferred_p, target_p);
@@ -120,7 +120,7 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 		{
 			queue->actions[index--] = queue->actions[--queue->action_count];
 			ActivateSlotAction(user, GetEntity(queue->storage, action->target_id),
-				action->type, action->target_p, queue->storage, map);
+				&action->action_type, action->target_p, queue->storage, map);
 			//InflictDamage(GetEntity(queue->storage, action->target_id), user->attack_dmg);
 		}
 	}

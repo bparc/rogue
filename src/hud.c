@@ -3,26 +3,26 @@ fn void DefaultActionBar(slot_bar_t *bar, assets_t *assets)
     // NOTE(Arc): I'm calling this from Setup()!
 
     for (s32 i = 0; i < 9; i++) {
-        bar->slots[i].action = action_none;
-        bar->slots[i].icon = NULL;
+        bar->slots[i].action.type = action_none;
+        bar->slots[i].action.icon = NULL;
     }
 
   
 
-    bar->slots[0].action = action_ranged_attack;
-    bar->slots[0].icon = &assets->CombatUI.action_bar_icons[1][0];
+    bar->slots[0].action.type = action_ranged_attack;
+    bar->slots[0].action.icon = &assets->CombatUI.action_bar_icons[1][0];
 
-    bar->slots[1].action = action_melee_attack;
-    bar->slots[1].icon = &assets->CombatUI.action_bar_icons[0][0];
+    bar->slots[1].action.type = action_melee_attack;
+    bar->slots[1].action.icon = &assets->CombatUI.action_bar_icons[0][0];
 
-    bar->slots[2].action = action_throw;
-    bar->slots[2].icon = &assets->CombatUI.action_bar_icons[2][0];
+    bar->slots[2].action.type = action_throw;
+    bar->slots[2].action.icon = &assets->CombatUI.action_bar_icons[2][0];
 
-    bar->slots[3].action = action_push;
-    bar->slots[3].icon = &assets->CombatUI.action_bar_icons[3][0];
+    bar->slots[3].action.type = action_push;
+    bar->slots[3].action.icon = &assets->CombatUI.action_bar_icons[3][0];
 
-    bar->slots[4].action = action_heal_self;
-    bar->slots[4].icon = &assets->CombatUI.action_bar_icons[4][0];
+    bar->slots[4].action.type = action_heal_self;
+    bar->slots[4].action.icon = &assets->CombatUI.action_bar_icons[4][0];
 
     bar->selected_slot = 1;
 }
@@ -51,13 +51,13 @@ fn void RenderSlotBar(game_world_t *state, command_buffer_t *out, assets_t *asse
 
         DrawRectOutline(out, slot_pos, slot_size, border_color);
 
-        if (state->slot_bar.slots[i].icon)
+        if (state->slot_bar.slots[i].action.icon)
         {
-            DrawBitmap(out, slot_pos, slot_size, PureWhite(), state->slot_bar.slots[i].icon);
+            DrawBitmap(out, slot_pos, slot_size, PureWhite(), state->slot_bar.slots[i].action.icon);
         }
         else
         {
-            action_type_t type = state->slot_bar.slots[i].action;
+            action_type_t type = state->slot_bar.slots[i].action.type;
             v2 text_p = Add(slot_pos, V2(2.0f, 0.0f));
             DrawText(out, assets->Font, text_p, action_type_t_names[type], Black());
         }

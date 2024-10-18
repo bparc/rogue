@@ -18,15 +18,6 @@ typedef enum {
 	static_entity_flags_stepon_trigger = 1 << 1,
 } static_entity_flags;
 
-typedef enum {
-	action_none = 0,
-	action_melee_attack,
-	action_ranged_attack,
-	action_throw,
-	action_push,
-	action_heal_self,
-} action_type_t;
-
 const char *action_type_t_names[] =
 {
 	"None",
@@ -38,26 +29,50 @@ const char *action_type_t_names[] =
 };
 
 typedef struct {
+	f32 range;
+	entity_id_t target;
+	v2s area_of_effect;
+	s32 action_point_cost;
+	f32 accuracy;
+	f32 damage;
+	b32 is_healing;
+	b32 is_status_effect;
+	status_effect_type_t status_effect;
+	const char *name;
+} action_params_t;
+
+typedef enum {
+	action_none = 0,
+	action_melee_attack,
+	action_ranged_attack,
+	action_throw,
+	action_push,
+	action_heal_self,
+} action_type_t;
+
+typedef struct {
+	action_type_t type;
+	bitmap_t *icon;
+	action_params_t params;
+} action_t;
+
+typedef struct {
     status_effect_type_t type;
     s32 remaining_turns;
 	s32 damage;
 } status_effect_t;
 
-#define MAX_STATUS_EFFECTS 3
-
 typedef struct {
-	action_type_t action;
-
-	bitmap_t *icon;
+	action_t action;
 } slot_t;
 
 #define MAX_SLOTS 9
-
 typedef struct {
 	slot_t slots[MAX_SLOTS];
 	s32 selected_slot;
 } slot_bar_t;
 
+#define MAX_STATUS_EFFECTS 3
 typedef struct
 {
 	u8 flags;
@@ -75,6 +90,7 @@ typedef struct
 	s32 ranged_accuracy;
 	s32 melee_accuracy;
 	s32 evasion;
+	s32 remaining_action_points;
 
 	status_effect_t status_effects[MAX_STATUS_EFFECTS];
 
@@ -119,7 +135,7 @@ const char *interpolator_state_t_names[] = {
 typedef struct
 {
 	b32 blocking;
-	action_type_t type;
+	action_t action_type;
 
 	entity_id_t target_id;
 	v2s target_p;
@@ -181,7 +197,7 @@ fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_
 		{
 			result->target_p = target_p;
 		}
-		result->type = type;
+		result->action_type.type = type;
 	}
 }
 
@@ -216,6 +232,7 @@ typedef struct
 #include "turn_system.c"
 #include "hud.c"
 
+#define MAX_PLAYER_ACTION_POINTS 10
 fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *assets)
 {
 	state->cursor = PushStruct(cursor_t, memory);
@@ -230,7 +247,7 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *asset
 	s32 player_accuracy = 75; // Applying this value for both melee and ranged accuracy
 	s32 player_evasion = 20;
 	CreateEntity(state->storage, V2S(10, 5), V2S(1, 1), entity_flags_controllable,
-		player_health, attack_dmg, state->map, player_max_health, player_accuracy, player_evasion);
+		player_health, attack_dmg, state->map, player_max_health, player_accuracy, player_evasion, MAX_PLAYER_ACTION_POINTS);
 	state->camera_position = V2(0, 0);
 }
 

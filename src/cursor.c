@@ -14,6 +14,8 @@ fn void DrawHighlightArea(command_buffer_t *out, map_t *map,v2s center, int radi
     }
 }
 
+#include "actions.c"
+
 #define BASE_HIT_CHANCE 50
 #define MELEE_BONUS 15
 #define GRAZE_THRESHOLD 10
@@ -68,8 +70,8 @@ fn void HandleAttack(entity_t *user, entity_t *target, action_type_t action_type
 		}
 
 	} else if (roll < final_hit_chance + GRAZE_THRESHOLD && roll >= final_hit_chance) {
-		s32 graze_damage = user->attack_dmg / 2;
-		InflictDamage(target, user->attack_dmg);
+		u16 graze_damage = user->attack_dmg / 2;
+		InflictDamage(target, graze_damage);
 		DebugLog("Grazing hit! Inflicted %i grazing damage to target #%i", graze_damage, target->id);
 	} else {
 		DebugLog("Missed! Ranged attack missed target #%i", target->id);
@@ -93,51 +95,49 @@ fn void DrawHitChance(game_world_t *state, assets_t *assets, command_buffer_t *o
 #define GRENADE_EXPLOSION_RADIUS 3	// temp value
 #define GRENADE_DAMAGE 50			// temp value
 // todo: Make walls and out of boundary zone protect entities from explosions
-fn void ActivateSlotAction(entity_t *user, entity_t *target, action_type_t action,
+fn void ActivateSlotAction(entity_t *user, entity_t *target, action_t *action,
 v2s target_p, entity_storage_t *storage, map_t *map)
 {
-    switch(action) {
+    switch(action->type) {
         case action_ranged_attack:
         {
-	        HandleAttack(user, target, action);
+			action->params = DefineRangedAttack(user);
+	        HandleAttack(user, target, action->type);
 	        break;
         }
         case action_melee_attack:
         {
-        	HandleAttack(user, target, action);
+			action->params = DefineMeleeAttack(user);
+        	HandleAttack(user, target, action->type);
         	break;
         }
     	case action_throw:
     	{
-    		s32 radius = GRENADE_EXPLOSION_RADIUS;
+    		action->params = DefineThrowAction(user);
+    		s32 radius = action->params.area_of_effect.x;
 			v2s explosion_center = target_p;
 			for (s32 i = 0; i < storage->num; i++) {
 				entity_t *entity = &storage->entities[i];
 				if (IsInsideCircle(entity->p, entity->size, explosion_center, radius)) {
-					InflictDamage(entity, GRENADE_DAMAGE);
+					InflictDamage(entity, (s16)action->params.damage);
 				}
 			}
-	       break;
+			break;
 		}
 		case action_push:
     	{
-        	target->p.x -= 4; // NOTE(): Push-back
-	       break;
+			target->p.x -= 4; // NOTE(): Push-back
+			break;
 		}
         case action_heal_self:
         {
         	if (target == user)
         	{
-        		s32 hp = 10;
-        		target->health += 10;
-        		DebugLog("healed up for %i hp", hp);
+        		action->params = DefineHealAction(user);
+        		Heal(target, (s16)action->params.damage);
+        		DebugLog("healed up for %i hp", (s16)action->params.damage);
         	}
-        	else
-        	{
-        		DebugLog("invalid target! (%s) #%i->#%i",
-        			action_type_t_names[action], user ? user->id : -1, target ? target->id : -1);
-        	}
-        } break;
+        }	break;
         case action_none:
         default:
             break;
@@ -169,17 +169,17 @@ fn void	DoCursor(
 
 		DebugAssert((bar.selected_slot >= 0) &&
 		(bar.selected_slot < ArraySize(bar.slots))); // NOTE(): Validate, just in case.
-		action_type_t equipped = bar.slots[bar.selected_slot - 1].action; // NOTE(): Slot IDs start from 1?
-		if (equipped == action_none)
+		action_t equipped = bar.slots[bar.selected_slot - 1].action; // NOTE(): Slot IDs start from 1?
+		if (equipped.type == action_none)
 		{
-			DebugLog("An unsupported action (%s) was selected! Can't open the cursor!", action_type_t_names[equipped]);
+			DebugLog("An unsupported action was selected! Can't open the cursor!");
 			cursor->active = false;
 			return;
 		}
-		if ((equipped == action_heal_self)) // NOTE(): Some skills could activate directly from the bar?
+		if ((equipped.type == action_heal_self)) // NOTE(): Some skills could activate directly from the bar?
 		{
 			if (WentDown(cons.confirm))
-				ActivateSlotAction(user, user, equipped, cursor->p, storage, map);
+				ActivateSlotAction(user, user, &equipped, cursor->p, storage, map);
 			else
 				cursor->active = false;
 			return;
@@ -187,17 +187,17 @@ fn void	DoCursor(
 		// NOTE(): Load up a "cursor specification" from the
 		// currently  equipped ability.
 		// NOTE(): We can have like different cursor patterns here or whatnot.
-		s32 Range = equipped == action_ranged_attack ? 8 :
-					equipped == action_melee_attack  ? 2 :
-					equipped == action_throw ? 4 :
-					equipped == action_push ? 2 :
+		s32 Range = equipped.type == action_ranged_attack ? 8 :
+					equipped.type == action_melee_attack  ? 2 :
+					equipped.type == action_throw ? 4 :
+					equipped.type == action_push ? 2 :
 					0;
 
 		// NOTE(): Draw the maximum range of the cursor.
 		DrawHighlightArea(out, map, user->p, Range, Pink());
 
 		// NOTE() : Draw the explosion radius.
-		if (equipped == action_throw) {
+		if (equipped.type == action_throw) {
 			DrawHighlightArea(out, map, cursor->p, GRENADE_EXPLOSION_RADIUS, Red());
 		}
 		// NOTE(): Draw the cursor.
@@ -220,7 +220,7 @@ fn void	DoCursor(
 		entity_t *target = GetEntityByPosition(storage, cursor->p);
 		b32 target_valid = IsHostile(target);
 		if (target_valid) {
-			s32 hit_chance = CalculateHitChance(user, target, equipped);
+			s32 hit_chance = CalculateHitChance(user, target, equipped.type);
 			DrawHitChance(state, assets, out, target->p, hit_chance);
 		}
 
@@ -242,14 +242,14 @@ fn void	DoCursor(
 		if (WentUp(cons.confirm))
 		{
 
-			if (equipped == action_throw) // NOTE(): "action_throw" can also target traversable tiles.
+			if (equipped.type == action_throw) // NOTE(): "action_throw" can also target traversable tiles.
 				target_valid |= IsTraversable(map, cursor->p); 
 
 			b32 positioned_on_user = CompareVectors(cursor->p, user->p);
 			if (target_valid && (positioned_on_user == false))
 			{
 				//ActivateSlotAction(user, target, equipped, cursor, storage, map);
-				QueryAsynchronousAction(queue, equipped, target, cursor->p);
+				QueryAsynchronousAction(queue, equipped.type, target, cursor->p);
 				cursor->active = false;
 			}
 		}
