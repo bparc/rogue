@@ -95,9 +95,6 @@ typedef struct
 	u64 next_id;
 } entity_storage_t;
 
-// NOTE(): Stores the turns as an list of entity ids
-// in a *reverse* order (the last turn in the queue will be executed first).
-
 typedef enum
 {
 	interp_request,
@@ -117,8 +114,22 @@ const char *interpolator_state_t_names[] = {
 
 typedef struct
 {
+	b32 blocking;
+	action_type_t type;
+
+	entity_id_t target_id;
+	v2s target_p;
+	
+	f32 t;
+} async_action_t;
+
+typedef struct
+{
+	// NOTE(): Stores the turns as an list of entity ids
+// in a *reverse* order (the last turn in the queue will be executed first).
 	s32 num;
 	entity_id_t entities[64];
+	entity_storage_t *storage;
 
 	// TODO(): All this stuff
 	// should be cleared to zero
@@ -132,12 +143,43 @@ typedef struct
 	s32 action_points;
 	s32 turn_inited;
 
-	f32 time_elapsed; // NOTE(): Time from the start of the turn in seconds.
+	f32 seconds_elapsed; // NOTE(): Seconds elapsed from the start of the turn.
 
 	s32 break_mode_enabled;
 	interpolator_state_t requested_state;
 	s32 request_step;
+
+	v2 focus_p;
+
+	s32 action_count;
+	async_action_t actions[1];
+
+	// NOTE(): Prev turn info.
+	entity_id_t prev_turn_entity;
 } turn_queue_t;
+
+fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_t *target, v2s target_p)
+{
+	async_action_t *result = 0;
+	if ((queue->action_count < ArraySize(queue->actions)))
+	{
+		result = &queue->actions[queue->action_count++];
+	}
+	if (result)
+	{
+		ZeroStruct(result);
+		if (target)
+		{
+			result->target_id = target->id;
+			result->target_p = target->p;
+		}
+		else
+		{
+			result->target_p = target_p;
+		}
+		result->type = type;
+	}
+}
 
 typedef struct
 {
@@ -155,6 +197,10 @@ typedef struct
 
 	map_t *map;
 	v2 camera_position;
+
+#if ENABLE_DEBUG_PATHFINDING
+	u8 debug_memory[MB(4)];
+#endif
 } game_world_t;
 
 // TODO(): Those should propably be eventually included

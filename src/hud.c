@@ -56,29 +56,53 @@ fn void RenderSlotBar(game_world_t *state, command_buffer_t *out, assets_t *asse
     }
 }
 
-fn void 
-HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets, const client_input_t *input)
+fn void DrawTurnQueuePic(command_buffer_t *out, f32 x, f32 y, v2 sz, f32 alpha, v4 frame_color, entity_t *entity, assets_t *assets)
 {
+    bitmap_t *bitmap = IsHostile(entity) ? &assets->Slime : &assets->Player[0];         
+    v2 p = V2(x, y);
+
+    v4 bitmap_color = PureWhite();
+    bitmap_color.w = alpha;
+
+    DrawBitmap(out, p, sz, bitmap_color, &assets->CombatUI.action_bar_elements[0]);
+    if (bitmap)
+        DrawBitmap(out, Add(p, V2(0.0f, 5.0f)), sz, bitmap_color, bitmap);
+}
+
+fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets, const client_input_t *input)
+{
+    v2 frame_sz = V2(64.f, 64.f);
+    f32 y_spacing = frame_sz.y + 5.0f;
+
     f32 y = 100.0f;
+
+    f32 fade_out_time = 0.5f;
+    if ((queue->prev_turn_entity > 0) &&
+        (queue->seconds_elapsed < fade_out_time))
+    {
+        f32 t = 1.0f - (queue->seconds_elapsed / fade_out_time);
+        t = t * t;
+        v4 color = Black();
+        color.w = t;
+
+        entity_t *entity = GetEntity(storage, queue->prev_turn_entity);
+        f32 x = (frame_sz.x * (1.0f - t)); 
+        DrawTurnQueuePic(out, 8.0f + -x, y, frame_sz, color.w, color, entity, assets);
+        y += y_spacing * t;
+    }
+
     // Renderowanie kolejki
     for (s32 index = queue->num - 1; index >= 0; index--)
     {
         entity_t *entity = GetEntity(storage, queue->entities[index]);
         if (entity)
         {
-            v2 frame_sz = V2(64.f, 64.f);
-            bitmap_t *bitmap = IsHostile(entity) ? &assets->Slime : &assets->Player[0];         
             v4 frame_color = (index == (queue->num - 1)) ? Red() : Black();
-
-            v2 p = V2(8.0f, 100.0f + y);
-            DrawRect(out, p, frame_sz, Black());
-            DrawBitmap(out, p, frame_sz, PureWhite(), &assets->CombatUI.action_bar_elements[0]);
-            DrawRectOutline(out, p, frame_sz, frame_color);
-            if (bitmap)
-                DrawBitmap(out, Add(p, V2(0.0f, 5.0f)), frame_sz, PureWhite(), bitmap);
-            y += (frame_sz.y + 5.0f);
+            DrawTurnQueuePic(out, 8.0f, y, frame_sz, 1.0f, frame_color, entity, assets);
+            y += y_spacing;
         }
     }
+    DrawRectOutline(out, V2(8.0f, 100.0f), frame_sz, Red());
 
     //if ((state->cursor->active == false)) //NOTE(): Hide the action bar if the cursor is open?
         RenderSlotBar(state, out, assets, input);

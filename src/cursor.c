@@ -18,7 +18,7 @@ fn void DrawHighlightArea(command_buffer_t *out, map_t *map,v2s center, int radi
 #define GRENADE_DAMAGE 50			// temp value
 // todo: Make walls and out of boundary zone protect entities from explosions
 fn void ActivateSlotAction(entity_t *user, entity_t *target, action_type_t action,
-cursor_t *cursor, entity_storage_t *storage, map_t *map)
+v2s target_p, entity_storage_t *storage, map_t *map)
 {
     switch(action) {
         case action_ranged_attack:
@@ -34,8 +34,8 @@ cursor_t *cursor, entity_storage_t *storage, map_t *map)
     	case action_throw:
     	{
     		s32 radius = GRENADE_EXPLOSION_RADIUS;
-			v2s explosion_center = cursor->p;
-			for (u8 i = 0; i < storage->num; i++) {
+			v2s explosion_center = target_p;
+			for (s32 i = 0; i < storage->num; i++) {
 				entity_t *entity = &storage->entities[i];
 				if (IsInsideCircle(entity->p, entity->size, explosion_center, radius)) {
 					InflictDamage(entity, GRENADE_DAMAGE);
@@ -103,7 +103,7 @@ fn void	DoCursor(
 		if ((equipped == action_heal_self)) // NOTE(): Some skills could activate directly from the bar?
 		{
 			if (WentDown(cons.confirm))
-				ActivateSlotAction(user, user, equipped, cursor, storage, map);
+				ActivateSlotAction(user, user, equipped, cursor->p, storage, map);
 			else
 				cursor->active = false;
 			return;
@@ -152,7 +152,7 @@ fn void	DoCursor(
 			}
 		}
 
-		// NOTE(): Pick the target under the cursor and perform the "slot action" on it (only if it isn't a thrown action).
+		// NOTE(): Pick the target under the cursor and perform the "slot action" on it.
 		if (WentUp(cons.confirm))
 		{
 			entity_t *target = GetEntityByPosition(storage, cursor->p);
@@ -164,7 +164,8 @@ fn void	DoCursor(
 			b32 positioned_on_user = CompareVectors(cursor->p, user->p);
 			if (target_valid && (positioned_on_user == false))
 			{
-				ActivateSlotAction(user, target, equipped, cursor, storage, map);
+				//ActivateSlotAction(user, target, equipped, cursor, storage, map);
+				QueryAsynchronousAction(queue, equipped, target, cursor->p);
 				cursor->active = false;
 			}
 		}

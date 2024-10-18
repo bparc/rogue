@@ -52,8 +52,85 @@ fn void GarbageCollect(entity_storage_t *storage)
 	#endif
 }
 
+fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
+	entity_storage_t *storage, map_t *map, turn_queue_t *queue,
+	f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
+{
+		// NOTE(): Listen for the player input.
+		const v2s *directions = cardinal_directions;
+		#if ENABLE_DIAGONAL_MOVEMENT
+		if (IsKeyPressed(input, key_code_shift))
+			directions = diagonal_directions;
+		#endif
+		
+		s32 direction = GetDirectionalInput(input);
+		b32 input_valid = (direction >= 0) && (direction < 4);
+		b32 cursor_mode_active = state->cursor->active; // NOTE(): The cursor_active flag needs to be stored *before* calling DoCursor. This is actually the correct order. For reasons.
+		DoCursor(out, entity, cons, input_valid,
+			direction, directions, queue, map, storage, log, state->cursor, state->slot_bar, state);
+		
+		#if _DEBUG // NOTE(): Render the input directions on the map.
+		v2s base_p = cursor_mode_active ? state->cursor->p : entity->p;
+		for (s32 index = 0; index < 4; index++)
+			RenderIsoTile(out, map, AddS(base_p, directions[index]), SetAlpha(Orange(), 0.5f), true, 0);
+		#endif
+		
+		if (input_valid && (cursor_mode_active == false) && (queue->action_points > 0))
+		{
+	        if (MoveEntity(map, entity, directions[direction]))
+	        {
+	        	ApplyTileEffects(entity->p, state, entity);
+				// NOTE(): Consume moves
+				queue->action_points--;
+#if ENABLE_DEBUG_PATHFINDING
+				memory_t memory = {0};
+				memory.size = ArraySize(state->debug_memory);
+				memory._memory = state->debug_memory;
+				ComputeDistances(state->map, entity->p.x, entity->p.y, memory);
+#endif
+			}
+		}
+}
+
+fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, command_buffer_t *out, f32 dt, assets_t *assets, map_t *map)
+{
+	for (s32 index = 0; index < queue->action_count; index++)
+	{
+		async_action_t *action = &queue->actions[index];
+		b32 Finished = false;
+
+		if ((action->type == action_ranged_attack) ||
+			(action->type == action_throw))
+		{
+			v2 target_p = GetTileCenter(map, action->target_p);
+			f32 distance = Distance(user->deferred_p, target_p);
+			f32 t = action->t / (distance * 0.005f);
+			action->t += dt * 2.5f;
+
+			DrawRangedAnimation(out, user->deferred_p, target_p, &assets->SlimeBall, t);
+			
+			Finished = (t >= 1.0f);
+		}
+		else
+		{
+			Finished = true;
+		}
+
+		if (Finished)
+		{
+			queue->actions[index--] = queue->actions[--queue->action_count];
+			ActivateSlotAction(user, GetEntity(queue->storage, action->target_id),
+				action->type, action->target_p, queue->storage, map);
+			//InflictDamage(GetEntity(queue->storage, action->target_id), user->attack_dmg);
+		}
+	}
+}
+
 fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
+	// NOTE(): Setup
+	queue->storage = storage;
+
 	SetGlobalOffset(out, state->camera_position); // NOTE(): Let's pass the camera position via the PushRenderOutput call instead of this SetGlobalOffset stuff.
 	// NOTE(): Process the current turn
 
@@ -72,7 +149,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 
 			queue->interp_state = interp_request;
 			queue->time = 0.0f;
-			queue->time_elapsed = 0.0f;
+			queue->seconds_elapsed = 0.0f;
 
 			#if ENABLE_TURN_SYSTEM_DEBUG_LOGS
 			DebugLog("initiating turn for entity#%i", entity->id);
@@ -81,6 +158,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		}
 
 		Assert(queue->turn_inited);
+		queue->seconds_elapsed += dt;
 		// NOTE(): The turn will "stall" until AcceptTurn() is called.
 
 		// NOTE(): DEBUG draw the "discrete" p.
@@ -90,67 +168,29 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 
 		// NOTE(): We're focusing the camera either on a cursor or on a player position,
 		// depending on the current mode.
-		v2 focus_p = state->cursor->active ? GetTileCenter(map, state->cursor->p) : entity->deferred_p;
-		state->camera_position = CameraTracking(state->camera_position, focus_p, GetViewport(input), dt);
+		queue->focus_p = state->cursor->active ? GetTileCenter(map, state->cursor->p) : entity->deferred_p;
+		state->camera_position = CameraTracking(state->camera_position, queue->focus_p, GetViewport(input), dt);
 		
 		if (entity->flags & entity_flags_controllable) // NOTE(): The "player" code.
 		{
-			// NOTE(): Listen for the player input.
-			const v2s *considered_dirs = cardinal_directions;
-			#if ENABLE_DIAGONAL_MOVEMENT
-			if (IsKeyPressed(input, key_code_shift))
-				considered_dirs = diagonal_directions;
-			#endif
-			
-			s32 direction = GetDirectionalInput(input);
-			b32 input_valid = (direction >= 0) && (direction < 4);
-			b32 cursor_mode_active = state->cursor->active; // NOTE(): The cursor_active flag needs to be stored *before* calling DoCursor. This is actually the correct order. For reasons.
-
-			DoCursor(out, entity, cons, input_valid,
-				direction, considered_dirs, queue, map, storage, log, state->cursor, state->slot_bar, state);
-			
-			#if _DEBUG // NOTE(): Render the considered directions on the map.
-			v2s base_p = cursor_mode_active ? state->cursor->p : entity->p;
-			for (s32 index = 0; index < 4; index++)
-				RenderIsoTile(out, map, AddS(base_p, considered_dirs[index]), SetAlpha(Orange(), 0.5f), true, 0);
-			#endif
-			
-			//Valid input
-			if (input_valid && (cursor_mode_active == false))
-			{
-				//future position
-				v2s peekPos = AddS(entity -> p, considered_dirs[direction]);
-
-				//valid move pos
-				if (IsWorldPointEmpty(state, peekPos) && (queue->action_points > 0))
-				{
-			        MoveEntity(map, entity, considered_dirs[direction]);
-			        ApplyTileEffects(peekPos, state, entity);
-					// NOTE(): Consume moves
-					queue->action_points--;
-
-#if ENABLE_DEBUG_PATHFINDING
-					static u8 debug_memory[MB(4)] = {};
-					memory_t memory = {0};
-					memory.size = ArraySize(debug_memory);
-					memory._memory = debug_memory;
-					ComputeDistances(state->map, entity->p.x, entity->p.y, memory);
-#endif
-				}
-			}
+			// TODO(): We should buffer inputs here in case
+			// the player pressed a button while the
+			// animation is still being played.
+			if (queue->action_count == 0)
+				ListenForUserInput(entity, state, storage, map, queue, dt, input, cons, log, out, assets);
+			ResolveAsynchronousActionQueue(queue, entity, out, dt, assets, map);
 
 			// NOTE(): End the turn if we run out of all action points.
-			if (queue->action_points <= 0)
-						AcceptTurn(queue);
+			if ((queue->action_points <= 0) && (queue->action_count == 0))
+				AcceptTurn(queue, entity);
 		}
-		else // NOTE(): Animator
+		else // NOTE(): AI
 		{
 			s32 range = ENEMY_DEBUG_RANGE;
 			DrawHighlightArea(out, map, entity->p, range, Green()); // Range
 
 			f32 speed_mul = TURN_SPEED_NORMAL;
 			queue->time += dt * speed_mul;
-			queue->time_elapsed += dt;
 
 			switch(queue->interp_state)
 			{
@@ -228,9 +268,9 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 				{
 					if (queue->time > 0.1f)
 					{
-						AcceptTurn(queue);
+						AcceptTurn(queue, entity);
 						#ifdef ENABLE_TURN_SYSTEM_DEBUG_LOGS
-						DebugLog("turn finished in %.2f seconds", queue->time_elapsed);
+						DebugLog("turn finished in %.2f seconds", queue->seconds_elapsed);
 						#endif
 					}
 				} break;

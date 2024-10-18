@@ -78,18 +78,18 @@ fn entity_id_t AttemptAttack(game_world_t *World, entity_t *requestee, s32 effec
 	return result;
 }
 
-fn void AnimateAttack(game_world_t *World, entity_t *entity, entity_t *target, f32 time, f32 dt, assets_t *assets, command_buffer_t *out, b32 inflict_damage){
-	v2 from = entity->deferred_p;
-	v2 to = Sub(target->deferred_p, V2(20.0f, 20.0f));
-
-	// TODO(): Move this out to RenderCenteredIsoBitmap() or whatnot.
-	
-	if (inflict_damage)
-		InflictDamage(target, entity->attack_dmg);
-
-	bitmap_t *bitmap = &assets->SlimeBall;
-	v2 bitmap_p = Lerp2(from, to, time);
+fn void DrawRangedAnimation(command_buffer_t *out, v2 from, v2 to, bitmap_t *bitmap, f32 t)
+{
+	v2 target_center = to;
+	v2 bitmap_p = Lerp2(from, target_center, t);
 	bitmap_p = ScreenToIso(bitmap_p);
 	bitmap_p = Sub(bitmap_p, Scale(bitmap->scale, 0.5f));
 	DrawBitmap(out, bitmap_p, bitmap->scale,  PureWhite(), bitmap);
+}
+
+fn void AnimateAttack(game_world_t *World, entity_t *entity, entity_t *target, f32 time, f32 dt, assets_t *assets, command_buffer_t *out, b32 inflict_damage){
+	// TODO(): Move this out to RenderCenteredIsoBitmap() or whatnot.
+	DrawRangedAnimation(out, entity->deferred_p, target->deferred_p, &assets->SlimeBall, time);
+	if (inflict_damage)
+		InflictDamage(target, entity->attack_dmg);
 }

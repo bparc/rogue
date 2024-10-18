@@ -256,7 +256,7 @@ fn entity_t *FindClosestHostile(entity_storage_t *storage, v2s player_pos)
 	return nearest_enemy;
 }
 
-fn void MoveEntity(map_t *map, entity_t *entity, v2s offset)
+fn b32 MoveEntity(map_t *map, entity_t *entity, v2s offset)
 {
 	entity->p = AddS(entity->p, offset);
 	if (entity->p.x < 0)
@@ -267,6 +267,8 @@ fn void MoveEntity(map_t *map, entity_t *entity, v2s offset)
 		entity->p.x = map->x - 1;
 	if (entity->p.y >= map->y)
 		entity->p.y = map->y - 1;
+
+	return (true);
 }
 
 fn v2 CameraTracking(v2 p, v2 player_world_pos, v2 viewport, f32 dt)
@@ -333,13 +335,15 @@ fn entity_t *PeekNextTurn(turn_queue_t *queue, entity_storage_t *storage)
 	return result;
 }
 
-fn void AcceptTurn(turn_queue_t *queue)
+fn void AcceptTurn(turn_queue_t *queue, entity_t *entity)
 {
 	DebugAssert(queue->turn_inited == true); // NOTE(): Propably a bug?
 
 	Assert(queue->num > 0);
 	queue->num--;
 	queue->turn_inited = false;
+	queue->prev_turn_entity = entity->id;
+	queue->seconds_elapsed = 0.0f;
 }
 
 fn void ConsumeActionPoints(turn_queue_t *queue, s32 count)
