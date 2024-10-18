@@ -1,4 +1,4 @@
-fn void DefaultActionBar(slot_bar_t *bar)
+fn void DefaultActionBar(slot_bar_t *bar, assets_t *assets)
 {
     // NOTE(Arc): I'm calling this from Setup()!
 
@@ -7,11 +7,22 @@ fn void DefaultActionBar(slot_bar_t *bar)
         bar->slots[i].icon = NULL;
     }
 
+  
+
     bar->slots[0].action = action_ranged_attack;
+    bar->slots[0].icon = &assets->CombatUI.action_bar_icons[1][0];
+
     bar->slots[1].action = action_melee_attack;
+    bar->slots[1].icon = &assets->CombatUI.action_bar_icons[0][0];
+
     bar->slots[2].action = action_throw;
+    bar->slots[2].icon = &assets->CombatUI.action_bar_icons[2][0];
+
     bar->slots[3].action = action_push;
+    bar->slots[3].icon = &assets->CombatUI.action_bar_icons[3][0];
+
     bar->slots[4].action = action_heal_self;
+    bar->slots[4].icon = &assets->CombatUI.action_bar_icons[4][0];
 
     bar->selected_slot = 1;
 }

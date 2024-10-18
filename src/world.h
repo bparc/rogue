@@ -216,13 +216,13 @@ typedef struct
 #include "turn_system.c"
 #include "hud.c"
 
-fn void Setup(game_world_t *state, memory_t *memory, log_t *log)
+fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *assets)
 {
 	state->cursor = PushStruct(cursor_t, memory);
 	state->turns = PushStruct(turn_queue_t, memory);
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->map = CreateMap(30, 20, memory, TILE_PIXEL_SIZE);
-	DefaultActionBar(&state->slot_bar);
+	DefaultActionBar(&state->slot_bar,  assets);
 
 	u16 player_health = 400;
 	u16 player_max_health = 400;

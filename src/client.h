@@ -88,7 +88,7 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 	BeginFrame(state);
 	if (state->inited == 0)
 	{
-		Setup(&state->world, &state->memory, state->event_log);
+		Setup(&state->world, &state->memory, state->event_log, &state->assets);
 		state->inited = TRUE;
 	}
 

@@ -2,6 +2,7 @@
 #define TILE_VARIATIONS_COUNT_MAX 5
 
 
+
 typedef struct {
     bitmap_t LowTiles[TILE_POSITION_COUNT][TILE_VARIATIONS_COUNT_MAX]; //order as in enum below
 	bitmap_t MidTiles[TILE_POSITION_COUNT][TILE_VARIATIONS_COUNT_MAX]; //maybe require two actions to climb?
@@ -11,10 +12,17 @@ typedef struct {
 
 typedef struct {
 
+	//action bar
 	bitmap_t action_bar_elements[3];
 	bitmap_t action_bar_full;
 
+	bitmap_t action_bar_icons[5][1]; //icons:variations, order as in world.c
+
+	
+	
+
 } combat_ui_t;
+
 
 typedef struct
 {
@@ -25,7 +33,8 @@ typedef struct
 	bitmap_t SlimeRangedProjectile; //16x16x
 
 	bitmap_t SlimeBig;
-	bitmap_t Player[4];
+	bitmap_t Player[4]; //why 4 players?
+	bitmap_t PlayerGrenade;
 	bitmap_t LowTiles[2];	
 	bitmap_t Traps[3];
 	bitmap_t SlimeBall;
@@ -93,6 +102,7 @@ fn b32 LoadAssets(assets_t *assets, bmfont_t *font)
 	Bitmap(assets, &assets->SlimeRangedProjectile, "assets/enemies/slime_ranged_attack.png", 0, 0); //16x16px
 	
 		//TODO: tiles loading (do it automatically somehow)
+		//ORDER MATTERS HERE!
 	Bitmap(assets, &assets->Tilesets[0].LowTiles[0][0], "assets/tiles/planet_1/low_center_1.png", 0, 0);
 	Bitmap(assets, &assets->Tilesets[0].LowTiles[0][1], "assets/tiles/planet_1/low_center_2.png", 0, 0);
 	Bitmap(assets, &assets->Tilesets[0].LowTiles[1][0], "assets/tiles/planet_1/low_full_1.png", 0, 0);
@@ -112,14 +122,23 @@ fn b32 LoadAssets(assets_t *assets, bmfont_t *font)
 	Bitmap(assets, &assets->Tilesets[0].LowTiles[12][0], "assets/tiles/planet_1/low_three_border_no_left_1.png", 0, 0);
 	Bitmap(assets, &assets->Tilesets[0].LowTiles[13][0], "assets/tiles/planet_1/low_three_border_no_right_1.png", 0, 0);
 
-
+	//combat UI
 	Bitmap(assets, &assets->CombatUI.action_bar_full, "assets/ui/world/combat_action_bar_full.png", 0, 0);
 	Bitmap(assets, &assets->CombatUI.action_bar_elements[0], "assets/ui/world/combat_action_bar_left.png", 0, 0);
 	Bitmap(assets, &assets->CombatUI.action_bar_elements[1], "assets/ui/world/combat_action_bar_center.png",0 ,0 );
 	Bitmap(assets, &assets->CombatUI.action_bar_elements[2], "assets/ui/world/combat_action_bar_right.png",0, 0);
 
+//order matters basically everywhere
+	Bitmap(assets, &assets->CombatUI.action_bar_icons[0][0], "assets/ui/world/icons/action_base_melee_attack_icon.png", 0, 0);
+	Bitmap(assets, &assets->CombatUI.action_bar_icons[1][0], "assets/ui/world/icons/action_base_ranged_attack_icon.png", 0, 0);
+	Bitmap(assets, &assets->CombatUI.action_bar_icons[2][0], "assets/ui/world/icons/action_base_throw_grenade_icon.png", 0, 0);
+	Bitmap(assets, &assets->CombatUI.action_bar_icons[3][0], "assets/ui/world/icons/action_base_push_icon.png", 0, 0);
+	Bitmap(assets, &assets->CombatUI.action_bar_icons[4][0], "assets/ui/world/icons/action_base_heal_icon.png", 0, 0);
+
 
 	Bitmap(assets, &assets->Player[0], "assets/player/player_standing_front.png", 0, 0);
+	Bitmap(assets, &assets->PlayerGrenade, "assets/player/grenade_projectile.png", 0, 0);
+
 	Bitmap(assets, &assets->LowTiles[0], "assets/tiles/planet_1/low_center_1.png", 0, 0);
 	Bitmap(assets, &assets->LowTiles[1], "assets/tiles/planet_1/low_center_2.png", 0, 0);
 
