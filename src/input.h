@@ -5,6 +5,7 @@ typedef enum
 	key_code_shift,	
 	key_code_space,
 	key_code_tab,
+	key_code_0,
 	key_code_1,
 	key_code_2,
 	key_code_3,

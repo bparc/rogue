@@ -48,6 +48,18 @@ extern int main(void)
 					input.keys[key_code_f1] = (u8)glfwGetKey(window, GLFW_KEY_F1);
 					input.keys[key_code_f2] = (u8)glfwGetKey(window, GLFW_KEY_F2);
 
+					//numerics manually
+					input.keys[key_code_0] = (u8)glfwGetKey(window, '0');
+					input.keys[key_code_1] = (u8)glfwGetKey(window, '1');
+					input.keys[key_code_2] = (u8)glfwGetKey(window, '2');
+					input.keys[key_code_3] = (u8)glfwGetKey(window, '3');
+					input.keys[key_code_4] = (u8)glfwGetKey(window, '4');
+					input.keys[key_code_5] = (u8)glfwGetKey(window, '5');
+					input.keys[key_code_6] = (u8)glfwGetKey(window, '6');
+					input.keys[key_code_7] = (u8)glfwGetKey(window, '7');
+					input.keys[key_code_8] = (u8)glfwGetKey(window, '8');
+					input.keys[key_code_9] = (u8)glfwGetKey(window, '9');
+
 					for (s32 index = 0; index < NumEnteredChars; index++)
 						input.char_queue[index] = EnteredChars[index];
 					input.char_count = NumEnteredChars;
