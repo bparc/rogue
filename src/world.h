@@ -1,8 +1,22 @@
+typedef u64 entity_id_t;
+
+typedef enum
+{
+	entity_flags_controllable = 1 << 0,
+	entity_flags_hostile = 1 << 1,
+	entity_flags_deleted = 1 << 2,
+} entity_flags_t;
+
 typedef enum {
     status_effect_none = 1 << 0,
     status_effect_poison = 1 << 1,
 	status_effect_instant_damage = 1 << 2,
 } status_effect_type_t;
+
+typedef enum {
+	static_entity_flags_trap = 1 << 0,
+	static_entity_flags_stepon_trigger = 1 << 1,
+} static_entity_flags;
 
 typedef enum {
 	action_none = 0,
@@ -33,6 +47,7 @@ typedef struct {
 
 typedef struct {
 	action_type_t action;
+
 	bitmap_t *icon;
 } slot_t;
 
@@ -43,10 +58,13 @@ typedef struct {
 	s32 selected_slot;
 } slot_bar_t;
 
-#include "entity.h"
-#include "entity.c"
+typedef struct
+{
+	u8 flags;
+	entity_id_t id;
+	v2s p; // A position on the tile map.
+	v2 deferred_p;
 
-<<<<<<< Updated upstream
 	v2s size; //size in squares, 1x1, 2x1, 1x2, etc
 
 	f32 blink_time;
@@ -172,10 +190,6 @@ typedef struct
 	v2s p;
 	b32 active; // If active, the player input is redirected to the cursor.
 } cursor_t;
-=======
-#include "turn_system.h"
-#include "cursor.h"
->>>>>>> Stashed changes
 
 typedef struct
 {
@@ -195,9 +209,8 @@ typedef struct
 
 // TODO(): Those should propably be eventually included
 // in "client.h" for consistency's sake or something.
-#include "draw.h"
-#include "draw.c"
 #include "world.c"
+#include "gameplay.h"
 #include "cursor.c"
 #include "turn_based.c"
 #include "turn_system.c"
@@ -231,6 +244,76 @@ fn void EndGameWorld(game_world_t *state)
 
 }
 
+fn u8 chooseTileBitmap(game_world_t* world, s32 x, s32 y) {
+	
+
+    // check if top is a tile etc
+    u8 top = !IsOutOfBounds(world, V2S(x, y - 1));
+    u8 bottom = !IsOutOfBounds(world, V2S(x, y + 1));
+    u8 left = !IsOutOfBounds(world, V2S(x - 1, y));
+    u8 right = !IsOutOfBounds(world, V2S(x + 1, y));
+
+   
+      //borders: connected on three sides
+    if (!top && left && right && bottom) {
+        return tile_border_top;
+    }
+    if (!bottom && left && right && top) {
+        return tile_border_bottom;
+    }
+    if (!left && right && top && bottom) {
+        return tile_border_left;
+    }
+    if (!right && left && top && bottom) {
+        return tile_border_right;
+    }
+
+    // corners: connected on two adjacent sides
+    if (!left && top && right && !bottom) {
+        return tile_corner_left;
+    }
+    if (right && !top && !left && bottom) {
+        return tile_corner_top;
+    }
+    if (left && !bottom && !right && top) {
+        return tile_corner_bottom;
+		
+    }
+    if (!right && bottom && left && !top) {
+        return tile_corner_right;
+    }
+
+    // single connections: connected on one side
+    if (left && !right && !top && !bottom) {
+        return tile_single_connect_left;
+    }
+    if (right && !left && !top && !bottom) {
+        return tile_single_connect_right;
+    }
+    if (top && !left && !right && !bottom) {
+        return tile_single_connect_top;
+    }
+    if (bottom && !left && !right && !top) {
+        return tile_single_connect_bottom;
+    }
+
+    // TODO: pposite sides connected |x| and = (with a small x in the middle)
+    if (left && right && !top && !bottom) {
+        return tile_full; 
+    }
+    if (top && bottom && !left && !right) {
+        return tile_full;
+    }
+
+    // island tile
+    if (!left && !right && !top && !bottom) {
+        return tile_full; 
+    }
+
+    return tile_center;
+
+}
+
 fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log, assets_t *assets, virtual_controls_t cons, command_buffer_t *out)
 {
 	BeginGameWorld(state);
@@ -261,7 +344,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				b32 Filled = 0;
 				f32 height = 0;
 
-				if (IsWall(map, V2S(x, y)))
+				if (IsWall(state, V2S(x, y)))
 				{
 					Filled = true;
 					height = 15;
@@ -273,7 +356,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				if (value == 1)
 				{
 
-					u8 tile_type = chooseTileBitmap(state->map, x, y);
+					u8 tile_type = chooseTileBitmap(state, x, y);
 					bitmap_t* bitmap = &assets->Tilesets[0].LowTiles[tile_type][0];
 					
 					v2 p = MapToScreen(map, V2S(x, y));
@@ -392,3 +475,4 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 	
 }
+
