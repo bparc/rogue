@@ -121,8 +121,6 @@ fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *ou
 	s32 x = (s32)cursor_p.x;
 	s32 y = (s32)cursor_p.y;
 	//DebugPrint("%i %i", x, y);
-
-	ControlPanel(state->turns, cons, state->storage);
 }
 
 int IsValidEntity(s32 globalX, s32 globalY, char *Data, s32 startX, s32 startY, v2s size, char entityChar) {

@@ -36,35 +36,6 @@ typedef struct
 	b32 Loaded;
 } assets_t;
 
-
-
-
-typedef enum {
-	tile_center = 0, //all 4 cardinal surrounding tiles connect to this
-	tile_full,
-
-	//three sides to connect with one being the border _direction
-	tile_border_top,
-	tile_border_bottom,
-	tile_border_left,
-	tile_border_right,
-
-	//two sides connect, two borders facing _direction
-	tile_corner_top,
-	tile_corner_bottom,
-	tile_corner_left,
-	tile_corner_right,
-
-	//one side connects at _direction, three are unconnected
-	tile_single_connect_top,
-	tile_single_connect_bottom,
-	tile_single_connect_left,
-	tile_single_connect_right,
-
-
-	
-} tile_position;
-
 fn void Bitmap(assets_t *assets, bitmap_t *bitmap, const char *path, f32 align_x, f32 align_y)
 {
 	*bitmap = LoadBitmapFromFile(path);

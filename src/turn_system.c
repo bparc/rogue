@@ -15,6 +15,29 @@ fn void ControlPanel(turn_queue_t *queue, const virtual_controls_t *cons, entity
 		queue->request_step = true;
 }
 
+fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_t *target, v2s target_p)
+{
+	async_action_t *result = 0;
+	if ((queue->action_count < ArraySize(queue->actions)))
+	{
+		result = &queue->actions[queue->action_count++];
+	}
+	if (result)
+	{
+		ZeroStruct(result);
+		if (target)
+		{
+			result->target_id = target->id;
+			result->target_p = target->p;
+		}
+		else
+		{
+			result->target_p = target_p;
+		}
+		result->type = type;
+	}
+}
+
 fn inline s32 ChangeQueueState(turn_queue_t *queue, interpolator_state_t state)
 {
 	s32 result = false;
@@ -39,9 +62,10 @@ fn inline s32 ChangeQueueState(turn_queue_t *queue, interpolator_state_t state)
 	return result;
 }
 
-fn void GarbageCollect(entity_storage_t *storage)
+fn void GarbageCollect(turn_queue_t *queue)
 {
 	// TODO(): This will mess up the turn oder...
+	entity_storage_t *storage = queue->storage;
 	#if 1
 	for (s32 index = 0; index < storage->num; index++)
 	{
@@ -52,8 +76,7 @@ fn void GarbageCollect(entity_storage_t *storage)
 	#endif
 }
 
-fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
-	entity_storage_t *storage, map_t *map, turn_queue_t *queue,
+fn void inline ListenForUserInput(entity_t *entity, game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue,
 	f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
 		// NOTE(): Listen for the player input.
@@ -105,10 +128,8 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 			v2 target_p = GetTileCenter(map, action->target_p);
 			f32 distance = Distance(user->deferred_p, target_p);
 			f32 t = action->t / (distance * 0.005f);
-			action->t += dt * 2.5f;
-
+			action->t += dt * 0.7f;
 			DrawRangedAnimation(out, user->deferred_p, target_p, &assets->SlimeBall, t);
-			
 			Finished = (t >= 1.0f);
 		}
 		else
@@ -121,16 +142,93 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 			queue->actions[index--] = queue->actions[--queue->action_count];
 			ActivateSlotAction(user, GetEntity(queue->storage, action->target_id),
 				action->type, action->target_p, queue->storage, map);
-			//InflictDamage(GetEntity(queue->storage, action->target_id), user->attack_dmg);
 		}
 	}
+}
+
+fn v2 CameraTracking(v2 p, v2 player_world_pos, v2 viewport, f32 dt)
+{
+	v2 player_iso_pos = ScreenToIso(player_world_pos);
+	
+	v2 screen_center = Scale(Scale(viewport, 1.0f / (f32)VIEWPORT_INTEGER_SCALE), 0.5f);
+	v2 camera_offset = Sub(screen_center, player_iso_pos);
+	p = Lerp2(p, camera_offset, 5.0f * dt);
+	return p;
+}
+
+fn void PushTurn(turn_queue_t *queue, entity_t *entity)
+{
+	if (queue->num < ArraySize(queue->entities))
+		queue->entities[queue->num++] = entity->id;
+}
+
+fn void DefaultTurnOrder(turn_queue_t *queue, entity_storage_t *storage)
+{
+	s32 player_count = 0;
+	entity_t *players[16] = {0};
+
+	for (s32 index = 0; index < storage->num; index++)
+	{
+		entity_t *entity = &storage->entities[index];
+		if (IsHostile(entity))
+			PushTurn(queue, entity);
+		else
+			players[player_count++] = entity;
+	}
+
+	Assert(player_count < ArraySize(players));
+	for (s32 index = 0; index < player_count; index++)
+		PushTurn(queue, players[index]);
+}
+
+fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)
+{
+	entity_t *result = 0;
+	if (queue->num > 0)
+	{
+		result = GetEntity(storage, queue->entities[queue->num - 1]);
+		if (!result)
+			queue->num--; // NOTE(): The ID is invalid, pull it from the queue.
+	}
+	return result;
+}
+
+fn int32_t IsEntityActive(turn_queue_t *queue, entity_storage_t *storage, entity_id_t id)
+{
+	entity_t *result = NextInOrder(queue, storage);
+	if (result)
+		return (result->id == id);
+	return 0;
+}
+
+fn entity_t *PeekNextTurn(turn_queue_t *queue, entity_storage_t *storage)
+{
+	entity_t *result = 0;
+	if (queue->num >= 2)
+		result = GetEntity(storage, queue->entities[queue->num - 2]);
+	return result;
+}
+
+fn void AcceptTurn(turn_queue_t *queue, entity_t *entity)
+{
+	DebugAssert(queue->turn_inited == true); // NOTE(): Propably a bug?
+
+	Assert(queue->num > 0);
+	queue->num--;
+	queue->turn_inited = false;
+	queue->prev_turn_entity = entity->id;
+	queue->seconds_elapsed = 0.0f;
+}
+
+fn void ConsumeActionPoints(turn_queue_t *queue, s32 count)
+{
+	queue->action_points--;
 }
 
 fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
 	// NOTE(): Setup
 	queue->storage = storage;
-
 	SetGlobalOffset(out, state->camera_position); // NOTE(): Let's pass the camera position via the PushRenderOutput call instead of this SetGlobalOffset stuff.
 	// NOTE(): Process the current turn
 
@@ -278,5 +376,6 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		}
 	}
 
-	GarbageCollect(storage);
+	GarbageCollect(queue);
+	ControlPanel(state->turns, &cons, state->storage);
 }
