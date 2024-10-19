@@ -119,7 +119,7 @@ fn void DrawHitChance(game_world_t *state, assets_t *assets, command_buffer_t *o
 #define GRENADE_DAMAGE 50			// temp value
 // todo: Make walls and out of boundary zone protect entities from explosions
 fn void ActivateSlotAction(entity_t *user, entity_t *target, action_t *action,
-v2s target_p, entity_storage_t *storage, game_world_t *state)
+v2s target_p, entity_storage_t *storage, game_world_t *state, turn_queue_t *queue)
 {
     switch(action->type) {
         case action_ranged_attack:
@@ -166,6 +166,12 @@ v2s target_p, entity_storage_t *storage, game_world_t *state)
         default:
             break;
     }
+
+	queue->action_points -= action->params.action_point_cost;
+	if (queue->action_points < 0) {
+		queue->action_points = 0;
+	}
+
 }
 
 fn void	DoCursor(
@@ -196,6 +202,7 @@ fn void	DoCursor(
 		DebugAssert((bar.selected_slot >= 0) &&
 		(bar.selected_slot < ArraySize(bar.slots))); // NOTE(): Validate, just in case.
 		action_t equipped = bar.slots[bar.selected_slot - 1].action; // NOTE(): Slot IDs start from 1?
+		equipped.params = DefineActionTypeParams(user, equipped);
 		if (equipped.type == action_none)
 		{
 			DebugLog("An unsupported action was selected! Can't open the cursor!");
@@ -205,7 +212,9 @@ fn void	DoCursor(
 		if ((equipped.type == action_heal_self)) // NOTE(): Some skills could activate directly from the bar?
 		{
 			if (WentDown(cons.confirm))
-				ActivateSlotAction(user, user, &equipped, cursor->p, storage, state);
+				if (queue->action_points >= equipped.params.action_point_cost) {
+					ActivateSlotAction(user, user, &equipped, cursor->p, storage, state, queue);
+				}
 			else
 				cursor->active = false;
 			return;
@@ -277,9 +286,13 @@ fn void	DoCursor(
 			b32 positioned_on_user = CompareVectors(cursor->p, user->p);
 			if (target_valid && (positioned_on_user == false))
 			{
-				//ActivateSlotAction(user, target, equipped, cursor, storage, map);
-				QueryAsynchronousAction(queue, equipped.type, target, cursor->p);
-				cursor->active = false;
+
+				if (queue->action_points >= equipped.params.action_point_cost) {
+					//ActivateSlotAction(user, target, equipped, cursor, storage, map);
+					QueryAsynchronousAction(queue, equipped.type, target, cursor->p);
+					cursor->active = false;
+				}
+
 			}
 		}
 	}

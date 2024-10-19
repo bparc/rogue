@@ -99,3 +99,31 @@ fn action_params_t DefineHealAction(entity_t *user) {
 
     return heal_action;
 }
+
+fn action_params_t DefineActionTypeParams(entity_t *user, action_t action) {
+
+    switch (action.type) {
+        case action_none:
+            action.params = DefineNoneAction();
+            break;
+        case action_melee_attack:
+            action.params = DefineMeleeAttack(user);
+            break;
+        case action_ranged_attack:
+            action.params = DefineRangedAttack(user);
+            break;
+        case action_throw:
+            action.params = DefineThrowAction(user);
+            break;
+        case action_push:
+            action.params = DefinePushAction(user);
+            break;
+        case action_heal_self:
+            action.params = DefineHealAction(user);
+            break;
+        default:
+            break;
+    }
+
+    return action.params;
+}

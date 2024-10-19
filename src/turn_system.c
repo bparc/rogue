@@ -241,7 +241,7 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 		{
 			queue->actions[index--] = queue->actions[--queue->action_count];
 			ActivateSlotAction(user, GetEntity(queue->storage, action->target_id),
-				&action->action_type, action->target_p, queue->storage, state);
+				&action->action_type, action->target_p, queue->storage, state, queue);
 			//InflictDamage(GetEntity(queue->storage, action->target_id), user->attack_dmg);
 		}
 	}
