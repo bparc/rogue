@@ -46,12 +46,17 @@ fn void PushEntity(game_world_t *state, entity_t *user, entity_t *target, u8 pus
 #define DISTANCE_PENALTY_PER_TILE 9
 #define CRITICAL_HIT_CHANCE 10
 #define CRITICAL_DAMAGE_MULTIPLIER 2
+#define SKIP_TURN_HIT_CHANCE_INCREASE 15
 fn s32 CalculateHitChance(entity_t *user, entity_t *target, action_type_t action_type) {
 	s32 final_hit_chance;
 	f32 distance = DistanceV2S(user->p, target->p);
 
 	if (action_type != action_melee_attack) {
 		final_hit_chance = user->ranged_accuracy - target->evasion + BASE_HIT_CHANCE;
+		if (user->has_hitchance_boost) {
+			final_hit_chance += SKIP_TURN_HIT_CHANCE_INCREASE;
+			user->has_hitchance_boost = false;
+		}
 
 		if (distance > MAX_EFFECTIVE_RANGE) {
 			s32 penalty = (s32) (distance - MAX_EFFECTIVE_RANGE) * DISTANCE_PENALTY_PER_TILE;
@@ -60,6 +65,10 @@ fn s32 CalculateHitChance(entity_t *user, entity_t *target, action_type_t action
 
 	} else {
 		final_hit_chance = user->ranged_accuracy - target->evasion + BASE_HIT_CHANCE + MELEE_BONUS;
+		if (user->has_hitchance_boost) {
+			final_hit_chance += SKIP_TURN_HIT_CHANCE_INCREASE;
+			user->has_hitchance_boost = false;
+		}
 	}
 
 	if (final_hit_chance > 100) {

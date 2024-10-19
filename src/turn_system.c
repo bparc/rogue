@@ -183,6 +183,13 @@ fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
 		if (IsKeyPressed(input, key_code_shift))
 			directions = diagonal_directions;
 		#endif
+
+		if (WentDown(cons.y) && queue->action_points > 0) {
+			entity->has_hitchance_boost = true;
+
+			queue->action_points = 0;
+			DebugLog("Skipped turn with action points remaining. Hit chance increased by %d%% for next attack.", SKIP_TURN_HIT_CHANCE_INCREASE);
+		}
 		
 		s32 direction = GetDirectionalInput(input);
 		b32 input_valid = (direction >= 0) && (direction < 4);

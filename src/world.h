@@ -91,6 +91,7 @@ typedef struct
 	s32 melee_accuracy;
 	s32 evasion;
 	s32 remaining_action_points;
+	b32 has_hitchance_boost;
 
 	status_effect_t status_effects[MAX_STATUS_EFFECTS];
 
