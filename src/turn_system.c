@@ -4,8 +4,10 @@ fn void PushTurn(turn_queue_t *queue, entity_t *entity)
 		queue->entities[queue->num++] = entity->id;
 }
 
-fn void DefaultTurnOrder(turn_queue_t *queue, entity_storage_t *storage)
+fn void DefaultTurnOrder(turn_queue_t *queue)
 {
+	entity_storage_t *storage = queue->storage;
+
 	s32 player_count = 0;
 	entity_t *players[16] = {0};
 
@@ -257,7 +259,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 	if (entity == 0)
 	{
 		// NOTE(): We run out of the queue, time to schedule new ones.
-		EstablishTurnOrder(state, queue, storage);
+		EstablishTurnOrder(state, queue);
 	}
 	if (entity)
 	{

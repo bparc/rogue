@@ -3,9 +3,9 @@ fn void DebugWait(game_world_t *World, entity_t *entity, interpolator_state_t st
 
 }
 
-fn void EstablishTurnOrder(game_world_t *World, turn_queue_t *queue, entity_storage_t *storage)
+fn void EstablishTurnOrder(game_world_t *World, turn_queue_t *queue)
 {
-	DefaultTurnOrder(queue, storage);
+	DefaultTurnOrder(queue);
 }
 
 fn s32 BeginTurn(game_world_t *World, entity_t *entity)

@@ -78,6 +78,6 @@ typedef struct
 	evicted_entity_t evicted_entities[8];
 } turn_queue_t;
 
-fn void DefaultTurnOrder(turn_queue_t *queue, entity_storage_t *storage);
+fn void DefaultTurnOrder(turn_queue_t *queue);
 fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_t *target, v2s target_p);
 fn void ConsumeActionPoints(turn_queue_t *queue, s32 count);
