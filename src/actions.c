@@ -1,6 +1,6 @@
 fn action_params_t DefineNoneAction() {
     action_params_t none_action = {
-        .range = 0.0f,
+        .range = 0,
         .target = 0,
         .area_of_effect = {1, 1},
         .action_point_cost = 0,
@@ -17,7 +17,7 @@ fn action_params_t DefineNoneAction() {
 
 fn action_params_t DefineMeleeAttack(entity_t *user) {
     action_params_t melee_attack = {
-        .range = 1.0f,
+        .range = 2,
         .target = 0,
         .area_of_effect = {1, 1},
         .action_point_cost = 3,
@@ -34,7 +34,7 @@ fn action_params_t DefineMeleeAttack(entity_t *user) {
 
 fn action_params_t DefineRangedAttack(entity_t *user) {
     action_params_t ranged_attack = {
-        .range = 5.0f,
+        .range = 5,
         .target = 0,
         .area_of_effect = {1, 1},
         .action_point_cost = 4,
@@ -51,11 +51,11 @@ fn action_params_t DefineRangedAttack(entity_t *user) {
 
 fn action_params_t DefineThrowAction(entity_t *user) {
     action_params_t throw_action = {
-        .range = 4.0f,
+        .range = 6,
         .target = 0,
         .area_of_effect = {3, 3},
-        .action_point_cost = 6,
-        .accuracy = 0.75f,
+        .action_point_cost = 7,
+        .accuracy = 1.0f,
         .damage = 50.0f,
         .is_healing = false,
         .is_status_effect = false,
@@ -68,7 +68,7 @@ fn action_params_t DefineThrowAction(entity_t *user) {
 
 fn action_params_t DefinePushAction(entity_t *user) {
     action_params_t push_action = {
-        .range = 1.0f,
+        .range = 2,
         .target = 0,
         .area_of_effect = {1, 1},
         .action_point_cost = 2,
@@ -85,7 +85,7 @@ fn action_params_t DefinePushAction(entity_t *user) {
 
 fn action_params_t DefineHealAction(entity_t *user) {
     action_params_t heal_action = {
-        .range = 1.0f,
+        .range = 1,
         .target = 0,
         .area_of_effect = {1, 1},
         .action_point_cost = 6,

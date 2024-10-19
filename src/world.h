@@ -29,7 +29,7 @@ const char *action_type_t_names[] =
 };
 
 typedef struct {
-	f32 range;
+	s32 range;
 	entity_id_t target;
 	v2s area_of_effect;
 	s32 action_point_cost;

@@ -133,24 +133,22 @@ v2s target_p, entity_storage_t *storage, game_world_t *state, turn_queue_t *queu
     switch(action->type) {
         case action_ranged_attack:
         {
-			action->params = DefineRangedAttack(user);
 	        HandleAttack(user, target, action->type, state);
 	        break;
         }
         case action_melee_attack:
         {
-			action->params = DefineMeleeAttack(user);
         	HandleAttack(user, target, action->type, state);
         	break;
         }
     	case action_throw:
     	{
-    		action->params = DefineThrowAction(user);
     		s32 radius = action->params.area_of_effect.x;
-			v2s explosion_center = target_p;
+			v2s explosion_center = state->cursor->p;
 			for (s32 i = 0; i < storage->num; i++) {
 				entity_t *entity = &storage->entities[i];
 				if (IsInsideCircle(entity->p, entity->size, explosion_center, radius)) {
+					DebugLog("Inflicting damage");
 					InflictDamage(entity, (s16)action->params.damage);
 				}
 			}
@@ -158,7 +156,6 @@ v2s target_p, entity_storage_t *storage, game_world_t *state, turn_queue_t *queu
 		}
 		case action_push:
     	{
-        	action->params = DefinePushAction(user);
 			PushEntity(state, user, target, 4);
 			break;
 		}
@@ -166,7 +163,6 @@ v2s target_p, entity_storage_t *storage, game_world_t *state, turn_queue_t *queu
         {
         	if (target == user)
         	{
-        		action->params = DefineHealAction(user);
         		Heal(target, (s16)action->params.damage);
         		DebugLog("healed up for %i hp", (s16)action->params.damage);
         	}
@@ -176,6 +172,7 @@ v2s target_p, entity_storage_t *storage, game_world_t *state, turn_queue_t *queu
             break;
     }
 
+	DebugLog("Used %i action points", action->params.action_point_cost);
 	queue->action_points -= action->params.action_point_cost;
 	if (queue->action_points < 0) {
 		queue->action_points = 0;
@@ -228,21 +225,13 @@ fn void	DoCursor(
 				cursor->active = false;
 			return;
 		}
-		// NOTE(): Load up a "cursor specification" from the
-		// currently  equipped ability.
-		// NOTE(): We can have like different cursor patterns here or whatnot.
-		s32 Range = equipped.type == action_ranged_attack ? 8 :
-					equipped.type == action_melee_attack  ? 2 :
-					equipped.type == action_throw ? 4 :
-					equipped.type == action_push ? 2 :
-					0;
 
 		// NOTE(): Draw the maximum range of the cursor.
-		DrawHighlightArea(out, map, user->p, Range, Pink());
+		DrawHighlightArea(out, map, user->p, equipped.params.range, Pink());
 
 		// NOTE() : Draw the explosion radius.
 		if (equipped.type == action_throw) {
-			DrawHighlightArea(out, map, cursor->p, GRENADE_EXPLOSION_RADIUS, Red());
+			DrawHighlightArea(out, map, cursor->p, equipped.params.area_of_effect.x, Red());
 		}
 		// NOTE(): Draw the cursor.
 		RenderIsoTile(out, map, cursor->p, A(Pink(), 0.8f), true, 0);
@@ -251,12 +240,12 @@ fn void	DoCursor(
 		v2s requestedPos = AddS(cursor->p, move_requested ? dirs[direction] : V2S(0, 0));
 
 		b32 in_range = false;
-		in_range = IsInsideCircle(requestedPos, V2S(1,1), user->p, Range);
+		in_range = IsInsideCircle(requestedPos, V2S(1,1), user->p, equipped.params.range);
 		if (move_requested && in_range)
 				cursor->p = requestedPos;
 		// NOTE(): If the cursor somehow ended up out of its range -
 		// move it back to the user.
-		in_range = IsInsideCircle(cursor->p, V2S(1,1), user->p, Range);
+		in_range = IsInsideCircle(cursor->p, V2S(1,1), user->p, equipped.params.range);
 		if ((in_range == false))
 			cursor->p = user->p;
 
@@ -265,7 +254,7 @@ fn void	DoCursor(
 		entity_t *Enemy = FindClosestHostile(storage, cursor->p);
 		if (Enemy)
 		{ 
-			if (IsInsideCircle(Enemy->p, Enemy->size, user->p, Range))
+			if (IsInsideCircle(Enemy->p, Enemy->size, user->p, equipped.params.range))
 			{
 
 				RenderIsoTileArea(out, map, Enemy->p, AddS(Enemy->p, Enemy->size), A(Red(), 0.8f)); //render target for all size enemies

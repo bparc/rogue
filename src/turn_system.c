@@ -225,6 +225,7 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 	for (s32 index = 0; index < queue->action_count; index++)
 	{
 		async_action_t *action = &queue->actions[index];
+		action->action_type.params = DefineActionTypeParams(user, action->action_type);
 		b32 Finished = false;
 
 		if ((action->action_type.type == action_ranged_attack) ||
