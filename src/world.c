@@ -161,6 +161,12 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, 
 		result->ranged_accuracy = accuracy;
 		result->evasion = evasion;
 		result->remaining_action_points = remaining_action_points;
+
+		// Initializing status effects to status_effect_none (which is 1)
+		for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
+			result->status_effects[i].type = status_effect_none;
+			result->status_effects[i].remaining_turns = 0;
+		}
 	}
 	
 	return result;

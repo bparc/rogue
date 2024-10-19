@@ -1,19 +1,19 @@
 fn void AddStatusEffect(entity_t *entity, status_effect_type_t status_effect, s32 duration) {
-    for (int i = 0; i < MAX_STATUS_EFFECTS; ++i) {
-        
-        if (1 + entity->status_effects[i].type == status_effect_none) { //types start at 1
-            
+    for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
+
+        s32 status_effect_type_value = entity->status_effects[i].type;
+
+        if (entity->status_effects[i].type == status_effect_none) {
             switch (status_effect) {
                 case status_effect_poison:
                     entity->status_effects[i].type = status_effect_poison;
-                entity->status_effects[i].remaining_turns = duration;
-                break;
+                    entity->status_effects[i].remaining_turns = duration;
+                    break;
                 default:
                     break;
             }
         }
     }
-
 }
 
 fn void InflictDamage(entity_t *entity, s16 damage) {
@@ -81,6 +81,7 @@ fn void ProcessStatusEffects(entity_t *entity) {
             entity->status_effects[i].remaining_turns--;
 
             if (entity->status_effects[i].remaining_turns == 0) {
+                DebugLog("Changing status effect to none, applying value: %d", status_effect_none);
                 entity->status_effects[i].type = status_effect_none;
             }
         }
