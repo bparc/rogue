@@ -39,17 +39,44 @@ fn inline s32 ChangeQueueState(turn_queue_t *queue, interpolator_state_t state)
 	return result;
 }
 
-fn void GarbageCollect(entity_storage_t *storage)
+fn evicted_entity_t *GetEvictedEntity(turn_queue_t *queue, entity_id_t ID)
+{
+	for (s32 index = 0; index < queue->num_evicted_entities; index++)
+	{
+		evicted_entity_t *entity = &queue->evicted_entities[index];
+		if (entity->id == ID)
+			return entity;
+	}
+	return NULL;
+}
+
+fn void GarbageCollect(turn_queue_t *queue, f32 dt)
 {
 	// TODO(): This will mess up the turn oder...
-	#if 1
+	entity_storage_t *storage = queue->storage;
 	for (s32 index = 0; index < storage->num; index++)
 	{
 		entity_t *entity = &storage->entities[index];
 		if (entity->flags & entity_flags_deleted)
+		{
+			if (queue->num_evicted_entities < ArraySize(queue->evicted_entities))
+			{
+				evicted_entity_t *evicted = &queue->evicted_entities[queue->num_evicted_entities++];
+				evicted->entity = *entity;
+				evicted->time_remaining = 1.0f;
+			}
+
 			storage->entities[index--] = storage->entities[--storage->num];
+		}
 	}
-	#endif
+
+	for (s32 index = 0; index < queue->num_evicted_entities; index++)
+	{
+		evicted_entity_t *entity = &queue->evicted_entities[index];
+		entity->time_remaining -= (dt * ENTITY_EVICTION_SPEED);
+		if (entity->time_remaining <= 0.0f)
+			queue->evicted_entities[index--] = queue->evicted_entities[--queue->num_evicted_entities];
+	}
 }
 
 fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
@@ -278,5 +305,5 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		}
 	}
 
-	GarbageCollect(storage);
+	GarbageCollect(queue, dt);
 }

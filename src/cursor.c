@@ -152,6 +152,8 @@ fn void	DoCursor(
 	turn_queue_t *queue, map_t *map, entity_storage_t *storage, log_t *log, cursor_t *cursor,
 	slot_bar_t bar, game_world_t *state, assets_t *assets)
 {
+	cursor->target_id = 0;
+	
 	Assert(user);
 	if ((cursor->active == false) && WentDown(cons.confirm))
 	{
@@ -216,14 +218,6 @@ fn void	DoCursor(
 		if ((in_range == false))
 			cursor->p = user->p;
 
-		// NOTE(): Draw the hit chance
-		entity_t *target = GetEntityByPosition(storage, cursor->p);
-		b32 target_valid = IsHostile(target);
-		if (target_valid) {
-			s32 hit_chance = CalculateHitChance(user, target, equipped.type);
-			DrawHitChance(state, assets, out, target->p, hit_chance);
-		}
-
 		// NOTE(): Find the closest hostile to the cursor, draw
 		// tiles underneath them, then snap to them if the button went down.
 		entity_t *Enemy = FindClosestHostile(storage, cursor->p);
@@ -238,6 +232,17 @@ fn void	DoCursor(
 			}
 		}
 
+		// NOTE(): Get target.
+		entity_t *target = GetEntityByPosition(storage, cursor->p);
+		b32 target_valid = IsHostile(target);
+		if (target_valid && target)
+		{
+			cursor->target_id = target->id;
+
+			// NOTE(): Draw the hit chance
+			s32 hit_chance = CalculateHitChance(user, target, equipped.type);
+			DrawHitChance(state, assets, out, target->p, hit_chance);
+		}
 		// NOTE(): Pick the target under the cursor and perform the "slot action" on it.
 		if (WentUp(cons.confirm))
 		{

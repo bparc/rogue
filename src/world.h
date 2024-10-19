@@ -145,6 +145,16 @@ typedef struct
 
 typedef struct
 {
+	union
+	{
+		entity_t entity;
+		entity_t;
+	};
+	f32 time_remaining;
+} evicted_entity_t;
+
+typedef struct
+{
 	// NOTE(): Stores the turns as an list of entity ids
 // in a *reverse* order (the last turn in the queue will be executed first).
 	s32 num;
@@ -174,8 +184,15 @@ typedef struct
 	s32 action_count;
 	async_action_t actions[1];
 
-	// NOTE(): Prev turn info.
+	// NOTE(): Some additional book-keeping
+	// for the animation system to use.
 	entity_id_t prev_turn_entity;
+	// NOTE(): A small buffer that stores
+	// copies of deleted entities for
+	// a brief amount of time.
+	#define ENTITY_EVICTION_SPEED 2.0f
+	s32 num_evicted_entities;
+	evicted_entity_t evicted_entities[8];
 } turn_queue_t;
 
 fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_t *target, v2s target_p)
@@ -205,6 +222,8 @@ typedef struct
 {
 	v2s p;
 	b32 active; // If active, the player input is redirected to the cursor.
+
+	entity_id_t target_id;
 } cursor_t;
 
 typedef struct

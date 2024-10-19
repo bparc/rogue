@@ -27,7 +27,7 @@ fn void DefaultActionBar(slot_bar_t *bar, assets_t *assets)
     bar->selected_slot = 1;
 }
 
-fn void RenderSlotBar(game_world_t *state, command_buffer_t *out, assets_t *assets, const client_input_t *input) {
+fn void ActionMenu(game_world_t *state, command_buffer_t *out, assets_t *assets, const client_input_t *input) {
     v2 action_bar_size = V2(540.0f, 60.0f);
     v2 slot_size = V2(50.0f, 50.0f);
     f32 padding = 10.0f;
@@ -67,56 +67,78 @@ fn void RenderSlotBar(game_world_t *state, command_buffer_t *out, assets_t *asse
     }
 }
 
-fn void DrawTurnQueuePic(command_buffer_t *out, f32 x, f32 y, v2 sz, f32 alpha, v4 frame_color, entity_t *entity, assets_t *assets)
+fn void DrawTurnQueuePic(command_buffer_t *out, f32 x, f32 y, v2 sz, f32 alpha, entity_t *entity, assets_t *assets)
 {
     bitmap_t *bitmap = IsHostile(entity) ? &assets->Slime : &assets->Player[0];         
     v2 p = V2(x, y);
 
     v4 bitmap_color = PureWhite();
     bitmap_color.w = alpha;
-
+    
     DrawBitmap(out, p, sz, bitmap_color, &assets->CombatUI.action_bar_elements[0]);
     if (bitmap)
         DrawBitmap(out, Add(p, V2(0.0f, 5.0f)), sz, bitmap_color, bitmap);
 }
 
-fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets, const client_input_t *input)
+fn void DrawTurnQueuePicFadeOut(command_buffer_t *out, f32 x, f32 *y, v2 sz, entity_t *entity, assets_t *assets, f32 t, f32 y_spacing)
 {
-    v2 frame_sz = V2(64.f, 64.f);
-    f32 y_spacing = frame_sz.y + 5.0f;
+    t = t * t;
 
-    f32 y = 100.0f;
+    v4 color = Black();
+    color.w = t;
+    x += (sz.x * (1.0f - t)); 
+    DrawTurnQueuePic(out, -x, *y, sz, color.w, entity, assets);
+    *y += y_spacing * t;
+}
+
+fn void TurnQueue(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, assets_t *assets, cursor_t *cursor)
+{
+    entity_storage_t *storage = queue->storage;
+
+    v2 sz = V2(64.f, 64.f);
+    f32 spacing = sz.y + 5.0f;
+    f32 top = 100.0f;
+    f32 min = 8.0f;
+
+    f32 x = min;
+    f32 y = top;
 
     f32 fade_out_time = 0.5f;
     if ((queue->prev_turn_entity > 0) &&
         (queue->seconds_elapsed < fade_out_time))
     {
         f32 t = 1.0f - (queue->seconds_elapsed / fade_out_time);
-        t = t * t;
-        v4 color = Black();
-        color.w = t;
-
         entity_t *entity = GetEntity(storage, queue->prev_turn_entity);
-        f32 x = (frame_sz.x * (1.0f - t)); 
-        DrawTurnQueuePic(out, 8.0f + -x, y, frame_sz, color.w, color, entity, assets);
-        y += y_spacing * t;
+        DrawTurnQueuePicFadeOut(out, x, &y, sz, entity, assets, t, spacing);
     }
 
-    // Renderowanie kolejki
     for (s32 index = queue->num - 1; index >= 0; index--)
     {
-        entity_t *entity = GetEntity(storage, queue->entities[index]);
+        entity_id_t ID = queue->entities[index];
+        entity_t *entity = GetEntity(storage, ID);
         if (entity)
         {
-            v4 frame_color = (index == (queue->num - 1)) ? Red() : Black();
-            DrawTurnQueuePic(out, 8.0f, y, frame_sz, 1.0f, frame_color, entity, assets);
-            y += y_spacing;
+            DrawTurnQueuePic(out, x, y, sz, 1.0f, entity, assets);
+            if (entity->id == cursor->target_id)
+                DrawRectOutline(out, V2(x, y), sz, Orange());
+
+            y += spacing;
+        }
+        else
+        {
+            evicted_entity_t *evicted = GetEvictedEntity(queue, ID);
+            if (evicted)
+                DrawTurnQueuePicFadeOut(out, x, &y, sz, &evicted->entity, assets, evicted->time_remaining, spacing);
         }
     }
-    DrawRectOutline(out, V2(8.0f, 100.0f), frame_sz, Red());
 
-    //if ((state->cursor->active == false)) //NOTE(): Hide the action bar if the cursor is open?
-        RenderSlotBar(state, out, assets, input);
+    DrawRectOutline(out, V2(x, 100.0f), sz, Red());
+}
+
+fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets, const client_input_t *input)
+{
+    TurnQueue(out, state, queue, assets, state->cursor);
+    ActionMenu(state, out, assets, input);
 }
 
 //fn void ActivateSlotAction(entity_t *user, entity_t *target, action_type_t action);
