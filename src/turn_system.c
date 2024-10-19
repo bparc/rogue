@@ -213,7 +213,7 @@ fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
 		}
 }
 
-fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, command_buffer_t *out, f32 dt, assets_t *assets, map_t *map)
+fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, command_buffer_t *out, f32 dt, assets_t *assets, game_world_t *state)
 {
 	for (s32 index = 0; index < queue->action_count; index++)
 	{
@@ -223,7 +223,7 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 		if ((action->action_type.type == action_ranged_attack) ||
 			(action->action_type.type == action_throw))
 		{
-			v2 target_p = GetTileCenter(map, action->target_p);
+			v2 target_p = GetTileCenter(state->map, action->target_p);
 			f32 distance = Distance(user->deferred_p, target_p);
 			f32 t = action->t / (distance * 0.005f);
 			action->t += dt * 2.5f;
@@ -241,7 +241,7 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 		{
 			queue->actions[index--] = queue->actions[--queue->action_count];
 			ActivateSlotAction(user, GetEntity(queue->storage, action->target_id),
-				&action->action_type, action->target_p, queue->storage, map);
+				&action->action_type, action->target_p, queue->storage, state);
 			//InflictDamage(GetEntity(queue->storage, action->target_id), user->attack_dmg);
 		}
 	}
@@ -299,7 +299,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			// animation is still being played.
 			if (queue->action_count == 0)
 				ListenForUserInput(entity, state, storage, map, queue, dt, input, cons, log, out, assets);
-			ResolveAsynchronousActionQueue(queue, entity, out, dt, assets, map);
+			ResolveAsynchronousActionQueue(queue, entity, out, dt, assets, state);
 
 			// NOTE(): End the turn if we run out of all action points.
 			if ((queue->action_points <= 0) && (queue->action_count == 0))

@@ -14,6 +14,29 @@ fn void DrawHighlightArea(command_buffer_t *out, map_t *map,v2s center, int radi
     }
 }
 
+fn void PushEntity(game_world_t *state, entity_t *user, entity_t *target, u8 push_distance) {
+	v2s direction = SubS(target->p, user->p);
+
+	if (direction.x != 0) direction.x = (direction.x > 0) ? 1 : -1;
+	if (direction.y != 0) direction.y = (direction.y > 0) ? 1 : -1;
+
+	const s32 PLAYER_STRENGTH = user->attack_dmg; // Just temp value for the demo, since we don't have RPG systems ready yet
+	s32 damage_per_tile = PLAYER_STRENGTH / (target->size.x * target->size.y);
+	s32 total_damage = 0;
+
+	for (s32 i = 0; i < push_distance; ++i) {
+		v2s next_pos = AddS(target->p, direction); // Slime is moved through each tile on the way
+
+		if (!MoveFitsWithSize(state, target, next_pos)) {
+			InflictDamage(target, (s16)damage_per_tile);
+			break;
+		} else {
+			target->p = next_pos;
+			ApplyTileEffects(next_pos, state, target);
+		}
+	}
+}
+
 #include "actions.c"
 
 #define BASE_HIT_CHANCE 50
@@ -47,7 +70,7 @@ fn s32 CalculateHitChance(entity_t *user, entity_t *target, action_type_t action
 }
 
 // todo: add critical hits, distance measure
-fn void HandleAttack(entity_t *user, entity_t *target, action_type_t action_type) {
+fn void HandleAttack(entity_t *user, entity_t *target, action_type_t action_type, game_world_t *state) {
 
 	s32 final_hit_chance = CalculateHitChance(user, target, action_type);
 
@@ -61,7 +84,7 @@ fn void HandleAttack(entity_t *user, entity_t *target, action_type_t action_type
 
 		if (crit_roll < CRITICAL_DAMAGE_MULTIPLIER) {
 			s32 crit_damage = user->attack_dmg * CRITICAL_DAMAGE_MULTIPLIER;
-			target->p.x -= 2;
+			PushEntity(state, user, target, 2);
 			InflictDamage(target, (u16)crit_damage);
 			DebugLog("Critical Hit! Inflicted %i critical damage to target #%i", crit_damage, target->id);
 		} else {
@@ -96,19 +119,19 @@ fn void DrawHitChance(game_world_t *state, assets_t *assets, command_buffer_t *o
 #define GRENADE_DAMAGE 50			// temp value
 // todo: Make walls and out of boundary zone protect entities from explosions
 fn void ActivateSlotAction(entity_t *user, entity_t *target, action_t *action,
-v2s target_p, entity_storage_t *storage, map_t *map)
+v2s target_p, entity_storage_t *storage, game_world_t *state)
 {
     switch(action->type) {
         case action_ranged_attack:
         {
 			action->params = DefineRangedAttack(user);
-	        HandleAttack(user, target, action->type);
+	        HandleAttack(user, target, action->type, state);
 	        break;
         }
         case action_melee_attack:
         {
 			action->params = DefineMeleeAttack(user);
-        	HandleAttack(user, target, action->type);
+        	HandleAttack(user, target, action->type, state);
         	break;
         }
     	case action_throw:
@@ -126,7 +149,8 @@ v2s target_p, entity_storage_t *storage, map_t *map)
 		}
 		case action_push:
     	{
-			target->p.x -= 4; // NOTE(): Push-back
+        	action->params = DefinePushAction(user);
+			PushEntity(state, user, target, 4);
 			break;
 		}
         case action_heal_self:
@@ -181,7 +205,7 @@ fn void	DoCursor(
 		if ((equipped.type == action_heal_self)) // NOTE(): Some skills could activate directly from the bar?
 		{
 			if (WentDown(cons.confirm))
-				ActivateSlotAction(user, user, &equipped, cursor->p, storage, map);
+				ActivateSlotAction(user, user, &equipped, cursor->p, storage, state);
 			else
 				cursor->active = false;
 			return;
