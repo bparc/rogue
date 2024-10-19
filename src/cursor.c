@@ -148,7 +148,6 @@ v2s target_p, entity_storage_t *storage, game_world_t *state, turn_queue_t *queu
 			for (s32 i = 0; i < storage->num; i++) {
 				entity_t *entity = &storage->entities[i];
 				if (IsInsideCircle(entity->p, entity->size, explosion_center, radius)) {
-					DebugLog("Inflicting damage");
 					InflictDamage(entity, (s16)action->params.damage);
 				}
 			}
