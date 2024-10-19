@@ -146,7 +146,7 @@ typedef struct
 #include "world.c"
 #include "gameplay.h"
 #include "cursor.c"
-#include "turn_based.c"
+#include "turn_user.c"
 #include "turn_system.c"
 #include "hud.c"
 
