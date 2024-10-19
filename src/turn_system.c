@@ -1,3 +1,95 @@
+fn void PushTurn(turn_queue_t *queue, entity_t *entity)
+{
+	if (queue->num < ArraySize(queue->entities))
+		queue->entities[queue->num++] = entity->id;
+}
+
+fn void DefaultTurnOrder(turn_queue_t *queue, entity_storage_t *storage)
+{
+	s32 player_count = 0;
+	entity_t *players[16] = {0};
+
+	for (s32 index = 0; index < storage->num; index++)
+	{
+		entity_t *entity = &storage->entities[index];
+		if (IsHostile(entity))
+			PushTurn(queue, entity);
+		else
+			players[player_count++] = entity;
+	}
+
+	Assert(player_count < ArraySize(players));
+	for (s32 index = 0; index < player_count; index++)
+		PushTurn(queue, players[index]);
+}
+
+fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)
+{
+	entity_t *result = 0;
+	if (queue->num > 0)
+	{
+		result = GetEntity(storage, queue->entities[queue->num - 1]);
+		if (!result)
+			queue->num--; // NOTE(): The ID is invalid, pull it from the queue.
+	}
+	return result;
+}
+
+fn int32_t IsEntityActive(turn_queue_t *queue, entity_storage_t *storage, entity_id_t id)
+{
+	entity_t *result = NextInOrder(queue, storage);
+	if (result)
+		return (result->id == id);
+	return 0;
+}
+
+fn entity_t *PeekNextTurn(turn_queue_t *queue, entity_storage_t *storage)
+{
+	entity_t *result = 0;
+	if (queue->num >= 2)
+		result = GetEntity(storage, queue->entities[queue->num - 2]);
+	return result;
+}
+
+fn void AcceptTurn(turn_queue_t *queue, entity_t *entity)
+{
+	DebugAssert(queue->turn_inited == true); // NOTE(): Propably a bug?
+
+	Assert(queue->num > 0);
+	queue->num--;
+	queue->turn_inited = false;
+	queue->prev_turn_entity = entity->id;
+	queue->seconds_elapsed = 0.0f;
+}
+
+fn void ConsumeActionPoints(turn_queue_t *queue, s32 count)
+{
+	queue->action_points--;
+}
+
+fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_t *target, v2s target_p)
+{
+	async_action_t *result = 0;
+	if ((queue->action_count < ArraySize(queue->actions)))
+	{
+		result = &queue->actions[queue->action_count++];
+	}
+	if (result)
+	{
+		ZeroStruct(result);
+		if (target)
+		{
+			result->target_id = target->id;
+			result->target_p = target->p;
+		}
+		else
+		{
+			result->target_p = target_p;
+		}
+		result->action_type.type = type;
+	}
+}
+
 fn void ControlPanel(turn_queue_t *queue, const virtual_controls_t *cons, entity_storage_t *storage)
 {
 	if (WentDown(cons->debug01)) // Toggle
