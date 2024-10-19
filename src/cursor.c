@@ -8,7 +8,7 @@ fn void DrawHighlightArea(command_buffer_t *out, map_t *map,v2s center, int radi
 
             if (IsInsideCircle(point, V2S(1,1), center, radius))
             {
-                RenderIsoTile(out, map, point, SetAlpha(color, 0.5f), true, 0);
+                RenderIsoTile(out, map, point, A(color, 0.5f), true, 0);
             }
         }
     }
@@ -203,7 +203,7 @@ fn void	DoCursor(
 			DrawHighlightArea(out, map, cursor->p, GRENADE_EXPLOSION_RADIUS, Red());
 		}
 		// NOTE(): Draw the cursor.
-		RenderIsoTile(out, map, cursor->p, SetAlpha(Pink(), 0.8f), true, 0);
+		RenderIsoTile(out, map, cursor->p, A(Pink(), 0.8f), true, 0);
 
 		// NOTE(): Move the cursor.
 		v2s requestedPos = AddS(cursor->p, move_requested ? dirs[direction] : V2S(0, 0));
@@ -226,7 +226,7 @@ fn void	DoCursor(
 			if (IsInsideCircle(Enemy->p, Enemy->size, user->p, Range))
 			{
 
-				RenderIsoTileArea(out, map, Enemy->p, AddS(Enemy->p, Enemy->size), SetAlpha(Red(), 0.8f)); //render target for all size enemies
+				RenderIsoTileArea(out, map, Enemy->p, AddS(Enemy->p, Enemy->size), A(Red(), 0.8f)); //render target for all size enemies
 				if (WentDown(cons.snap_cursor))
 					cursor->p = Enemy->p;
 			}

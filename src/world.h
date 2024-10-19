@@ -500,7 +500,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 			if (fmodf(t, blink_rate) >= (blink_rate * 0.5f))
 				bitmap_color = Red();
 			else
-				bitmap_color = SetAlpha(Blue(), 0.9f);
+				bitmap_color = A(Blue(), 0.9f);
 		}
 
 		DrawBitmap(out, bitmap_p, bitmap_sz, bitmap_color, bitmap);

@@ -99,7 +99,7 @@ fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
 		#if _DEBUG // NOTE(): Render the input directions on the map.
 		v2s base_p = cursor_mode_active ? state->cursor->p : entity->p;
 		for (s32 index = 0; index < 4; index++)
-			RenderIsoTile(out, map, AddS(base_p, directions[index]), SetAlpha(Orange(), 0.5f), true, 0);
+			RenderIsoTile(out, map, AddS(base_p, directions[index]), A(Orange(), 0.5f), true, 0);
 		#endif
 		
 		if (input_valid && (cursor_mode_active == false) && (queue->action_points > 0))

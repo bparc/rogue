@@ -83,7 +83,7 @@ fn inline v4 LightPeach(void)
 	return RGB(255, 204, 170);
 }
 
-fn inline v4 SetAlpha(v4 color, f32 a)
+fn inline v4 A(v4 color, f32 a)
 {
 	color.w = a;
 	return color;
