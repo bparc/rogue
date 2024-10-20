@@ -28,7 +28,7 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 	#if ENABLE_DEBUG_PATHFINDING
 	v2s nearest = FindNearestTile(World->map, requestee->p);
 	chosenDir = SubS(nearest, requestee->p);
-	MoveEntity(World->map, requestee, chosenDir);
+	Move(World->map, requestee, chosenDir);
 	#else
 
 	int canMove = false;
@@ -40,9 +40,8 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 		canMove = MoveFitsWithSize(World, requestee, peekPos);
 		
 		if(canMove) {
-			MoveEntity(World->map, requestee, chosenDir);
+			Move(World, requestee, chosenDir);
 			ApplyTileEffects(requestee->p, World, requestee);
-			//DebugLog("moving %i %i", peekPos.x, peekPos.y);
 			break;
 		}
 

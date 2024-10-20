@@ -211,14 +211,21 @@ fn b32 IsHostile(const entity_t *entity)
 {
 	if (entity)
 		return entity->flags & entity_flags_hostile;
-	return 0;
+	return false;
+}
+
+fn b32 IsPlayer(const entity_t *entity)
+{
+	if (entity)
+		return (entity->flags & entity_flags_controllable);
+	return false;
 }
 
 fn b32 IsTrap(const static_entity_t *entity)
 {
 	if (entity)
 		return entity->flags & static_entity_flags_trap;
-	return 0;
+	return false;
 }
 
 fn entity_t *GetEntity(entity_storage_t *storage, entity_id_t id)
@@ -274,21 +281,6 @@ fn entity_t *FindClosestHostile(entity_storage_t *storage, v2s player_pos)
 	return nearest_enemy;
 }
 
-fn b32 MoveEntity(map_t *map, entity_t *entity, v2s offset)
-{
-	entity->p = AddS(entity->p, offset);
-	if (entity->p.x < 0)
-		entity->p.x = 0;
-	if (entity->p.y < 0)
-		entity->p.y = 0;
-	if (entity->p.x >= map->x)
-		entity->p.x = map->x - 1;
-	if (entity->p.y >= map->y)
-		entity->p.y = map->y - 1;
-
-	return (true);
-}
-
 fn v2 CameraTracking(v2 p, v2 player_world_pos, v2 viewport, f32 dt)
 {
 	v2 player_iso_pos = ScreenToIso(player_world_pos);
@@ -330,22 +322,16 @@ fn b32 IsWorldPointEmpty(game_world_t *state, v2s p) {
 	return false; // Entity collision
 }
 
-/*int MoveFitsWithSize(game_world_t* world, v2s size, v2s requestedPos) {
-	DebugLog("Peek pos: x=%d, y=%d", requestedPos.x, requestedPos.y);
-
-    for (int y = 0; y < size.y; ++y) {
-        for (int x = 0; x < size.x; ++x) {
-            v2s pos = {requestedPos.x + x, requestedPos.y + y};
-        	DebugLog("Checking pos: x=%d, y=%d", pos.x, pos.y);
-            if (!IsWorldPointEmpty(world, pos)) {
-            	DebugLog("Move doesn't fit at pos: x=%d, y=%d", pos.x, pos.y);
-                return false; 
-            }
-        }
-    }
-	DebugLog("Move fits at requested position");
-    return true;  // Movement is possible
-}*/
+fn b32 Move(game_world_t *world, entity_t *entity, v2s offset)
+{
+	v2s requested_p = AddS(entity->p, offset);
+	b32 valid = IsWorldPointEmpty(world, requested_p);
+	if (valid)
+	{
+		entity->p = requested_p;
+	}
+	return (valid);
+}
 
 int MoveFitsWithSize(game_world_t* world, entity_t *requestee, v2s requestedPos) {
 

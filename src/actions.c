@@ -127,3 +127,26 @@ fn action_params_t DefineActionTypeParams(entity_t *user, action_t action) {
 
     return action.params;
 }
+
+fn action_t GetEquippedAction(const slot_bar_t *menu, entity_t *user)
+{
+    action_t result = { .type = action_none };
+    s32 index = (menu->selected_slot - 1);
+    if ((index >= 0) && (index < ArraySize(menu->slots)))
+    {
+        result = menu->slots[index].action;
+        result.params = DefineActionTypeParams(user, result);
+    }
+    return result;
+}
+
+fn s32 GetAPCost(action_t action, entity_t *entity)
+{
+    s32 result = 0;
+    if (entity)
+    {
+        action_params_t params = DefineActionTypeParams(entity, action);
+        result = params.action_point_cost;
+    }
+    return result;
+}

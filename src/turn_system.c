@@ -37,6 +37,14 @@ fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)
 	return result;
 }
 
+fn entity_t *GetActiveUnit(const turn_queue_t *queue)
+{
+	entity_t *result = 0;
+	if (queue->num > 0)
+		result = GetEntity(queue->storage, queue->entities[queue->num - 1]);
+	return result;
+}
+
 fn int32_t IsEntityActive(turn_queue_t *queue, entity_storage_t *storage, entity_id_t id)
 {
 	entity_t *result = NextInOrder(queue, storage);
@@ -64,9 +72,19 @@ fn void AcceptTurn(turn_queue_t *queue, entity_t *entity)
 	queue->seconds_elapsed = 0.0f;
 }
 
-fn void ConsumeActionPoints(turn_queue_t *queue, s32 count)
+fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count)
 {
-	queue->action_points--;
+	s32 sufficient = queue->action_points - count > 0;
+	if (sufficient)
+	{
+		DebugLog("Used %i action points", count);
+		queue->action_points -= count;
+	}
+	else
+	{
+		DebugLog("Insufficient amount of action points! (%i req.)", count);
+	}
+	return sufficient;
 }
 
 fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_t *target, v2s target_p)
@@ -75,9 +93,7 @@ fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_
 	if ((queue->action_count < ArraySize(queue->actions)))
 	{
 		result = &queue->actions[queue->action_count++];
-	}
-	if (result)
-	{
+		
 		ZeroStruct(result);
 		if (target)
 		{
@@ -205,7 +221,7 @@ fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
 		
 		if (input_valid && (cursor_mode_active == false) && (queue->action_points > 0))
 		{
-	        if (MoveEntity(map, entity, directions[direction]))
+	        if (Move(state, entity, directions[direction]))
 	        {
 	        	ApplyTileEffects(entity->p, state, entity);
 				// NOTE(): Consume moves
@@ -259,7 +275,6 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 {
 	// NOTE(): Setup
 	queue->storage = storage;
-
 	SetGlobalOffset(out, state->camera_position); // NOTE(): Let's pass the camera position via the PushRenderOutput call instead of this SetGlobalOffset stuff.
 	// NOTE(): Process the current turn
 
@@ -397,10 +412,10 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 				{
 					if (queue->time > 0.1f)
 					{
-						AcceptTurn(queue, entity);
 						#ifdef ENABLE_TURN_SYSTEM_DEBUG_LOGS
 						DebugLog("turn finished in %.2f seconds", queue->seconds_elapsed);
 						#endif
+						AcceptTurn(queue, entity);
 					}
 				} break;
 			}

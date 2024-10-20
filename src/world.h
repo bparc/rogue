@@ -333,24 +333,6 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		}
 	}
 
-	//render static combat objects
-	for (s32 index = 0; index < storage->statics_num; index++)
-	{
-		static_entity_t *entity = &storage->static_entities[index];
-
-		v4 color = Lavender();
-		bitmap_t *bitmap = &assets->Traps[1];
-
-		v2s p = entity->p; 
-		v2 bitmap_p = MapToScreen(state->map, p); 
-
-		bitmap_p = ScreenToIso(bitmap_p);
-		v2 bitmap_sz = bitmap->scale;
-		bitmap_p = Sub(bitmap_p, Scale(bitmap_sz, 0.5f)); // center
-
-		DrawBitmap(out, bitmap_p, bitmap_sz, PureWhite(), bitmap);
-	}
-
 	// NOTE(): Render entities.
 	
 	for (s32 index = 0; index < storage->num; index++)

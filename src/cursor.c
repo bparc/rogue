@@ -130,53 +130,50 @@ fn void DrawHitChance(game_world_t *state, assets_t *assets, command_buffer_t *o
 fn void ActivateSlotAction(entity_t *user, entity_t *target, action_t *action,
 v2s target_p, entity_storage_t *storage, game_world_t *state, turn_queue_t *queue)
 {
-    switch(action->type) {
-        case action_ranged_attack:
-        {
-	        HandleAttack(user, target, action->type, state);
-	        break;
-        }
-        case action_melee_attack:
-        {
-        	HandleAttack(user, target, action->type, state);
-        	break;
-        }
-    	case action_throw:
+	if (ConsumeActionPoints(queue, action->params.action_point_cost))
+	{
+    	switch(action->type)
     	{
-    		s32 radius = action->params.area_of_effect.x;
-			v2s explosion_center = state->cursor->p;
-			for (s32 i = 0; i < storage->num; i++) {
-				entity_t *entity = &storage->entities[i];
-				if (IsInsideCircle(entity->p, entity->size, explosion_center, radius)) {
-					InflictDamage(entity, (s16)action->params.damage);
+    	    case action_ranged_attack:
+    	    {
+		        HandleAttack(user, target, action->type, state);
+		        break;
+    	    }
+    	    case action_melee_attack:
+    	    {
+    	    	HandleAttack(user, target, action->type, state);
+    	    	break;
+    	    }
+    		case action_throw:
+    		{
+    			s32 radius = action->params.area_of_effect.x;
+				v2s explosion_center = state->cursor->p;
+				for (s32 i = 0; i < storage->num; i++)
+				{
+					entity_t *entity = &storage->entities[i];
+					if (IsInsideCircle(entity->p, entity->size, explosion_center, radius))
+						InflictDamage(entity, (s16)action->params.damage);
 				}
+				break;
 			}
-			break;
-		}
-		case action_push:
-    	{
-			PushEntity(state, user, target, 4);
-			break;
-		}
-        case action_heal_self:
-        {
-        	if (target == user)
-        	{
-        		Heal(target, (s16)action->params.damage);
-        		DebugLog("healed up for %i hp", (s16)action->params.damage);
-        	}
-        }	break;
-        case action_none:
-        default:
-            break;
-    }
-
-	DebugLog("Used %i action points", action->params.action_point_cost);
-	queue->action_points -= action->params.action_point_cost;
-	if (queue->action_points < 0) {
-		queue->action_points = 0;
+			case action_push:
+    		{
+				PushEntity(state, user, target, 4);
+				break;
+			}
+    	    case action_heal_self:
+    	    {
+    	    	if (target == user)
+    	    	{
+    	    		Heal(target, (s16)action->params.damage);
+    	    		DebugLog("healed up for %i hp", (s16)action->params.damage);
+    	    	}
+    	    }	break;
+    	    case action_none:
+    	    default:
+    	        break;
+    	}
 	}
-
 }
 
 fn void	DoCursor(
@@ -187,43 +184,30 @@ fn void	DoCursor(
 	turn_queue_t *queue, map_t *map, entity_storage_t *storage, log_t *log, cursor_t *cursor,
 	slot_bar_t bar, game_world_t *state, assets_t *assets)
 {
+	action_t equipped = GetEquippedAction(&bar, user);
 	cursor->target_id = 0;
-	
 	Assert(user);
+
+	// NOTE(): Open the cursor.
 	if ((cursor->active == false) && WentDown(cons.confirm))
 	{
+		switch (equipped.type)
+		{
+		case action_none: DebugLog("An unsupported action was selected! Can't open the cursor!"); break;
+		case action_heal_self: QueryAsynchronousAction(queue, equipped.type, user, cursor->p); break;
+		default:
 		// NOTE(): The cursor was just activated.
-		// Setup a starting state.
-		cursor->active = true;
-		cursor->p = user->p;
+		// Setup a starting state.	
+			cursor->active = true;
+			cursor->p = user->p;
+		}
 	}
 
 	if (cursor->active)
 	{
 		// NOTE(): Close the cursor, if needed.
-		if (WentDown(cons.cancel))
+		if (WentDown(cons.cancel) || ((equipped.type == action_none || equipped.type == action_heal_self)))
 			cursor->active = false;
-
-		DebugAssert((bar.selected_slot >= 0) &&
-		(bar.selected_slot < ArraySize(bar.slots))); // NOTE(): Validate, just in case.
-		action_t equipped = bar.slots[bar.selected_slot - 1].action; // NOTE(): Slot IDs start from 1?
-		equipped.params = DefineActionTypeParams(user, equipped);
-		if (equipped.type == action_none)
-		{
-			DebugLog("An unsupported action was selected! Can't open the cursor!");
-			cursor->active = false;
-			return;
-		}
-		if ((equipped.type == action_heal_self)) // NOTE(): Some skills could activate directly from the bar?
-		{
-			if (WentDown(cons.confirm))
-				if (queue->action_points >= equipped.params.action_point_cost) {
-					ActivateSlotAction(user, user, &equipped, cursor->p, storage, state, queue);
-				}
-			else
-				cursor->active = false;
-			return;
-		}
 
 		// NOTE(): Draw the maximum range of the cursor.
 		DrawHighlightArea(out, map, user->p, equipped.params.range, Pink());
@@ -276,20 +260,14 @@ fn void	DoCursor(
 		// NOTE(): Pick the target under the cursor and perform the "slot action" on it.
 		if (WentUp(cons.confirm))
 		{
-
 			if (equipped.type == action_throw) // NOTE(): "action_throw" can also target traversable tiles.
 				target_valid |= IsTraversable(map, cursor->p); 
 
 			b32 positioned_on_user = CompareVectors(cursor->p, user->p);
 			if (target_valid && (positioned_on_user == false))
 			{
-
-				if (queue->action_points >= equipped.params.action_point_cost) {
-					//ActivateSlotAction(user, target, equipped, cursor, storage, map);
-					QueryAsynchronousAction(queue, equipped.type, target, cursor->p);
-					cursor->active = false;
-				}
-
+				QueryAsynchronousAction(queue, equipped.type, target, cursor->p);
+				cursor->active = false;
 			}
 		}
 	}

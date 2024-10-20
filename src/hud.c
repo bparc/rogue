@@ -27,9 +27,10 @@ fn void DefaultActionBar(slot_bar_t *bar, assets_t *assets)
     bar->selected_slot = 1;
 }
 
-fn void ActionMenu(game_world_t *state, command_buffer_t *out, assets_t *assets, const client_input_t *input) {
+fn void ActionMenu(entity_t *user, game_world_t *state, command_buffer_t *out, assets_t *assets, const client_input_t *input, turn_queue_t *queue) {
     v2 action_bar_size = V2(540.0f, 60.0f);
     v2 slot_size = V2(50.0f, 50.0f);
+    
     f32 padding = 10.0f;
     f32 total_width = 9 * slot_size.x + 8 * padding;
 
@@ -53,7 +54,12 @@ fn void ActionMenu(game_world_t *state, command_buffer_t *out, assets_t *assets,
 
         if (state->slot_bar.slots[i].action.icon)
         {
-            DrawBitmap(out, slot_pos, slot_size, PureWhite(), state->slot_bar.slots[i].action.icon);
+            v4 color = PureWhite();
+            action_t action = state->slot_bar.slots[i].action;
+
+            if (queue->action_points <= GetAPCost(action, user))
+                color = RGB(30, 30, 30);
+            DrawBitmap(out, slot_pos, slot_size, color, state->slot_bar.slots[i].action.icon);
         }
         else
         {
@@ -138,8 +144,8 @@ fn void TurnQueue(command_buffer_t *out, game_world_t *state, turn_queue_t *queu
 fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets, const client_input_t *input)
 {
     TurnQueue(out, state, queue, assets, state->cursor);
-    ActionMenu(state, out, assets, input);
-}
 
-//fn void ActivateSlotAction(entity_t *user, entity_t *target, action_type_t action);
-// NOTE(Arc): This has to be implemented in "cursor.c" for now.
+    entity_t *active = GetActiveUnit(queue);
+    if (IsPlayer(active))
+        ActionMenu(active, state, out, assets, input, queue);
+}
