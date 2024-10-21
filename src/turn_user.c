@@ -44,7 +44,12 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 {
 	int randomIndex = rand() % 4;
 
-	v2s chosenDir = cardinal_directions[randomIndex]; //NOTE(): replaced by enemy ai
+	v2s chosenDir;
+	if (rand() % 100 < 25) {
+		chosenDir = cardinal_directions[randomIndex]; //NOTE(): replaced by enemy ai
+	} else {
+		chosenDir = GetDirectionToClosestPlayer(World->storage, requestee->p);
+	}
 
 	#if ENABLE_DEBUG_PATHFINDING
 	v2s nearest = FindNearestTile(World->map, requestee->p);

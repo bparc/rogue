@@ -77,6 +77,8 @@ fn entity_t *GetEntity(entity_storage_t *storage, entity_id_t id);
 // NOTE(): Spatial
 fn entity_t *GetEntityByPosition(entity_storage_t *storage, v2s p);
 fn entity_t *FindClosestHostile(entity_storage_t *storage, v2s player_pos);
+fn entity_t *FindClosestPlayer(entity_storage_t *storage, v2s p);
+fn v2s GetDirectionToClosestPlayer(entity_storage_t *storage, v2s p);
 
 // NOTE(): Type Queries
 fn b32 IsHostile(const entity_t *entity);
