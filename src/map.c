@@ -127,3 +127,89 @@ fn s32 DetectEdge(const map_t *map, v2s offset)
 			return index;
 	return -1;
 }
+
+fn v2 MapToScreen(const map_t *map, v2s p)
+{
+	v2 result = SV2(p.x, p.y);
+	result = Mul(result, map->tile_sz);
+	return (result);
+}
+
+fn u8 PickTileBitmapType(const map_t *map, s32 x, s32 y)
+{
+	// check if top is a tile etc
+    u8 top = !IsEmpty(map, V2S(x, y - 1));
+    u8 bottom = !IsEmpty(map, V2S(x, y + 1));
+    u8 left = !IsEmpty(map, V2S(x - 1, y));
+    u8 right = !IsEmpty(map, V2S(x + 1, y));
+
+     //borders: connected on three sides
+    if (!top && left && right && bottom) {
+        return tile_border_top;
+    }
+    if (!bottom && left && right && top) {
+        return tile_border_bottom;
+    }
+    if (!left && right && top && bottom) {
+        return tile_border_left;
+    }
+    if (!right && left && top && bottom) {
+        return tile_border_right;
+    }
+
+    // corners: connected on two adjacent sides
+    if (!left && top && right && !bottom) {
+        return tile_corner_left;
+    }
+    if (right && !top && !left && bottom) {
+        return tile_corner_top;
+    }
+    if (left && !bottom && !right && top) {
+        return tile_corner_bottom;
+		
+    }
+    if (!right && bottom && left && !top) {
+        return tile_corner_right;
+    }
+
+    // single connections: connected on one side
+    if (left && !right && !top && !bottom) {
+        return tile_single_connect_left;
+    }
+    if (right && !left && !top && !bottom) {
+        return tile_single_connect_right;
+    }
+    if (top && !left && !right && !bottom) {
+        return tile_single_connect_top;
+    }
+    if (bottom && !left && !right && !top) {
+        return tile_single_connect_bottom;
+    }
+
+    // TODO: pposite sides connected |x| and = (with a small x in the middle)
+    if (left && right && !top && !bottom) {
+        return tile_full; 
+    }
+    if (top && bottom && !left && !right) {
+        return tile_full;
+    }
+
+    // island tile
+    if (!left && !right && !top && !bottom) {
+        return tile_full; 
+    }
+
+    return tile_center;
+}
+
+fn bitmap_t *PickTileBitmap(const map_t* map, s32 x, s32 y, assets_t *assets)
+{
+	u8 ID = PickTileBitmapType(map, x, y);
+	return (&assets->Tilesets[0].LowTiles[ID][0]);
+}
+
+fn b32 IsWall(const map_t *map, v2s p)
+{
+	b32 result = GetTileValue(map, p.x, p.y) == 2;
+	return result;
+}

@@ -35,25 +35,27 @@ fn void MakeSimpleMap(game_world_t *world)
 
 	int visited[Y][X] = {false}; //needed for compound tiles larger than 1x1
 
-	for (s32 y = 0; y < Y; y++) {
-		for (s32 x = 0; x < X; x++) {
-
+	for (s32 y = 0; y < Y; y++)
+	{
+		for (s32 x = 0; x < X; x++)
+		{
+			v2s p = V2S(x, y);
 			u8 value = 1;
 
-			if (visited[y][x]) {
-				
-				SetTileValueI(world->map, x, y, value);
+			if (visited[y][x])
+			{
+				SetTileValue(world->map, p, value);
 				continue;
 			};  // can only fire for >1x1
 
 			
-			switch (Data[y][x]) {
+			switch (Data[y][x])
+			{
 				case '#': value = 1; break;
 				case 'W': value = 2; break;
-				case 'S':
-					CreateSlimeI(world, x, y);
-					break;
-				case 'B': {
+				case 'S': CreateSlime(world, p); break;
+				case 'B': 
+				{
 					v2s size = V2S(2,2);
 					// big slimes can only be 2x2
 					if (IsValidEntity(X, Y, (char *)Data, x, y, size, 'B')) {
@@ -63,9 +65,10 @@ fn void MakeSimpleMap(game_world_t *world)
 								visited[j][i] = true; //dont rerun those
 							}
 						}
-						CreateBigSlimeI(world, x, y); //big slimes are 2x2
-
-					} else {
+						CreateBigSlime(world, p); //big slimes are 2x2
+					}
+					else
+					{
 						printf("Invalid big slime at position (%d, %d)\n", x, y);
 						visited[y][x] = true;
 					}
@@ -73,11 +76,9 @@ fn void MakeSimpleMap(game_world_t *world)
 				}
 				case 'T': SetTileTrapType(world->map, V2S(x, y), trap_type_poison); break;
 				case 'P': SetTileTrapType(world->map, V2S(x, y), trap_type_physical); break;
-				default:
-					value = 0; break;
+				default: value = 0; break;
 			}
-			SetTileValueI(world->map, x, y, value);
-		
+			SetTileValue(world->map, p, value);
 		}
 	}
 

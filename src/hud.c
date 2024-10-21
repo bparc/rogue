@@ -2,12 +2,11 @@ fn void DefaultActionBar(slot_bar_t *bar, assets_t *assets)
 {
     // NOTE(Arc): I'm calling this from Setup()!
 
-    for (s32 i = 0; i < 9; i++) {
+    for (s32 i = 0; i < ArraySize(bar->slots); i++)
+    {
         bar->slots[i].action.type = action_none;
         bar->slots[i].action.icon = NULL;
     }
-
-  
 
     bar->slots[0].action.type = action_ranged_attack;
     bar->slots[0].action.icon = &assets->CombatUI.action_bar_icons[1][0];
@@ -44,32 +43,33 @@ fn void ActionMenu(entity_t *user, game_world_t *state, command_buffer_t *out, a
 
     v2 slot_start_pos = Add(action_bar_pos, V2(5.0f, 5.0f)); // (535, 835)
 
-    for (s32 i = 0; i < ArraySize(state->slot_bar.slots); i++) {
+    slot_bar_t *Bar = &state->slot_bar;
+
+    for (s32 i = 0; i < ArraySize(Bar->slots); i++)
+    {
+        slot_t *Slot = &Bar->slots[i];
+        action_t *action = &Slot->action;
+
         v2 slot_offset = V2(i * (slot_size.x + padding), 0.0f);
-        v2 slot_pos = Add(slot_start_pos, slot_offset);
+        v2 slot_p = Add(slot_start_pos, slot_offset);
 
-        v4 border_color = (state->slot_bar.selected_slot == (i + 1)) ? Blue() : Black();
+        v4 border_color = (Bar->selected_slot == (i + 1)) ? Blue() : Black();
+        DrawRectOutline(out, slot_p, slot_size, border_color);
 
-        DrawRectOutline(out, slot_pos, slot_size, border_color);
-
-        if (state->slot_bar.slots[i].action.icon)
+        if (action->icon)
         {
             v4 color = PureWhite();
-            action_t action = state->slot_bar.slots[i].action;
-
-            if (queue->action_points <= GetAPCost(action, user))
+            if (queue->action_points <= GetAPCost(*action, user))
                 color = RGB(30, 30, 30);
-            DrawBitmap(out, slot_pos, slot_size, color, state->slot_bar.slots[i].action.icon);
+            DrawBitmap(out, slot_p, slot_size, color, action->icon);
         }
         else
         {
-            action_type_t type = state->slot_bar.slots[i].action.type;
-            v2 text_p = Add(slot_pos, V2(2.0f, 0.0f));
-            DrawText(out, assets->Font, text_p, action_type_t_names[type], Black());
+            DrawText(out, assets->Font, slot_p, action_type_t_names[action->type], Black());
         }
 
         if (IsKeyPressed(input, key_code_1 + (u8)i))
-            state->slot_bar.selected_slot = i + 1;
+            Bar->selected_slot = i + 1;
     }
 }
 
@@ -125,7 +125,7 @@ fn void TurnQueue(command_buffer_t *out, game_world_t *state, turn_queue_t *queu
         if (entity)
         {
             DrawTurnQueuePic(out, x, y, sz, 1.0f, entity, assets);
-            if (entity->id == cursor->target_id)
+            if (entity->id == cursor->Target)
                 DrawRectOutline(out, V2(x, y), sz, Orange());
 
             y += spacing;
@@ -139,6 +139,21 @@ fn void TurnQueue(command_buffer_t *out, game_world_t *state, turn_queue_t *queu
     }
 
     DrawRectOutline(out, V2(x, 100.0f), sz, Red());
+}
+
+fn void HealthBar(command_buffer_t *out, v2 p, assets_t *assets, entity_t *entity)
+{
+    // todo: Add animation when chunk of health is lost, add art asset
+    f32 health_percentage = (f32)entity->health / entity->max_health;
+
+    v2 bar_size = V2(35, 3);
+    v2 bar_p = Sub(p, V2(14.0f, 29.0f));
+
+    DrawRect(out, bar_p, bar_size, Black());
+    v2 health_bar_size = V2(bar_size.x * health_percentage, bar_size.y);
+            
+    DrawRect(out, bar_p, health_bar_size, Green());
+    DrawRectOutline(out, bar_p, health_bar_size, Black());
 }
 
 fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets, const client_input_t *input)

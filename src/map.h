@@ -40,19 +40,24 @@ fn trap_type_t GetTileTrapType(const map_t *map, s32 x, s32 y);
 fn void SetTileDistance(map_t *map, s32 x, s32 y, s16 value);
 fn s16 GetTileDistance(const map_t *map, s32 x, s32 y);
 
-// NOTE(): Tile queries
+// NOTE(): Tile Type Queries
 fn b32 IsTraversable(map_t *map, v2s p);
 fn b32 IsEmpty(const map_t *map, v2s p);
 
+fn b32 IsWall(const map_t *map, v2s p);
 fn s32 IsCorner(const map_t *map, v2s offset, s32 Index);
 fn s32 IsEdge(const map_t *map, v2s offset, s32 Index);
 fn s32 DetectCorner(const map_t *map, v2s offset);
 fn s32 DetectEdge(const map_t *map, v2s offset);
 
-// NOTE(): Geometric queries
+// NOTE(): Geometric Queries
 fn bb_t GetTileBounds(const map_t *map, s32 x, s32 y);
 fn v2 GetTileCenter(const map_t *map, v2s p);
+fn v2 MapToScreen(const map_t *map, v2s p);
 
 // NOTE(): Pathfinding
 fn tile_t *FindNearestNeighbor(map_t *map, v2s from, v2s *neighbor_index);
 fn void ComputeDistances(map_t *map, s32 x, s32 y, memory_t memory);
+
+// NOTE(): Assets
+fn bitmap_t *PickTileBitmap(const map_t* map, s32 x, s32 y, assets_t *assets);

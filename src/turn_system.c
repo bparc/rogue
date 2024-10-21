@@ -210,8 +210,7 @@ fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
 		s32 direction = GetDirectionalInput(input);
 		b32 input_valid = (direction >= 0) && (direction < 4);
 		b32 cursor_mode_active = state->cursor->active; // NOTE(): The cursor_active flag needs to be stored *before* calling DoCursor. This is actually the correct order. For reasons.
-		DoCursor(out, entity, cons, input_valid,
-			direction, directions, queue, map, storage, log, state->cursor, state->slot_bar, state, assets);
+		DoCursor(state, assets, log, out, cons, entity, input_valid, direction, directions);
 		
 		#if _DEBUG // NOTE(): Render the input directions on the map.
 		v2s base_p = cursor_mode_active ? state->cursor->p : entity->p;
@@ -264,11 +263,19 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 		if (Finished)
 		{
 			queue->actions[index--] = queue->actions[--queue->action_count];
-			ActivateSlotAction(user, GetEntity(queue->storage, action->target_id),
-				&action->action_type, action->target_p, queue->storage, state, queue);
-			//InflictDamage(GetEntity(queue->storage, action->target_id), user->attack_dmg);
+			ActivateSlotAction(state, user, GetEntity(queue->storage, action->target_id), &action->action_type);
 		}
 	}
+}
+
+fn v2 CameraTracking(v2 p, v2 player_world_pos, v2 viewport, f32 dt)
+{
+	v2 player_iso_pos = ScreenToIso(player_world_pos);
+	
+	v2 screen_center = Scale(Scale(viewport, 1.0f / (f32)VIEWPORT_INTEGER_SCALE), 0.5f);
+	v2 camera_offset = Sub(screen_center, player_iso_pos);
+	p = Lerp2(p, camera_offset, 5.0f * dt);
+	return p;
 }
 
 fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
@@ -331,7 +338,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		else // NOTE(): AI
 		{
 			s32 range = ENEMY_DEBUG_RANGE;
-			DrawHighlightArea(out, map, entity->p, range, Green()); // Range
+			RenderRange(out, map, entity->p, range, Green()); // Range
 
 			f32 speed_mul = TURN_SPEED_NORMAL;
 			queue->time += dt * speed_mul;
