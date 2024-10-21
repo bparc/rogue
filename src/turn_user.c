@@ -19,6 +19,27 @@ fn s32 BeginTurn(game_world_t *World, entity_t *entity)
 	return action_point_count;
 }
 
+fn void SubdivideLargeSlime(game_world_t *game, entity_t *entity, s32 x, s32 y)
+{
+	entity_t *result = CreateSlime(game, Add32(entity->p, V2S(x, y)));
+	if (result)
+		result->deferred_p = entity->deferred_p;
+}
+
+fn void Perish(game_world_t *game, entity_t *entity)
+{
+	switch (entity->enemy_type)
+	{
+	case enemy_slime_large:
+		{
+			SubdivideLargeSlime(game, entity, 0, 0);
+			SubdivideLargeSlime(game, entity, 1, 0);
+			SubdivideLargeSlime(game, entity, 1, 1);
+			SubdivideLargeSlime(game, entity, 0, 1);
+		} break;
+	}
+}
+
 fn s32 Decide(game_world_t *World, entity_t *requestee)
 {
 	int randomIndex = rand() % 4;
@@ -27,14 +48,14 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 
 	#if ENABLE_DEBUG_PATHFINDING
 	v2s nearest = FindNearestTile(World->map, requestee->p);
-	chosenDir = SubS(nearest, requestee->p);
+	chosenDir = Sub32(nearest, requestee->p);
 	Move(World->map, requestee, chosenDir);
 	#else
 
 	int canMove = false;
 	int attempts = 0;
 
-	v2s peekPos = AddS(requestee -> p, chosenDir);
+	v2s peekPos = Add32(requestee -> p, chosenDir);
 
 	while(!canMove && attempts < 5){
 		canMove = MoveFitsWithSize(World, requestee, peekPos);
@@ -45,7 +66,7 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 			break;
 		}
 
-		peekPos = AddS(requestee -> p, chosenDir);
+		peekPos = Add32(requestee -> p, chosenDir);
 		chosenDir = cardinal_directions[(randomIndex + 1 ) % 4];
 		attempts++;
 	}
@@ -77,17 +98,8 @@ fn entity_id_t AttemptAttack(game_world_t *World, entity_t *requestee, s32 effec
 	return result;
 }
 
-fn void DrawRangedAnimation(command_buffer_t *out, v2 from, v2 to, bitmap_t *bitmap, f32 t)
+fn void AnimateAttack(game_world_t *World, entity_t *entity, entity_t *target, f32 time, f32 dt, assets_t *assets, command_buffer_t *out, b32 inflict_damage)
 {
-	v2 target_center = to;
-	v2 bitmap_p = Lerp2(from, target_center, t);
-	bitmap_p = ScreenToIso(bitmap_p);
-	bitmap_p = Sub(bitmap_p, Scale(bitmap->scale, 0.5f));
-	DrawBitmap(out, bitmap_p, bitmap->scale,  PureWhite(), bitmap);
-}
-
-fn void AnimateAttack(game_world_t *World, entity_t *entity, entity_t *target, f32 time, f32 dt, assets_t *assets, command_buffer_t *out, b32 inflict_damage){
-	// TODO(): Move this out to RenderCenteredIsoBitmap() or whatnot.
 	DrawRangedAnimation(out, entity->deferred_p, target->deferred_p, &assets->SlimeBall, time);
 	if (inflict_damage)
 		InflictDamage(target, entity->attack_dmg);

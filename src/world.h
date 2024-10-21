@@ -26,7 +26,7 @@ typedef struct
 #endif
 } game_world_t;
 
-fn void CreateSlime(game_world_t *state, v2s p);
+fn entity_t *CreateSlime(game_world_t *state, v2s p);
 fn void CreateBigSlime(game_world_t *state, v2s p);
 fn void CreatePoisonTrap(game_world_t *state, v2s p);
 

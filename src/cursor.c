@@ -60,7 +60,7 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 		RenderIsoTile(out, map, cursor->p, A(Pink(), 0.8f), true, 0);
 
 		// NOTE(): Move the cursor.
-		v2s requestedPos = AddS(cursor->p, move_requested ? dirs[direction] : V2S(0, 0));
+		v2s requestedPos = Add32(cursor->p, move_requested ? dirs[direction] : V2S(0, 0));
 
 		b32 in_range = false;
 		in_range = IsInsideCircle(requestedPos, V2S(1,1), user->p, equipped.params.range);
@@ -80,7 +80,7 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 			if (IsInsideCircle(Enemy->p, Enemy->size, user->p, equipped.params.range))
 			{
 
-				RenderIsoTileArea(out, map, Enemy->p, AddS(Enemy->p, Enemy->size), A(Red(), 0.8f)); //render target for all size enemies
+				RenderIsoTileArea(out, map, Enemy->p, Add32(Enemy->p, Enemy->size), A(Red(), 0.8f)); //render target for all size enemies
 				if (WentDown(cons.snap_cursor))
 					cursor->p = Enemy->p;
 			}

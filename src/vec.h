@@ -54,11 +54,11 @@ fn v2 Sub(v2 a, v2 b);
 fn v2 Div(v2 a, v2 b);
 fn v2 Scale(v2 v, f32 scalar);
 
-fn v2s AddS(v2s a, v2s b);
-fn v2s MulS(v2s a, v2s b);
-fn v2s SubS(v2s a, v2s b);
-fn v2s DivS(v2s a, v2s b);
-fn v2s ScaleS(v2 v, s32 scalar);
+fn v2s Add32(v2s a, v2s b);
+fn v2s Mul32(v2s a, v2s b);
+fn v2s Sub32(v2s a, v2s b);
+fn v2s Div32(v2s a, v2s b);
+fn v2s Scale32(v2 v, s32 scalar);
 
 // NOTE(): Vector Calculus/Geometric.
 fn f32 Dot(v2 a, v2 b);

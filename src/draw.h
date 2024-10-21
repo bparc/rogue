@@ -94,3 +94,12 @@ fn void RenderRange(command_buffer_t *out, map_t *map,v2s center, int radius, v4
         }
     }
 }
+
+fn void DrawRangedAnimation(command_buffer_t *out, v2 from, v2 to, bitmap_t *bitmap, f32 t)
+{
+	v2 target_center = to;
+	v2 bitmap_p = Lerp2(from, target_center, t);
+	bitmap_p = ScreenToIso(bitmap_p);
+	bitmap_p = Sub(bitmap_p, Scale(bitmap->scale, 0.5f));
+	DrawBitmap(out, bitmap_p, bitmap->scale,  PureWhite(), bitmap);
+}

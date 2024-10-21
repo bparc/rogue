@@ -160,7 +160,7 @@ fn evicted_entity_t *GetEvictedEntity(turn_queue_t *queue, entity_id_t ID)
 	return NULL;
 }
 
-fn void GarbageCollect(turn_queue_t *queue, f32 dt)
+fn void GarbageCollect(game_world_t *Game, turn_queue_t *queue, f32 dt)
 {
 	// TODO(): This will mess up the turn oder...
 	entity_storage_t *storage = queue->storage;
@@ -169,6 +169,8 @@ fn void GarbageCollect(turn_queue_t *queue, f32 dt)
 		entity_t *entity = &storage->entities[index];
 		if (entity->flags & entity_flags_deleted)
 		{
+			Perish(Game, entity);
+
 			if (queue->num_evicted_entities < ArraySize(queue->evicted_entities))
 			{
 				evicted_entity_t *evicted = &queue->evicted_entities[queue->num_evicted_entities++];
@@ -215,7 +217,7 @@ fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
 		#if _DEBUG // NOTE(): Render the input directions on the map.
 		v2s base_p = cursor_mode_active ? state->cursor->p : entity->p;
 		for (s32 index = 0; index < 4; index++)
-			RenderIsoTile(out, map, AddS(base_p, directions[index]), A(Orange(), 0.5f), true, 0);
+			RenderIsoTile(out, map, Add32(base_p, directions[index]), A(Orange(), 0.5f), true, 0);
 		#endif
 		
 		if (input_valid && (cursor_mode_active == false) && (queue->action_points > 0))
@@ -429,5 +431,5 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		}
 	}
 
-	GarbageCollect(queue, dt);
+	GarbageCollect(state, queue, dt);
 }

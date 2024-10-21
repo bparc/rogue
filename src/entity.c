@@ -92,6 +92,13 @@ fn entity_t *FindClosestHostile(entity_storage_t *storage, v2s player_pos)
 	return nearest_enemy;
 }
 
+fn entity_t *EntityFromIndex(entity_storage_t *storage, s32 index)
+{
+	if ((index >= 0) && (index < storage->num))
+		return &storage->entities[index];
+	return NULL;
+}
+
 fn entity_t *GetEntity(entity_storage_t *storage, entity_id_t id)
 {
 	if (id > 0)

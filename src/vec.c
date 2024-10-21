@@ -71,7 +71,7 @@ fn f32 Distance(v2 a, v2 b)
 
 fn f32 DistanceV2S(v2s a, v2s b)
 {
-	v2s delta = SubS(a, b);
+	v2s delta = Sub32(a, b);
 	return sqrtf((f32)(delta.x * delta.x + delta.y * delta.y));
 }
 
@@ -183,13 +183,13 @@ fn v2 GetCenter(bb_t bb)
 	return result;
 }
 
-fn v2s AddS(v2s a, v2s b)
+fn v2s Add32(v2s a, v2s b)
 {
 	v2s result = {a.x + b.x, a.y + b.y};
 	return result;
 }
 
-fn v2s SubS(v2s a, v2s b)
+fn v2s Sub32(v2s a, v2s b)
 {
 	v2s result = {a.x - b.x, a.y - b.y};
 	return result;

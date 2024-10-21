@@ -18,7 +18,6 @@ fn void AddStatusEffect(entity_t *entity, status_effect_type_t status_effect, s3
 
 fn void InflictDamage(entity_t *entity, s16 damage) {
     if (entity == NULL) return;
-
     if (damage >= entity->health) {
         entity->health = 0;
         entity->flags |= entity_flags_deleted;
@@ -90,7 +89,7 @@ fn void ProcessStatusEffects(entity_t *entity)
 
 fn void PushEntity(game_world_t *state, entity_t *user, entity_t *target, u8 push_distance)
 {
-    v2s direction = SubS(target->p, user->p);
+    v2s direction = Sub32(target->p, user->p);
 
     if (direction.x != 0) direction.x = (direction.x > 0) ? 1 : -1;
     if (direction.y != 0) direction.y = (direction.y > 0) ? 1 : -1;
@@ -100,7 +99,7 @@ fn void PushEntity(game_world_t *state, entity_t *user, entity_t *target, u8 pus
     s32 total_damage = 0;
 
     for (s32 i = 0; i < push_distance; ++i) {
-        v2s next_pos = AddS(target->p, direction); // Slime is moved through each tile on the way
+        v2s next_pos = Add32(target->p, direction); // Slime is moved through each tile on the way
 
         if (!MoveFitsWithSize(state, target, next_pos)) {
             InflictDamage(target, (s16)damage_per_tile);
@@ -114,6 +113,8 @@ fn void PushEntity(game_world_t *state, entity_t *user, entity_t *target, u8 pus
 }
 
 fn s32 CalculateHitChance(entity_t *user, entity_t *target, action_type_t action_type) {
+    return INT32_MAX;
+
     s32 final_hit_chance;
     f32 distance = DistanceV2S(user->p, target->p);
 
