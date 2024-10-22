@@ -92,6 +92,38 @@ fn entity_t *FindClosestHostile(entity_storage_t *storage, v2s player_pos)
 	return nearest_enemy;
 }
 
+fn entity_t *FindClosestPlayer(entity_storage_t *storage, v2s p) {
+	entity_t *nearest_player = 0;
+	f32 nearest_distance = FLT_MAX;
+
+	for (s32 i = 0; i < storage->num; i++)
+	{
+		entity_t *entity = &storage->entities[i];
+		if (IsPlayer(entity))
+		{
+			f32 distance = DistanceV2S(entity->p, p);
+			if (distance < nearest_distance)
+			{
+				nearest_player = entity;
+				nearest_distance = distance;
+			}
+		}
+	}
+
+	return nearest_player;
+}
+
+fn v2s GetDirectionToClosestPlayer(entity_storage_t *storage, v2s p) {
+	entity_t *nearest_player = FindClosestPlayer(storage, p);
+
+	v2s direction = Sub32(nearest_player->p, p);
+
+	if (direction.x != 0) direction.x = (direction.x > 0) ? 1 : -1;
+	if (direction.y != 0) direction.y = (direction.y > 0) ? 1 : -1;
+
+	return direction;
+}
+
 fn entity_t *EntityFromIndex(entity_storage_t *storage, s32 index)
 {
 	if ((index >= 0) && (index < storage->num))
