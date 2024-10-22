@@ -248,9 +248,10 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 			v2 target_p = GetTileCenter(state->map, action->target_p);
 			f32 distance = Distance(user->deferred_p, target_p);
 			f32 t = action->t / (distance * 0.005f);
-			action->t += dt * 2.5f;
+			
+			action->t += dt * 1.5f;
 
-			DrawRangedAnimation(out, user->deferred_p, target_p, &assets->SlimeBall, t);
+			DrawRangedAnimation(out, user->deferred_p, target_p, &assets->PlayerGrenade, t);
 			
 			Finished = (t >= 1.0f);
 		}

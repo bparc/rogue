@@ -38,7 +38,7 @@ typedef struct
 	bitmap_t LowTiles[2];	
 	bitmap_t Traps[3];
 	bitmap_t SlimeBall;
-
+	
 	combat_ui_t CombatUI;
 	terrain_tileset_t Tilesets[1]; //replace with macro PLANETS_MAX_VARIATIONS or something
 
