@@ -47,6 +47,9 @@ extern int main(void)
 					input.keys[key_code_tab] = (u8)glfwGetKey(window, GLFW_KEY_TAB);
 					input.keys[key_code_f1] = (u8)glfwGetKey(window, GLFW_KEY_F1);
 					input.keys[key_code_f2] = (u8)glfwGetKey(window, GLFW_KEY_F2);
+					input.keys[key_code_f3] = (u8)glfwGetKey(window, GLFW_KEY_F3);
+					input.keys[key_code_f4] = (u8)glfwGetKey(window, GLFW_KEY_F4);
+					input.keys[key_code_f5] = (u8)glfwGetKey(window, GLFW_KEY_F5);
 
 					//numerics manually
 					input.keys[key_code_0] = (u8)glfwGetKey(window, '0');

@@ -110,18 +110,21 @@ fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_
 
 fn void ControlPanel(turn_queue_t *queue, const virtual_controls_t *cons, entity_storage_t *storage)
 {
-	if (WentDown(cons->debug01)) // Toggle
+	if (WentDown(cons->debug[0])) // Toggle
 		queue->break_mode_enabled = !queue->break_mode_enabled;
+	if (WentDown(cons->debug[2])) // Toggle
+		queue->god_mode_enabled = !queue->god_mode_enabled;
 
 	DebugPrint(
-		"NUM %i | ACT %i | BRK (F1): %s %s %s",
-		(storage->num),
+		"ACT %i | BRK (F1): %s%s%s | GOD (F3): %s",
 		(queue->action_points),
 		(queue->break_mode_enabled ? "ON" : "OFF"),
-		(queue->interp_state == interp_wait_for_input) ? " | STEP (F2) ->" : "",
-		(queue->interp_state == interp_wait_for_input) ? interpolator_state_t_names[queue->requested_state] : "");
+		(queue->interp_state == interp_wait_for_input) ? " | STEP (F2) -> " : "",
+		(queue->interp_state == interp_wait_for_input) ? interpolator_state_t_names[queue->requested_state] : "",
+		(queue->god_mode_enabled ? "ON" : "OFF"))
+	;
 
-	if ((queue->interp_state == interp_wait_for_input) && WentDown(cons->debug02))
+	if ((queue->interp_state == interp_wait_for_input) && WentDown(cons->debug[1]))
 		queue->request_step = true;
 }
 
@@ -222,17 +225,11 @@ fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
 		
 		if (input_valid && (cursor_mode_active == false) && (queue->action_points > 0))
 		{
-	        if (Move(state, entity, directions[direction]))
+	        if (Move(state, entity, directions[direction]) && (queue->god_mode_enabled == false))
 	        {
 	        	ApplyTileEffects(entity->p, state, entity);
 				// NOTE(): Consume moves
 				queue->action_points--;
-#if ENABLE_DEBUG_PATHFINDING
-				memory_t memory = {0};
-				memory.size = ArraySize(state->debug_memory);
-				memory._memory = state->debug_memory;
-				ComputeDistances(state->map, entity->p.x, entity->p.y, memory);
-#endif
 			}
 		}
 }
@@ -278,6 +275,20 @@ fn v2 CameraTracking(v2 p, v2 player_world_pos, v2 viewport, f32 dt)
 	v2 camera_offset = Sub(screen_center, player_iso_pos);
 	p = Lerp2(p, camera_offset, 5.0f * dt);
 	return p;
+}
+
+fn void DebugDrawPathSystem(turn_queue_t *queue, map_t *map, command_buffer_t *out)
+{
+	if (queue->break_mode_enabled)
+	{
+		path_t *path = &queue->path;
+		for (s32 index = 0; index < path->length; index++)
+		{
+			path_tile_t *Tile = &path->tiles[index];
+			v4 color = Orange();
+			RenderIsoTile(out, map, Tile->p, color, true, 0);
+		}
+	}
 }
 
 fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
@@ -349,8 +360,6 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			{
 			case interp_wait_for_input:
 				{
-					DebugWait(state, entity, queue->requested_state, out);
-
 					if (queue->request_step)
 					{
 						queue->interp_state = queue->requested_state;
@@ -432,4 +441,5 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 	}
 
 	GarbageCollect(state, queue, dt);
+	DebugDrawPathSystem(queue, map, out);
 }

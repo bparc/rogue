@@ -25,7 +25,7 @@ fn void MessageLog(command_buffer_t *out, const bmfont_t *font, v2 p, log_t *Log
 	Log->time += dt;
 	p = Add(p, V2(0.0f, 185.0f));
 
-	s32 max = MinS32(Log->offset - 1, ArraySize(Log->lines) - 1);
+	s32 max = Min32(Log->offset - 1, ArraySize(Log->lines) - 1);
 	s32 min = MaxS32(0, Log->offset - ArraySize(Log->lines));
 
 	for (s32 index = max;

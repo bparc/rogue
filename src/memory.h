@@ -61,7 +61,7 @@ fn void FlushMemory(memory_t *_memory)
 	_memory->offset = 0;
 }
 
-fn memory_t Part(memory_t *_memory, s32 size)
+fn memory_t Split(memory_t *_memory, s32 size)
 {
 	memory_t result = {0};
 	result._memory = PushSize(_memory, size);

@@ -17,6 +17,9 @@ typedef enum
 	key_code_9,
 	key_code_f1,
 	key_code_f2,
+	key_code_f3,
+	key_code_f4,
+	key_code_f5,
 	// NOTE(): Key codes for letter keys
 	// are the same as the coresponding
 	// ASCII characters.
@@ -103,7 +106,7 @@ typedef struct
 	pad_button_t menu, select;
 	pad_button_t rb;
 
-	pad_button_t debug01, debug02;
+	pad_button_t debug[12];
 } virtual_controls_t;
 
 fn inline b32 WentUp(pad_button_t button)
@@ -141,8 +144,11 @@ fn virtual_controls_t MapKeyboardToVirtualCons(const client_input_t *input, u8 k
 	result.dpad_left 	= MapVirtualButton('A', input, keys_prev);
 	result.confirm		= MapVirtualButton('E', input, keys_prev);
 	result.cancel		= MapVirtualButton('Q', input, keys_prev);
-	result.debug01		= MapVirtualButton(key_code_f1, input, keys_prev);
-	result.debug02		= MapVirtualButton(key_code_f2, input, keys_prev);
+	result.debug[0]		= MapVirtualButton(key_code_f1, input, keys_prev);
+	result.debug[1]		= MapVirtualButton(key_code_f2, input, keys_prev);
+	result.debug[2]		= MapVirtualButton(key_code_f3, input, keys_prev);
+	result.debug[3]		= MapVirtualButton(key_code_f4, input, keys_prev);
+	result.debug[4]		= MapVirtualButton(key_code_f5, input, keys_prev);
 	result.x			= MapVirtualButton(key_code_tab, input, keys_prev);
 	result.y			= MapVirtualButton(key_code_space, input, keys_prev);
 	return result;

@@ -97,7 +97,7 @@ fn s32 ClampS32(s32 value, s32 min, s32 max)
 	return value;
 }
 
-fn s32 MinS32(s32 a, s32 b)
+fn s32 Min32(s32 a, s32 b)
 {
 	s32 result = MIN(a, b);
 	return result;

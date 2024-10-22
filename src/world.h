@@ -20,10 +20,8 @@ typedef struct
 
 	map_t *map;
 	v2 camera_position;
-
-#if ENABLE_DEBUG_PATHFINDING
-	u8 debug_memory[MB(4)];
-#endif
+	
+	memory_t memory;
 } game_world_t;
 
 fn entity_t *CreateSlime(game_world_t *state, v2s p);
@@ -44,6 +42,8 @@ fn b32 Move(game_world_t *world, entity_t *entity, v2s offset);
 #define MAX_PLAYER_ACTION_POINTS 10
 fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *assets)
 {
+	state->memory = Split(memory, MB(1));
+
 	state->cursor = PushStruct(cursor_t, memory);
 	state->turns = PushStruct(turn_queue_t, memory);
 	state->storage = PushStruct(entity_storage_t, memory);
@@ -122,17 +122,6 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				}
 				#endif
 				
-				#if ENABLE_DEBUG_PATHFINDING
-				if (!height)
-				{
-					u16 distance = GetTileDistance(map, x, y);
-					f32 t = (f32)distance / 10.0f;
-					color = Lerp4(Red(), Blue(), t);
-					color.w = 0.9f;
-					RenderIsoTile(out, map, V2S(x, y), color, true, 0);
-				}
-				#endif
-				
 				if (GetTileTrapType(map, x, y) != trap_type_none)
 					RenderIsoTile(out, map, V2S(x, y), LightGrey(), true, 0);
 
@@ -152,7 +141,8 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	}
 
 	// NOTE(): Entities
-	
+	entity_t *Player = DEBUGGetPlayer(storage);
+
 	for (s32 index = 0; index < storage->num; index++)
 	{
 		entity_t *entity = &storage->entities[index];
@@ -202,6 +192,9 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 			else
 				bitmap_color = A(Blue(), 0.9f);
 		}
+
+		if (CompareVectors(entity->p, Player->p) && !IsPlayer(entity))
+			bitmap_color.w = 0.6f;
 
 		DrawBitmap(out, bitmap_p, bitmap_sz, bitmap_color, bitmap);
 

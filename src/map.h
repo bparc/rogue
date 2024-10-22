@@ -12,7 +12,6 @@ typedef enum
 typedef struct
 {
 	u8 value;
-	s16 distance;
 	trap_type_t trap_type;
 } tile_t;
 
@@ -28,6 +27,10 @@ fn map_t *CreateMap(s32 x, s32 y, memory_t *memory, f32 tile_height);
 fn void ClearMap(map_t *map);
 
 // NOTE(): Accessors
+fn s32 GetTileIndex32(const map_t *map, s32 x, s32 y);
+fn s32 GetTileIndex(const map_t *map, v2s p);
+fn s32 InMapBounds(const map_t *map, v2s p);
+
 fn tile_t *GetTile(map_t *map, s32 x, s32 y);
 
 fn void SetTileValueI(map_t *map, s32 x, s32 y, u8 value);
@@ -37,11 +40,8 @@ fn void SetTileTrapType(map_t *map, v2s p, trap_type_t type);
 fn u8 GetTileValue(const map_t *map, s32 x, s32 y);
 fn trap_type_t GetTileTrapType(const map_t *map, s32 x, s32 y);
 
-fn void SetTileDistance(map_t *map, s32 x, s32 y, s16 value);
-fn s16 GetTileDistance(const map_t *map, s32 x, s32 y);
-
 // NOTE(): Tile Type Queries
-fn b32 IsTraversable(map_t *map, v2s p);
+fn b32 IsTraversable(const map_t *map, v2s p);
 fn b32 IsEmpty(const map_t *map, v2s p);
 
 fn b32 IsWall(const map_t *map, v2s p);
@@ -54,10 +54,6 @@ fn s32 DetectEdge(const map_t *map, v2s offset);
 fn bb_t GetTileBounds(const map_t *map, s32 x, s32 y);
 fn v2 GetTileCenter(const map_t *map, v2s p);
 fn v2 MapToScreen(const map_t *map, v2s p);
-
-// NOTE(): Pathfinding
-fn tile_t *FindNearestNeighbor(map_t *map, v2s from, v2s *neighbor_index);
-fn void ComputeDistances(map_t *map, s32 x, s32 y, memory_t memory);
 
 // NOTE(): Assets
 fn bitmap_t *PickTileBitmap(const map_t* map, s32 x, s32 y, assets_t *assets);

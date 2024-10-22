@@ -78,4 +78,4 @@ fn s32 SRandIntFixed(int upper, int lower, int seed); //rand in range with seed
 fn s32 SRandInt(int seed); //rand in 0 - 2^32 range with seed
 
 fn s32 RandomInt(void);
-fn s32 MinS32(s32 a, s32 b);
+fn s32 Min32(s32 a, s32 b);

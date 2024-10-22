@@ -18,6 +18,7 @@ fn void AddStatusEffect(entity_t *entity, status_effect_type_t status_effect, s3
 
 fn void InflictDamage(entity_t *entity, s16 damage) {
     if (entity == NULL) return;
+
     if (damage >= entity->health) {
         entity->health = 0;
         entity->flags |= entity_flags_deleted;
@@ -112,9 +113,8 @@ fn void PushEntity(game_world_t *state, entity_t *user, entity_t *target, u8 pus
     }
 }
 
-fn s32 CalculateHitChance(entity_t *user, entity_t *target, action_type_t action_type) {
-    return INT32_MAX;
-
+fn s32 CalculateHitChance(entity_t *user, entity_t *target, action_type_t action_type)
+    {
     s32 final_hit_chance;
     f32 distance = DistanceV2S(user->p, target->p);
 
@@ -148,32 +148,39 @@ fn s32 CalculateHitChance(entity_t *user, entity_t *target, action_type_t action
 fn void HandleAttack(entity_t *user, entity_t *target, action_type_t action_type, game_world_t *state)
 {
 // todo: add critical hits, distance measure
-    s32 final_hit_chance = CalculateHitChance(user, target, action_type);
-
-    if (final_hit_chance < 0) final_hit_chance = 0;
-    if (final_hit_chance > 100) final_hit_chance = 100;
-
-    s32 roll = rand() % 100;
-    s32 crit_roll = rand() % 100;
-
-    if (roll < final_hit_chance) {
-
-        if (crit_roll < CRITICAL_DAMAGE_MULTIPLIER) {
-            s32 crit_damage = user->attack_dmg * CRITICAL_DAMAGE_MULTIPLIER;
-            PushEntity(state, user, target, 2);
-            InflictDamage(target, (u16)crit_damage);
-            DebugLog("Critical Hit! Inflicted %i critical damage to target #%i", crit_damage, target->id);
+    if (IsPlayer(user) && state->turns->god_mode_enabled)
+    {
+        InflictDamage(target, target->health);
+    }
+    else
+    {
+        s32 final_hit_chance = CalculateHitChance(user, target, action_type);
+    
+        if (final_hit_chance < 0) final_hit_chance = 0;
+        if (final_hit_chance > 100) final_hit_chance = 100;
+    
+        s32 roll = rand() % 100;
+        s32 crit_roll = rand() % 100;
+    
+        if (roll < final_hit_chance) {
+    
+            if (crit_roll < CRITICAL_DAMAGE_MULTIPLIER) {
+                s32 crit_damage = user->attack_dmg * CRITICAL_DAMAGE_MULTIPLIER;
+                PushEntity(state, user, target, 2);
+                InflictDamage(target, (u16)crit_damage);
+                DebugLog("Critical Hit! Inflicted %i critical damage to target #%i", crit_damage, target->id);
+            } else {
+                InflictDamage(target, user->attack_dmg);
+                DebugLog("Hit! Inflicted %i damage to target #%i", user->attack_dmg, target->id);
+            }
+    
+        } else if (roll < final_hit_chance + GRAZE_THRESHOLD && roll >= final_hit_chance) {
+            u16 graze_damage = user->attack_dmg / 2;
+            InflictDamage(target, graze_damage);
+            DebugLog("Grazing hit! Inflicted %i grazing damage to target #%i", graze_damage, target->id);
         } else {
-            InflictDamage(target, user->attack_dmg);
-            DebugLog("Hit! Inflicted %i damage to target #%i", user->attack_dmg, target->id);
+            DebugLog("Missed! Ranged attack missed target #%i", target->id);
         }
-
-    } else if (roll < final_hit_chance + GRAZE_THRESHOLD && roll >= final_hit_chance) {
-        u16 graze_damage = user->attack_dmg / 2;
-        InflictDamage(target, graze_damage);
-        DebugLog("Grazing hit! Inflicted %i grazing damage to target #%i", graze_damage, target->id);
-    } else {
-        DebugLog("Missed! Ranged attack missed target #%i", target->id);
     }
 }
 
@@ -184,7 +191,7 @@ fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target
 {
     entity_storage_t *storage = state->storage;
     turn_queue_t *queue = state->turns;
-    if (ConsumeActionPoints(queue, action->params.action_point_cost))
+    if (ConsumeActionPoints(queue, queue->god_mode_enabled ? 0 : action->params.action_point_cost))
     {
         switch(action->type)
         {
@@ -228,4 +235,11 @@ fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target
                 break;
         }
     }
+}
+
+fn void SubdivideLargeSlime(game_world_t *game, entity_t *entity, s32 x, s32 y)
+{
+    entity_t *result = CreateSlime(game, Add32(entity->p, V2S(x, y)));
+    if (result)
+        result->deferred_p = entity->deferred_p;
 }

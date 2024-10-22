@@ -1,56 +1,61 @@
-fn void DebugWait(game_world_t *World, entity_t *entity, interpolator_state_t state, command_buffer_t *out)
-{
-
-}
-
-fn void EstablishTurnOrder(game_world_t *World, turn_queue_t *queue)
+fn void EstablishTurnOrder(game_world_t *game, turn_queue_t *queue)
 {
 	DefaultTurnOrder(queue);
 }
 
-fn s32 BeginTurn(game_world_t *World, entity_t *entity)
+fn s32 BeginTurn(game_world_t *game, entity_t *entity)
 {
 	ProcessStatusEffects(entity);
 
 	s32 action_point_count = 10;
 	if (IsHostile(entity))
-		action_point_count = 2 + (rand() % 2);
+	{
+		//action_point_count = 2 + (rand() % 2);
+
+		// NOTE(): Request a path to the player.
+		turn_queue_t *queue = game->turns;
+		entity_t *DebugPlayer = DEBUGGetPlayer(queue->storage);
+		Assert(DebugPlayer);
+
+		path_t *path = &queue->path;
+		if (!FindPath(game->map, entity->p, DebugPlayer->p, path, game->memory))
+			DebugLog("Couldn't find a path!");
+		action_point_count = 6;
+		queue->max_action_points = action_point_count;
+
+		path->length = Min32(path->length, action_point_count);
+
+		// NOTE(): Truncate path to the closest unoccupied point to the
+		// destination.
+		s32 index = path->length - 1;
+		while (index >= 0)
+		{
+			if (IsWorldPointEmpty(game, path->tiles[index].p) == false)
+			{
+				index--;
+				continue;
+			}
+			break;
+		}
+		action_point_count = path->length = (index + 1);
+		
+		entity->DEBUG_step_count = 0;
+	}
 
 	return action_point_count;
 }
 
-fn void SubdivideLargeSlime(game_world_t *game, entity_t *entity, s32 x, s32 y)
+fn s32 Decide(game_world_t *game, entity_t *entity)
 {
-	entity_t *result = CreateSlime(game, Add32(entity->p, V2S(x, y)));
-	if (result)
-		result->deferred_p = entity->deferred_p;
-}
-
-fn void Perish(game_world_t *game, entity_t *entity)
-{
-	switch (entity->enemy_type)
-	{
-	case enemy_slime_large:
-		{
-			SubdivideLargeSlime(game, entity, 0, 0);
-			SubdivideLargeSlime(game, entity, 1, 0);
-			SubdivideLargeSlime(game, entity, 1, 1);
-			SubdivideLargeSlime(game, entity, 0, 1);
-		} break;
-	}
-}
-
-fn s32 Decide(game_world_t *World, entity_t *requestee)
-{
+	#if 1
+	path_t *path = &game->turns->path;
+	s32 index = entity->DEBUG_step_count++;
+	if (index < path->length)
+		entity->p = path->tiles[index].p;
+	#else
 	int randomIndex = rand() % 4;
 
 	v2s chosenDir = cardinal_directions[randomIndex]; //NOTE(): replaced by enemy ai
-
-	#if ENABLE_DEBUG_PATHFINDING
-	v2s nearest = FindNearestTile(World->map, requestee->p);
-	chosenDir = Sub32(nearest, requestee->p);
-	Move(World->map, requestee, chosenDir);
-	#else
 
 	int canMove = false;
 	int attempts = 0;
@@ -72,6 +77,20 @@ fn s32 Decide(game_world_t *World, entity_t *requestee)
 	}
 	#endif
 	return 1;
+}
+
+fn void Perish(game_world_t *game, entity_t *entity)
+{
+	switch (entity->enemy_type)
+	{
+	case enemy_slime_large:
+		{
+			SubdivideLargeSlime(game, entity, 0, 0);
+			SubdivideLargeSlime(game, entity, 1, 0);
+			SubdivideLargeSlime(game, entity, 1, 1);
+			SubdivideLargeSlime(game, entity, 0, 1);
+		} break;
+	}
 }
 
 fn entity_id_t AttemptAttack(game_world_t *World, entity_t *requestee, s32 effective_range)

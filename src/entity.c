@@ -126,3 +126,11 @@ fn b32 IsPlayer(const entity_t *entity)
 		return (entity->flags & entity_flags_controllable);
 	return false;
 }
+
+fn entity_t *DEBUGGetPlayer(entity_storage_t *storage)
+{
+	for (s32 index = 0; index < storage->num; index++)
+		if (IsPlayer(&storage->entities[index]))
+			return &storage->entities[index];
+	return 0;
+}

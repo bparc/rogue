@@ -46,6 +46,7 @@ typedef struct
 
 	status_effect_t status_effects[MAX_STATUS_EFFECTS];
 
+	s32 DEBUG_step_count;
 } entity_t;
 
 typedef struct
@@ -81,3 +82,4 @@ fn entity_t *FindClosestHostile(entity_storage_t *storage, v2s player_pos);
 // NOTE(): Type Queries
 fn b32 IsHostile(const entity_t *entity);
 fn b32 IsPlayer(const entity_t *entity);
+fn entity_t *DEBUGGetPlayer(entity_storage_t *storage);

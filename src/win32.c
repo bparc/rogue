@@ -76,4 +76,7 @@ fn void Win32GetInput(client_input_t *result, HWND window)
 	result->keys[key_code_9] = (GetAsyncKeyState(0x39) < 0);
 	result->keys[key_code_f1] = (GetAsyncKeyState(VK_F1) < 0);
 	result->keys[key_code_f2] = (GetAsyncKeyState(VK_F2) < 0);
+	result->keys[key_code_f3] = (GetAsyncKeyState(VK_F3) < 0);
+	result->keys[key_code_f4] = (GetAsyncKeyState(VK_F4) < 0);
+	result->keys[key_code_f5] = (GetAsyncKeyState(VK_F5) < 0);
 }

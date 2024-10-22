@@ -3,7 +3,7 @@ fn command_buffer_t PushCommandBuffer(memory_t *memory, s32 size)
 	command_buffer_t result = {0};
 	result.size = size;
 	result.commands = PushArray(command_t, memory, size);
-	result.memory = Part(memory, KB(8));
+	result.memory = Split(memory, KB(8));
 	return result;
 }
 

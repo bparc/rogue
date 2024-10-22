@@ -10,4 +10,5 @@ vs/
 src/external/
 lib/
 x64/
+x64/assets
 .vscode/

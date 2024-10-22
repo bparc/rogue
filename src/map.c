@@ -1,3 +1,21 @@
+fn s32 GetTileIndex32(const map_t *map, s32 x, s32 y)
+{
+	s32 result = (y * map->x + x);
+	return result;
+}
+
+fn s32 GetTileIndex(const map_t *map, v2s p)
+{
+	return GetTileIndex32(map, p.x, p.y);
+}
+
+fn s32 InMapBounds(const map_t *map, v2s p)
+{
+	s32 result = p.x >= 0 && p.y >= 0 &&
+	p.x < map->x && p.y < map->y;
+	return result;
+}
+
 fn tile_t *GetTile(map_t *map, s32 x, s32 y)
 {
 	tile_t *result = 0;
@@ -18,7 +36,7 @@ fn trap_type_t GetTileTrapType(const map_t *map, s32 x, s32 y)
 	return (result ? result->trap_type : trap_type_none);
 }
 
-fn b32 IsTraversable(map_t *map, v2s p)
+fn b32 IsTraversable(const map_t *map, v2s p)
 {
 	b32 result = (GetTileValue(map, p.x, p.y) == 1);
 	return result;
@@ -49,18 +67,6 @@ fn void SetTileTrapType (map_t *map, v2s p, trap_type_t type)
 		tile->trap_type = type;
 }
 
-fn void SetTileDistance(map_t *map, s32 x, s32 y, s16 value)
-{
-	tile_t *tile = GetTile(map, x, y);
-	if (tile)
-		tile->distance = value;
-}
-
-fn s16 GetTileDistance(const map_t *map, s32 x, s32 y)
-{
-	tile_t *tile = GetTile((map_t *)map, x, y);
-	return (tile ? tile->distance : 0);
-}
 
 fn bb_t GetTileBounds(const map_t *map, s32 x, s32 y)
 {

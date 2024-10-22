@@ -38,6 +38,8 @@ typedef struct
 
 typedef struct
 {
+	path_t path;
+	
 	// NOTE(): Stores the turns as an list of entity ids
 // in a *reverse* order (the last turn in the queue will be executed first).
 	s32 num;
@@ -53,11 +55,12 @@ typedef struct
 	entity_id_t attack_target;
 	interpolator_state_t interp_state;
 	f32 time; // NOTE(): A variable within 0.0 to 1.0 range for interpolating values.
+	s32 max_action_points;
 	s32 action_points;
 	s32 turn_inited;
-
 	f32 seconds_elapsed; // NOTE(): Seconds elapsed from the start of the turn.
 
+	s32 god_mode_enabled;
 	s32 break_mode_enabled;
 	interpolator_state_t requested_state;
 	s32 request_step;
@@ -80,6 +83,6 @@ typedef struct
 
 fn void DefaultTurnOrder(turn_queue_t *queue);
 fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_t *target, v2s target_p);
-fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count);
 
+fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count);
 fn entity_t *GetActiveUnit(const turn_queue_t *queue);
