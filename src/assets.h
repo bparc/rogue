@@ -70,6 +70,9 @@ typedef enum {
 	tile_single_connect_left,
 	tile_single_connect_right,
 
+	tile_top_bottom,
+	tile_left_right,
+
 
 	
 } tile_position;
@@ -121,6 +124,9 @@ fn b32 LoadAssets(assets_t *assets, bmfont_t *font)
 	Bitmap(assets, &assets->Tilesets[0].LowTiles[11][0], "assets/tiles/planet_1/low_three_border_no_bottom_1.png", 0, 0);
 	Bitmap(assets, &assets->Tilesets[0].LowTiles[12][0], "assets/tiles/planet_1/low_three_border_no_left_1.png", 0, 0);
 	Bitmap(assets, &assets->Tilesets[0].LowTiles[13][0], "assets/tiles/planet_1/low_three_border_no_right_1.png", 0, 0);
+
+	Bitmap(assets, &assets->Tilesets[0].LowTiles[14][0], "assets/tiles/planet_1/low_top_bottom_border_1.png", 0, 0);
+	Bitmap(assets, &assets->Tilesets[0].LowTiles[15][0], "assets/tiles/planet_1/low_left_right_border_1.png", 0, 0);
 
 	//combat UI
 	Bitmap(assets, &assets->CombatUI.action_bar_full, "assets/ui/world/combat_action_bar_full.png", 0, 0);

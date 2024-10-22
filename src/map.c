@@ -194,10 +194,10 @@ fn u8 PickTileBitmapType(const map_t *map, s32 x, s32 y)
 
     // TODO: pposite sides connected |x| and = (with a small x in the middle)
     if (left && right && !top && !bottom) {
-        return tile_full; 
+        return tile_left_right; 
     }
     if (top && bottom && !left && !right) {
-        return tile_full;
+        return tile_top_bottom;
     }
 
     // island tile
