@@ -54,7 +54,8 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 
 		// NOTE() : Draw the explosion radius.
 		if (equipped.type == action_throw) {
-			RenderRange(out, map, cursor->p, equipped.params.area_of_effect.x, Red());
+			RenderRange(out, map, cursor->p, equipped.params.area_of_effect.x, Red()); // inner
+			RenderRange(out, map, cursor->p, equipped.params.area_of_effect.x * (s32)2, Red()); // outer
 		}
 		// NOTE(): Draw the cursor.
 		RenderIsoTile(out, map, cursor->p, A(Pink(), 0.8f), true, 0);

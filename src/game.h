@@ -14,4 +14,4 @@ fn s32 CalculateHitChance(entity_t *user, entity_t *target, action_type_t action
 
 fn void InflictDamage(entity_t *entity, s16 damage);
 fn void Heal(entity_t *entity, s16 healed_hp);
-fn void PushEntity(game_world_t *state, entity_t *user, entity_t *target, u8 push_distance);
+fn void PushEntity(game_world_t *state, v2s source, entity_t *target, u8 push_distance, s32 strength);

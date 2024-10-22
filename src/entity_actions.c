@@ -53,10 +53,10 @@ fn action_params_t DefineThrowAction(entity_t *user) {
     action_params_t throw_action = {
         .range = 6,
         .target = 0,
-        .area_of_effect = {3, 3},
+        .area_of_effect = {2, 2},
         .action_point_cost = 7,
         .accuracy = 1.0f,
-        .damage = 50.0f,
+        .damage = 10.0f,
         .is_healing = false,
         .is_status_effect = false,
         .status_effect = status_effect_none,

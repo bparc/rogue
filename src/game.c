@@ -88,18 +88,17 @@ fn void ProcessStatusEffects(entity_t *entity)
     }
 }
 
-fn void PushEntity(game_world_t *state, entity_t *user, entity_t *target, u8 push_distance)
+fn void PushEntity(game_world_t *state, v2s source, entity_t *target, u8 push_distance, s32 strength)
 {
-    v2s direction = Sub32(target->p, user->p);
+    v2s direction = Sub32(target->p, source);
 
     if (direction.x != 0) direction.x = (direction.x > 0) ? 1 : -1;
     if (direction.y != 0) direction.y = (direction.y > 0) ? 1 : -1;
 
-    const s32 PLAYER_STRENGTH = user->attack_dmg; // Just temp value for the demo, since we don't have RPG systems ready yet
-    s32 damage_per_tile = PLAYER_STRENGTH / (target->size.x * target->size.y);
+    s32 damage_per_tile = strength / (target->size.x * target->size.y);
     s32 total_damage = 0;
 
-    for (s32 i = 0; i < push_distance; ++i) {
+    for (s32 i = 0; i < push_distance; ++i) { // todo: make strength affect push_distance somewhat
         v2s next_pos = Add32(target->p, direction); // Slime is moved through each tile on the way
 
         if (!MoveFitsWithSize(state, target, next_pos)) {
@@ -166,7 +165,7 @@ fn void HandleAttack(entity_t *user, entity_t *target, action_type_t action_type
     
             if (crit_roll < CRITICAL_DAMAGE_MULTIPLIER) {
                 s32 crit_damage = user->attack_dmg * CRITICAL_DAMAGE_MULTIPLIER;
-                PushEntity(state, user, target, 2);
+                PushEntity(state, user->p, target, 2, 25);
                 InflictDamage(target, (u16)crit_damage);
                 DebugLog("Critical Hit! Inflicted %i critical damage to target #%i", crit_damage, target->id);
             } else {
@@ -186,7 +185,7 @@ fn void HandleAttack(entity_t *user, entity_t *target, action_type_t action_type
 
 #define GRENADE_EXPLOSION_RADIUS 3  // temp value
 #define GRENADE_DAMAGE 50           // temp value
-// todo: Make walls and out of boundary zone protect entities from explosions
+// todo: In the future make walls protect entities from explosions
 fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target, action_t *action)
 {
     entity_storage_t *storage = state->storage;
@@ -207,19 +206,30 @@ fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target
             }
             case action_throw:
             {
-                s32 radius = action->params.area_of_effect.x;
+                s32 radius_inner = action->params.area_of_effect.x;
+                s32 radius_outer = action->params.area_of_effect.x * (s32)2;
                 v2s explosion_center = state->cursor->p;
+
+
                 for (s32 i = 0; i < storage->num; i++)
                 {
                     entity_t *entity = &storage->entities[i];
-                    if (IsInsideCircle(entity->p, entity->size, explosion_center, radius))
+                    f32 distance = DistanceV2S(explosion_center, entity->p);
+
+                    if (distance <= radius_inner) {
+                        InflictDamage(entity, (s16)action->params.damage * (s16)2.0f);
+                    } else if (distance <= radius_outer) {
                         InflictDamage(entity, (s16)action->params.damage);
+
+                        PushEntity(state, explosion_center, entity, 2, 25);
+                    }
+
                 }
                 break;
             }
             case action_push:
             {
-                PushEntity(state, user, target, 4);
+                PushEntity(state, user->p, target, 4, 25);
                 break;
             }
             case action_heal_self:
