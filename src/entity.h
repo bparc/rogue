@@ -42,6 +42,7 @@ typedef struct
 	s32 melee_accuracy;
 	s32 evasion;
 	s32 remaining_action_points;
+	f32 hitchance_boost_multiplier;
 	b32 has_hitchance_boost;
 
 	status_effect_t status_effects[MAX_STATUS_EFFECTS];
@@ -69,7 +70,7 @@ typedef struct
 } entity_storage_t;
 
 // NOTE(): Lifetime Management
-fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *map, u16 max_health_points, s32 accuracy, s32 evasion, s32 remaining_action_points);
+fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *map, u16 max_health_points, s32 accuracy, s32 evasion, s32 remaining_action_points, s32 remaining_movement_points, f32 hitchance_boost_multiplier);
 fn static_entity_t * CreateStaticEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, status_effect_t status_effects[MAX_STATUS_EFFECTS]);
 
 fn entity_t *EntityFromIndex(entity_storage_t *storage, s32 index);

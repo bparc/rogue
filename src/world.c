@@ -1,4 +1,5 @@
 #define MAX_SLIME_ACTION_POINTS 10
+#define MAX_SLIME_MOVEMENT_POINTS 10
 fn entity_t *CreateSlime(game_world_t *state, v2s p)
 {
 	u16 slime_hp = 100;
@@ -7,7 +8,7 @@ fn entity_t *CreateSlime(game_world_t *state, v2s p)
 	s32 slime_accuracy = 30; // Applying this value for both melee and ranged accuracy
 	s32 slime_evasion = 80;
 	entity_t *result = CreateEntity(state->storage, p, V2S(1, 1),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map,
-	slime_max_hp, slime_accuracy, slime_evasion, MAX_SLIME_ACTION_POINTS);
+	slime_max_hp, slime_accuracy, slime_evasion, MAX_SLIME_ACTION_POINTS, MAX_SLIME_MOVEMENT_POINTS, 1);
     result->enemy_type = enemy_slime;
     return result;
 }
@@ -20,7 +21,7 @@ fn void CreateBigSlime(game_world_t *state, v2s p)
 	s32 slime_accuracy = 45; // Applying this value for both melee and ranged accuracy
 	s32 slime_evasion = 40;
 	entity_t *result = CreateEntity(state->storage, p, V2S(2, 2),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map,
-	slime_max_hp, slime_accuracy, slime_evasion, MAX_SLIME_ACTION_POINTS);
+	slime_max_hp, slime_accuracy, slime_evasion, MAX_SLIME_ACTION_POINTS, MAX_SLIME_MOVEMENT_POINTS, 1);
     result->enemy_type = enemy_slime_large;
 }
 

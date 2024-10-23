@@ -39,7 +39,8 @@ fn b32 Move(game_world_t *world, entity_t *entity, v2s offset);
 #include "turn_system.c"
 #include "hud.c"
 
-#define MAX_PLAYER_ACTION_POINTS 10
+#define MAX_PLAYER_ACTION_POINTS 4
+#define MAX_PLAYER_MOVEMENT_POINTS 4
 fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *assets)
 {
 	state->memory = Split(memory, MB(1));
@@ -56,7 +57,7 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *asset
 	s32 player_accuracy = 75; // Applying this value for both melee and ranged accuracy
 	s32 player_evasion = 20;
 	CreateEntity(state->storage, V2S(10, 5), V2S(1, 1), entity_flags_controllable,
-		player_health, attack_dmg, state->map, player_max_health, player_accuracy, player_evasion, MAX_PLAYER_ACTION_POINTS);
+		player_health, attack_dmg, state->map, player_max_health, player_accuracy, player_evasion, MAX_PLAYER_ACTION_POINTS, MAX_PLAYER_MOVEMENT_POINTS, 1);
 	state->camera_position = V2(0, 0);
 }
 

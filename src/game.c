@@ -120,8 +120,7 @@ fn s32 CalculateHitChance(entity_t *user, entity_t *target, action_type_t action
     if (action_type != action_melee_attack) {
         final_hit_chance = user->ranged_accuracy - target->evasion + BASE_HIT_CHANCE;
         if (user->has_hitchance_boost) {
-            final_hit_chance += SKIP_TURN_HIT_CHANCE_INCREASE;
-            user->has_hitchance_boost = false;
+            final_hit_chance = (s32)((f32)final_hit_chance * user->hitchance_boost_multiplier);
         }
 
         if (distance > MAX_EFFECTIVE_RANGE) {
@@ -132,8 +131,7 @@ fn s32 CalculateHitChance(entity_t *user, entity_t *target, action_type_t action
     } else {
         final_hit_chance = user->ranged_accuracy - target->evasion + BASE_HIT_CHANCE + MELEE_BONUS;
         if (user->has_hitchance_boost) {
-            final_hit_chance += SKIP_TURN_HIT_CHANCE_INCREASE;
-            user->has_hitchance_boost = false;
+            final_hit_chance = (s32)((f32)final_hit_chance * user->hitchance_boost_multiplier);
         }
     }
 
@@ -197,11 +195,15 @@ fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target
             case action_ranged_attack:
             {
                 HandleAttack(user, target, action->type, state);
+                user->has_hitchance_boost = false;
+                user->hitchance_boost_multiplier = 1.0f;
                 break;
             }
             case action_melee_attack:
             {
                 HandleAttack(user, target, action->type, state);
+                user->has_hitchance_boost = false;
+                user->hitchance_boost_multiplier = 1.0f;
                 break;
             }
             case action_throw:

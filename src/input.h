@@ -151,5 +151,6 @@ fn virtual_controls_t MapKeyboardToVirtualCons(const client_input_t *input, u8 k
 	result.debug[4]		= MapVirtualButton(key_code_f5, input, keys_prev);
 	result.x			= MapVirtualButton(key_code_tab, input, keys_prev);
 	result.y			= MapVirtualButton(key_code_space, input, keys_prev);
+	result.select		= MapVirtualButton('B', input, keys_prev);
 	return result;
 }

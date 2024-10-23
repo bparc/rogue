@@ -59,7 +59,8 @@ fn void ActionMenu(entity_t *user, game_world_t *state, command_buffer_t *out, a
         if (action->icon)
         {
             v4 color = PureWhite();
-            if (queue->action_points <= GetAPCost(*action, user))
+
+            if (queue->action_points < GetAPCost(*action, user))
                 color = RGB(30, 30, 30);
             DrawBitmap(out, slot_p, slot_size, color, action->icon);
         }

@@ -57,6 +57,7 @@ typedef struct
 	f32 time; // NOTE(): A variable within 0.0 to 1.0 range for interpolating values.
 	s32 max_action_points;
 	s32 action_points;
+	s32 movement_points;
 	s32 turn_inited;
 	f32 seconds_elapsed; // NOTE(): Seconds elapsed from the start of the turn.
 

@@ -7,10 +7,10 @@ fn s32 BeginTurn(game_world_t *game, entity_t *entity)
 {
 	ProcessStatusEffects(entity);
 
-	s32 action_point_count = 10;
+	s32 movement_point_count = 10;
 	if (IsHostile(entity))
 	{
-		//action_point_count = 2 + (rand() % 2);
+		//movement_point_count = 2 + (rand() % 2);
 
 		// NOTE(): Request a path to the player.
 		turn_queue_t *queue = game->turns;
@@ -20,10 +20,10 @@ fn s32 BeginTurn(game_world_t *game, entity_t *entity)
 		path_t *path = &queue->path;
 		if (!FindPath(game->map, entity->p, DebugPlayer->p, path, game->memory))
 			DebugLog("Couldn't find a path!");
-		action_point_count = 6;
-		queue->max_action_points = action_point_count;
+		movement_point_count = 6;
+		queue->max_action_points = movement_point_count;
 
-		path->length = Min32(path->length, action_point_count);
+		path->length = Min32(path->length, movement_point_count);
 
 		// NOTE(): Truncate path to the closest unoccupied point to the
 		// destination.
@@ -37,12 +37,12 @@ fn s32 BeginTurn(game_world_t *game, entity_t *entity)
 			}
 			break;
 		}
-		action_point_count = path->length = (index + 1);
+		movement_point_count = path->length = (index + 1);
 		
 		entity->DEBUG_step_count = 0;
 	}
 
-	return action_point_count;
+	return movement_point_count;
 }
 
 fn s32 Decide(game_world_t *game, entity_t *entity)

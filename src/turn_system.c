@@ -74,7 +74,7 @@ fn void AcceptTurn(turn_queue_t *queue, entity_t *entity)
 
 fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count)
 {
-	s32 sufficient = queue->action_points - count > 0;
+	s32 sufficient = queue->action_points - count >= 0;
 	if (sufficient)
 	{
 		DebugLog("Used %i action points", count);
@@ -116,8 +116,9 @@ fn void ControlPanel(turn_queue_t *queue, const virtual_controls_t *cons, entity
 		queue->god_mode_enabled = !queue->god_mode_enabled;
 
 	DebugPrint(
-		"ACT %i | BRK (F1): %s%s%s | GOD (F3): %s",
+		"ACT %i | MOV %i | BRK (F1): %s%s%s | GOD (F3): %s",
 		(queue->action_points),
+		(queue->movement_points),
 		(queue->break_mode_enabled ? "ON" : "OFF"),
 		(queue->interp_state == interp_wait_for_input) ? " | STEP (F2) -> " : "",
 		(queue->interp_state == interp_wait_for_input) ? interpolator_state_t_names[queue->requested_state] : "",
@@ -205,11 +206,22 @@ fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
 			directions = diagonal_directions;
 		#endif
 
-		if (WentDown(cons.y) && queue->action_points > 0) {
+		if (WentDown(cons.select) && queue->movement_points >= 2 && entity->hitchance_boost_multiplier + 0.1f <= 2.0f) {
 			entity->has_hitchance_boost = true;
 
+			queue->movement_points -= 2;
+			entity->hitchance_boost_multiplier += 0.1f;
+
+			DebugLog("Used 2 movement points to brace for a hit chance bonus. Hit chance multiplied by %g for next attack.", entity->hitchance_boost_multiplier);
+		} else if (WentDown(cons.select) && queue->movement_points >= 2 && entity->hitchance_boost_multiplier + 0.1f > 2.0f) {
+		    DebugLog("Brace invalid. Your hit chance multiplier for next attack is %g which is maximum.", entity->hitchance_boost_multiplier);
+		}
+
+		if (WentDown(cons.y)) {
+			DebugLog("Skipping turn with %d movement points left.", queue->movement_points);
+
+			queue->movement_points = 0;
 			queue->action_points = 0;
-			DebugLog("Skipped turn with action points remaining. Hit chance increased by %d%% for next attack.", SKIP_TURN_HIT_CHANCE_INCREASE);
 		}
 		
 		s32 direction = GetDirectionalInput(input);
@@ -225,11 +237,11 @@ fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
 		
 		if (input_valid && (cursor_mode_active == false) && (queue->action_points > 0))
 		{
-	        if (Move(state, entity, directions[direction]) && (queue->god_mode_enabled == false))
+	        if (queue->movement_points > 0 && Move(state, entity, directions[direction]) && (queue->god_mode_enabled == false))
 	        {
 	        	ApplyTileEffects(entity->p, state, entity);
 				// NOTE(): Consume moves
-				queue->action_points--;
+				queue->movement_points--;
 			}
 		}
 }
@@ -309,7 +321,8 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 	{
 		if ((queue->turn_inited == false))
 		{
-			queue->action_points = BeginTurn(state, entity);
+			queue->movement_points = BeginTurn(state, entity);
+			queue->action_points = 4;
 			queue->turn_inited = true;
 
 			queue->interp_state = interp_request;
@@ -346,7 +359,8 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			ResolveAsynchronousActionQueue(queue, entity, out, dt, assets, state);
 
 			// NOTE(): End the turn if we run out of all action points.
-			if ((queue->action_points <= 0) && (queue->action_count == 0))
+			if (WentDown(cons.y) || ((queue->movement_points <= 0) && (queue->movement_points == 0)
+			&& entity->flags & entity_flags_hostile))
 				AcceptTurn(queue, entity);
 		}
 		else // NOTE(): AI

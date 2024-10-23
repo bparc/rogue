@@ -1,4 +1,4 @@
-fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *map, u16 max_health_points, s32 accuracy, s32 evasion, s32 remaining_action_points)
+fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *map, u16 max_health_points, s32 accuracy, s32 evasion, s32 remaining_action_points, s32 remaining_movement_points, f32 hitchance_boost_multiplier)
 {
 	entity_t *result = 0;
 	if (storage->num < ArraySize(storage->entities))
@@ -20,6 +20,8 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, 
 		result->ranged_accuracy = accuracy;
 		result->evasion = evasion;
 		result->remaining_action_points = remaining_action_points;
+		result->remaining_action_points = remaining_movement_points;
+		result->hitchance_boost_multiplier = hitchance_boost_multiplier;
 
 		// Initializing status effects to status_effect_none (which is 1)
 		for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
