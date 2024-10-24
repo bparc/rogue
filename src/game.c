@@ -16,33 +16,10 @@ fn void AddStatusEffect(entity_t *entity, status_effect_type_t status_effect, s3
     }
 }
 
-fn void InflictDamage(entity_t *entity, s16 damage) {
-    if (entity == NULL) return;
-
-    if (damage >= entity->health) {
-        entity->health = 0;
-        entity->flags |= entity_flags_deleted;
-        // todo: handle entity death
-    } else {
-        entity->health -= damage;
-    }
-    entity->blink_time = 1.0f;
-}
-
-fn void Heal(entity_t *entity, s16 healed_hp) {
-    if (entity == NULL) return;
-
-    if (entity->health >= healed_hp) {
-        entity->health = entity->max_health;
-    } else {
-        entity->health += healed_hp;
-    }
-}
-
 fn void ApplyTrapEffects(tile_t *tile, entity_t *entity) {
     switch(tile->trap_type) {
         case trap_type_physical:
-            InflictDamage(entity, 25);
+            TakeHP(entity, 25);
             break;
         case trap_type_poison:
             AddStatusEffect(entity, status_effect_poison, 3);
@@ -72,7 +49,7 @@ fn void ProcessStatusEffects(entity_t *entity)
         if (entity->status_effects[i].type != status_effect_none) {
             switch (entity->status_effects[i].type) {
                 case status_effect_poison:
-                    InflictDamage(entity, 10);
+                    TakeHP(entity, 10);
                     break;
                 default:
                     break;
@@ -102,7 +79,7 @@ fn void PushEntity(game_world_t *state, v2s source, entity_t *target, u8 push_di
         v2s next_pos = Add32(target->p, direction); // Slime is moved through each tile on the way
 
         if (!MoveFitsWithSize(state, target, next_pos)) {
-            InflictDamage(target, (s16)damage_per_tile);
+            TakeHP(target, (s16)damage_per_tile);
             break;
         } else {
             target->p = next_pos;
@@ -112,8 +89,8 @@ fn void PushEntity(game_world_t *state, v2s source, entity_t *target, u8 push_di
     }
 }
 
-fn s32 CalculateHitChance(entity_t *user, entity_t *target, action_type_t action_type)
-    {
+fn s32 CalculateHitChance(const entity_t *user, const entity_t *target, action_type_t action_type)
+{
     s32 final_hit_chance;
     f32 distance = DistanceV2S(user->p, target->p);
 
@@ -135,48 +112,56 @@ fn s32 CalculateHitChance(entity_t *user, entity_t *target, action_type_t action
         }
     }
 
-    if (final_hit_chance > 100) {
-        final_hit_chance = 100;
-    }
+    final_hit_chance = Clamp32(final_hit_chance, 0, 100);
 
+    final_hit_chance = 100;
     return final_hit_chance;
 }
 
-fn void HandleAttack(entity_t *user, entity_t *target, action_type_t action_type, game_world_t *state)
+fn void DoDamage(game_world_t *game, entity_t *target, s32 damage, const char *damage_type_prefix)
+{
+    damage = damage + (rand() % 3);
+    LogLn(game->log, "%shit! inflicted %i %s of %sdamage upon the target!",
+        damage_type_prefix, damage, damage == 1 ? "point" : "points", damage_type_prefix);
+    TakeHP(target, (s16)damage);
+    CreateNumberParticle(game->particles, target->deferred_p, damage);
+}
+
+fn void HandleAttack(game_world_t *state, entity_t *user, entity_t *target, action_type_t action_type)
 {
 // todo: add critical hits, distance measure
-    if (IsPlayer(user) && state->turns->god_mode_enabled)
+    if ((IsPlayer(user) && state->turns->god_mode_enabled))
     {
-        InflictDamage(target, target->health);
+        DoDamage(state, target, target->health, "");
     }
     else
     {
-        s32 final_hit_chance = CalculateHitChance(user, target, action_type);
-    
-        if (final_hit_chance < 0) final_hit_chance = 0;
-        if (final_hit_chance > 100) final_hit_chance = 100;
-    
+        s32 chance = CalculateHitChance(user, target, action_type);
         s32 roll = rand() % 100;
-        s32 crit_roll = rand() % 100;
-    
-        if (roll < final_hit_chance) {
-    
-            if (crit_roll < CRITICAL_DAMAGE_MULTIPLIER) {
-                s32 crit_damage = user->attack_dmg * CRITICAL_DAMAGE_MULTIPLIER;
-                PushEntity(state, user->p, target, 2, 25);
-                InflictDamage(target, (u16)crit_damage);
-                DebugLog("Critical Hit! Inflicted %i critical damage to target #%i", crit_damage, target->id);
-            } else {
-                InflictDamage(target, user->attack_dmg);
-                DebugLog("Hit! Inflicted %i damage to target #%i", user->attack_dmg, target->id);
+        s32 roll_crit = rand() % 100;
+
+        b32 did_not_missed = (roll < chance);
+        b32 missed = !did_not_missed;
+        b32 crited = (roll_crit < CRITICAL_DAMAGE_MULTIPLIER);
+        b32 grazed = ((roll >= chance)) && (roll < (chance + GRAZE_THRESHOLD));
+
+        if (did_not_missed)
+        {    
+            if (crited)
+                DoDamage(state, target, user->attack_dmg * CRITICAL_DAMAGE_MULTIPLIER, "critical ");
+            else
+                DoDamage(state, target, user->attack_dmg, "");
+        }
+        else
+        if (missed)
+        {
+            if (grazed)
+                DoDamage(state, target, user->attack_dmg / 2, "graze ");
+            else
+            {
+                LogLn(state->log, "missed!");
+                CreateNumberParticle(state->particles, target->deferred_p, 0);
             }
-    
-        } else if (roll < final_hit_chance + GRAZE_THRESHOLD && roll >= final_hit_chance) {
-            u16 graze_damage = user->attack_dmg / 2;
-            InflictDamage(target, graze_damage);
-            DebugLog("Grazing hit! Inflicted %i grazing damage to target #%i", graze_damage, target->id);
-        } else {
-            DebugLog("Missed! Ranged attack missed target #%i", target->id);
         }
     }
 }
@@ -194,35 +179,36 @@ fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target
         {
             case action_ranged_attack:
             {
-                HandleAttack(user, target, action->type, state);
+                HandleAttack(state, user, target, action->type);
                 user->has_hitchance_boost = false;
                 user->hitchance_boost_multiplier = 1.0f;
                 break;
             }
             case action_melee_attack:
             {
-                HandleAttack(user, target, action->type, state);
+                HandleAttack(state, user, target, action->type);
                 user->has_hitchance_boost = false;
                 user->hitchance_boost_multiplier = 1.0f;
                 break;
             }
             case action_throw:
             {
+                const char *Prefix = "blast ";
+                s32 damage = (s32)action->params.damage * 2;
+
                 s32 radius_inner = action->params.area_of_effect.x;
                 s32 radius_outer = action->params.area_of_effect.x * (s32)2;
                 v2s explosion_center = state->cursor->p;
-
 
                 for (s32 i = 0; i < storage->num; i++)
                 {
                     entity_t *entity = &storage->entities[i];
                     f32 distance = DistanceV2S(explosion_center, entity->p);
-
+                    
                     if (distance <= radius_inner) {
-                        InflictDamage(entity, (s16)action->params.damage * (s16)2.0f);
+                        DoDamage(state, entity, damage, Prefix);
                     } else if (distance <= radius_outer) {
-                        InflictDamage(entity, (s16)action->params.damage);
-
+                        DoDamage(state, entity, damage, Prefix);
                         PushEntity(state, explosion_center, entity, 2, 25);
                     }
 
@@ -254,4 +240,12 @@ fn void SubdivideLargeSlime(game_world_t *game, entity_t *entity, s32 x, s32 y)
     entity_t *result = CreateSlime(game, Add32(entity->p, V2S(x, y)));
     if (result)
         result->deferred_p = entity->deferred_p;
+}
+
+fn v2 CameraToScreen(const game_world_t *game, v2 p)
+{
+    p = ScreenToIso(p);
+    p = Add(p, game->camera_position);
+    p = Scale(p, VIEWPORT_INTEGER_SCALE);
+    return p;
 }

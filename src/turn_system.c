@@ -76,14 +76,9 @@ fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count)
 {
 	s32 sufficient = queue->action_points - count >= 0;
 	if (sufficient)
-	{
-		DebugLog("Used %i action points", count);
 		queue->action_points -= count;
-	}
 	else
-	{
 		DebugLog("Insufficient amount of action points! (%i req.)", count);
-	}
 	return sufficient;
 }
 
@@ -260,9 +255,9 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 			v2 target_p = GetTileCenter(state->map, action->target_p);
 			f32 distance = Distance(user->deferred_p, target_p);
 			f32 t = action->t / (distance * 0.005f);
-			
-			action->t += dt * 1.5f;
 
+			action->t += dt * 1.5f;
+			
 			DrawRangedAnimation(out, user->deferred_p, target_p, &assets->PlayerGrenade, t);
 			
 			Finished = (t >= 1.0f);
@@ -322,7 +317,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		if ((queue->turn_inited == false))
 		{
 			queue->movement_points = BeginTurn(state, entity);
-			queue->action_points = 4;
+			queue->action_points = 3;
 			queue->turn_inited = true;
 
 			queue->interp_state = interp_request;
@@ -445,7 +440,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 				{
 					if (queue->time > 0.1f)
 					{
-						#ifdef ENABLE_TURN_SYSTEM_DEBUG_LOGS
+						#if ENABLE_TURN_SYSTEM_DEBUG_LOGS
 						DebugLog("turn finished in %.2f seconds", queue->seconds_elapsed);
 						#endif
 						AcceptTurn(queue, entity);

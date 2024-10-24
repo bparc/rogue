@@ -10,10 +10,60 @@ typedef u64 entity_id_t;
 
 #include "cursor.h"
 
+typedef enum
+{
+	particle_type_none,
+	//particle_type_bitmap,
+	particle_type_number,
+} particle_type_t;
+
 typedef struct
 {
+	v2 p;
+	f32 t;
+	particle_type_t type;
+	s32 number;
+} particle_t;
+
+typedef struct
+{
+	s32 num;
+	particle_t parts[64];
+} particles_t;
+
+fn particle_t *CreateParticle(particles_t *particles, v2 p, particle_type_t type)
+{
+	particle_t *result = 0;
+	if (particles->num < ArraySize(particles->parts))
+		result = &particles->parts[particles->num++];
+	if (result)
+	{
+		ZeroStruct(result);
+		result->p = p;
+		result->type = type;
+	}
+	return result;
+}
+
+fn void CreateNumberParticle(particles_t *particles, v2 p, s32 number)
+{
+	particle_t *result = CreateParticle(particles, p, particle_type_number);
+	result->number = number;
+
+	v2 random_offset = {0};
+	random_offset.x = RandomFloat();
+	random_offset.y = RandomFloat();
+	random_offset = Normalize(random_offset);
+	random_offset = Scale(random_offset, 10.0f);
+	result->p = Add(result->p, random_offset);
+}
+
+typedef struct
+{
+	log_t *log;
 	cursor_t *cursor;
 	entity_storage_t *storage;
+	particles_t *particles;
 
 	slot_bar_t slot_bar;
 	turn_queue_t *turns;
@@ -22,8 +72,9 @@ typedef struct
 	v2 camera_position;
 	
 	memory_t memory;
-} game_world_t;
-
+} game_world_t
+;
+fn v2 CameraToScreen(const game_world_t *game, v2 p);
 fn entity_t *CreateSlime(game_world_t *state, v2s p);
 fn void CreateBigSlime(game_world_t *state, v2s p);
 fn void CreatePoisonTrap(game_world_t *state, v2s p);
@@ -39,25 +90,17 @@ fn b32 Move(game_world_t *world, entity_t *entity, v2s offset);
 #include "turn_system.c"
 #include "hud.c"
 
-#define MAX_PLAYER_ACTION_POINTS 4
-#define MAX_PLAYER_MOVEMENT_POINTS 4
 fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *assets)
 {
 	state->memory = Split(memory, MB(1));
 
+	state->log = log;
 	state->cursor = PushStruct(cursor_t, memory);
 	state->turns = PushStruct(turn_queue_t, memory);
 	state->storage = PushStruct(entity_storage_t, memory);
+	state->particles = PushStruct(particles_t, memory);
 	state->map = CreateMap(30, 20, memory, TILE_PIXEL_SIZE);
 	DefaultActionBar(&state->slot_bar,  assets);
-
-	u16 player_health = 400;
-	u16 player_max_health = 400;
-	u16 attack_dmg = 40;
-	s32 player_accuracy = 75; // Applying this value for both melee and ranged accuracy
-	s32 player_evasion = 20;
-	CreateEntity(state->storage, V2S(10, 5), V2S(1, 1), entity_flags_controllable,
-		player_health, attack_dmg, state->map, player_max_health, player_accuracy, player_evasion, MAX_PLAYER_ACTION_POINTS, MAX_PLAYER_MOVEMENT_POINTS, 1);
 	state->camera_position = V2(0, 0);
 }
 
@@ -83,6 +126,9 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 {
 	const map_t *map = state->map;
 	entity_storage_t *storage = state->storage;
+	entity_t *player = DEBUGGetPlayer(storage);
+	particles_t *particles = state->particles;
+	command_buffer_t *out_top = Debug.out;
 
 	SetGlobalOffset(out, V2(0.0f, 0.0f));
 	DrawRect(out, V2(0, 0), V2(1920, 1080), SKY_COLOR); // NOTE(): Background
@@ -142,8 +188,6 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	}
 
 	// NOTE(): Entities
-	entity_t *Player = DEBUGGetPlayer(storage);
-
 	for (s32 index = 0; index < storage->num; index++)
 	{
 		entity_t *entity = &storage->entities[index];
@@ -194,12 +238,39 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 				bitmap_color = A(Blue(), 0.9f);
 		}
 
-		if (CompareVectors(entity->p, Player->p) && !IsPlayer(entity))
+		if (CompareVectors(entity->p, player->p) && !IsPlayer(entity))
 			bitmap_color.w = 0.6f;
 
 		DrawBitmap(out, bitmap_p, bitmap_sz, bitmap_color, bitmap);
 
 		RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
-		HealthBar(out, ScreenToIso(p), assets, entity);
+		HealthBar(out_top, CameraToScreen(state, p), assets, entity);
+	}
+
+ 	// NOTE(): Particles
+	for (s32 index = 0; index < particles->num; index++)
+	{
+		particle_t *particle = &particles->parts[index];
+		particle->t += dt;
+		if (particle->t < 1.0f)
+		{
+			switch (particle->type)
+			{
+			case particle_type_number:
+				{	
+					f32 t = particle->t;
+					v4 color = White();
+					color.w = (1.0f - Smoothstep(t, 0.5f));
+
+					v2 p = CameraToScreen(state, particle->p);
+					p.y -= ((50.0f * t) + (t * t * t) * 20.0f);
+					p.x += (Sine(t) * 2.0f - 1.0f) * 2.0f;
+					DrawFormat(out_top, assets->Font, p, color, "%i", particle->number);
+				} break;
+			}
+			continue;
+		}
+
+		particles->parts[index--] = particles->parts[--particles->num];
 	}
 }

@@ -1,10 +1,25 @@
 #define MAX_SLIME_ACTION_POINTS 10
 #define MAX_SLIME_MOVEMENT_POINTS 10
+#define MAX_PLAYER_ACTION_POINTS 4
+#define MAX_PLAYER_MOVEMENT_POINTS 4
+
+fn entity_t *CreatePlayer(game_world_t *state, v2s p)
+{
+    u16 player_health = 62;
+    u16 player_max_health = 62;
+    u16 attack_dmg = 8;
+    s32 player_accuracy = 75; // Applying this value for both melee and ranged accuracy
+    s32 player_evasion = 20;
+    entity_t *result = CreateEntity(state->storage, p, V2S(1, 1), entity_flags_controllable,
+        player_health, attack_dmg, state->map, player_max_health, player_accuracy, player_evasion, MAX_PLAYER_ACTION_POINTS, MAX_PLAYER_MOVEMENT_POINTS, 1);
+    return result;
+}
+
 fn entity_t *CreateSlime(game_world_t *state, v2s p)
 {
-	u16 slime_hp = 100;
-	u16 slime_max_hp = 100;
-	u16 slime_attack_dmg = 1;
+	u16 slime_hp = 54;
+	u16 slime_max_hp = 54;
+	u16 slime_attack_dmg = 6;
 	s32 slime_accuracy = 30; // Applying this value for both melee and ranged accuracy
 	s32 slime_evasion = 80;
 	entity_t *result = CreateEntity(state->storage, p, V2S(1, 1),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map,

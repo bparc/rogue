@@ -85,10 +85,16 @@ fn s32 RandomInt(void)
 	return result;
 }
 
+fn f32 RandomFloat(void)
+{
+	f32 result = (f32)rand() / (f32)INT32_MAX;
+	return result;
+}
+
 #define MIN(a, b) (a < b ? a : b) 
 #define MAX(a, b) (a > b ? a : b)
 
-fn s32 ClampS32(s32 value, s32 min, s32 max)
+fn s32 Clamp32(s32 value, s32 min, s32 max)
 {
 	if (value < min)
 		value = min;
@@ -100,6 +106,12 @@ fn s32 ClampS32(s32 value, s32 min, s32 max)
 fn s32 Min32(s32 a, s32 b)
 {
 	s32 result = MIN(a, b);
+	return result;
+}
+
+fn u16 Min16U(u16 a, u16 b)
+{
+	u16 result = MIN(a, b);
 	return result;
 }
 

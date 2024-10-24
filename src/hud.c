@@ -147,14 +147,15 @@ fn void HealthBar(command_buffer_t *out, v2 p, assets_t *assets, entity_t *entit
     // todo: Add animation when chunk of health is lost, add art asset
     f32 health_percentage = (f32)entity->health / entity->max_health;
 
-    v2 bar_size = V2(35, 3);
-    v2 bar_p = Sub(p, V2(14.0f, 29.0f));
+    v2 bar_size = V2(16*4, 2*4);
+    v2 bar_p = Sub(p, V2(30.0f, 110.0f));
 
     DrawRect(out, bar_p, bar_size, Black());
     v2 health_bar_size = V2(bar_size.x * health_percentage, bar_size.y);
             
     DrawRect(out, bar_p, health_bar_size, Green());
     DrawRectOutline(out, bar_p, health_bar_size, Black());
+    DrawFormat(out, assets->Font, Add(bar_p, V2(4.0f,-10.0f)), White(), "%i/%i", entity->health,entity->max_health);
 }
 
 fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets, const client_input_t *input)

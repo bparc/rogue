@@ -78,7 +78,7 @@ fn void OpenGLDispatchBuffer(const command_buffer_t *buffer, v4 viewport)
 
 					bitmap_p = Add(bitmap_p, V2(1.0f, 1.0f));
 					OpenGLRenderQuad(bitmap_p, Add(bitmap_p, bitmap_sz), uv_min, uv_max, (GLuint)font->bitmap.handle, text->color);
-					
+
 					offset.x += glyph.x_advance;
 				}
 			} break;

@@ -115,10 +115,7 @@ fn entity_id_t AttemptAttack(game_world_t *World, entity_t *requestee, s32 effec
 	}
 
 	if (target && IsInsideCircle(target->p, target->size, requestee->p, effective_range))
-	{
 		result = target->id;
-		DebugLog("target found #%i", target->id);
-	}
 	return result;
 }
 
@@ -126,5 +123,5 @@ fn void AnimateAttack(game_world_t *World, entity_t *entity, entity_t *target, f
 {
 	DrawRangedAnimation(out, entity->deferred_p, target->deferred_p, &assets->SlimeBall, time);
 	if (inflict_damage)
-		InflictDamage(target, entity->attack_dmg);
+		TakeHP(target, entity->attack_dmg);
 }

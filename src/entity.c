@@ -168,3 +168,25 @@ fn entity_t *DEBUGGetPlayer(entity_storage_t *storage)
 			return &storage->entities[index];
 	return 0;
 }
+
+fn void TakeHP(entity_t *entity, s16 damage)
+{
+    if (entity)
+    {
+        entity->blink_time = 1.0f;
+        if (damage >= entity->health)
+        {
+            entity->health = 0;
+            entity->flags |= entity_flags_deleted;
+        }
+        else
+        {
+            entity->health -= damage;
+        }
+    }
+}
+
+fn void Heal(entity_t *entity, s16 amount) {
+    if (entity)
+        entity->health = Min16U(entity->max_health, entity->health + amount);
+}
