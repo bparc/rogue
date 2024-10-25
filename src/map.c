@@ -275,35 +275,3 @@ fn b32 ContinueDDALine(dda_line_t *it)
 
 	return result;
 }
-
-fn void RayCast(const map_t *map, v2s from, v2s to)
-{
-	v2 a = SToF2(from);
-	v2 b = SToF2(to);
-
-	v2 ray = Sub(b, a);
-	v2 distance_to_edge = SToF2(Sign2(ray));
-	v2s delta = Sign2(ray);
-
-	v2s at = from;
-	f32 t = 0.0f;
-	while (InMapBounds(map, at) && !CompareVectors(at, to))
-	{
-		v2 ray_p = SToF2(from);
-		
-		v2 edge = Add(SToF2(at), distance_to_edge);
-		v2 dt = Sub(edge, ray_p);
-		dt = Div(dt, ray);
-		if (dt.x < dt.y)
-		{
-			at.x += delta.x;
-			t += dt.x;
-		}
-		else
-		{
-			at.y += delta.y;
-			t += dt.y;
-		}
-		continue;
-	}
-}
