@@ -415,6 +415,8 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			queue->time = 0.0f;
 			queue->seconds_elapsed = 0.0f;
 
+			state->cursor->active = false;
+
 			#if ENABLE_TURN_SYSTEM_DEBUG_LOGS
 			DebugLog("initiating turn for entity#%i", entity->id);
 			#endif

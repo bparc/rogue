@@ -107,7 +107,6 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 			if (target_valid && (positioned_on_user == false))
 			{
 				QueryAsynchronousAction(queue, equipped.type, target, cursor->p);
-				cursor->active = false;
 			}
 		}
 	}
