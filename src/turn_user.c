@@ -112,7 +112,7 @@ fn entity_id_t AttemptAttack(game_world_t *World, entity_t *requestee, s32 effec
 		f32 random_chance = RandomFloat();
 		DebugLog("%f", random_chance);
 
-		if (RandomChance(35))
+		if (RandomChance(30))
 			queue->enemy_action = enemy_action_slash;
 		else
 			queue->enemy_action = enemy_action_shoot;

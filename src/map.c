@@ -220,22 +220,78 @@ fn b32 IsWall(const map_t *map, v2s p)
 	return result;
 }
 
+typedef struct
+{
+	const map_t *map;
+	v2s from;
+	v2s to;
+
+	f32 t;
+	v2s at;
+
+	v2s delta;
+	v2 ray;
+	v2 distance_to_edge;
+} dda_line_t;
+
+fn dda_line_t BeginDDALine(const map_t *map, v2s from, v2s to)
+{
+	dda_line_t result = {0};
+	result.at = from;
+	result.from = result.at;
+	result.to = to;
+	result.map = map;
+
+	result.ray = Sub(SToF2(to), SToF2(from));
+	result.distance_to_edge = SToF2(Sign2(result.ray));
+	result.delta = Sign2(result.ray);
+
+	return result;
+}
+
+fn b32 ContinueDDALine(dda_line_t *it)
+{
+	b32 result = (InMapBounds(it->map, it->at) && !CompareVectors(it->at, it->to));
+
+	if (result)
+	{
+		v2 ray_p = SToF2(it->from);
+	
+		v2 edge = Add(SToF2(it->at), it->distance_to_edge);
+		v2 dt = Sub(edge, ray_p);
+		dt = Div(dt, it->ray);
+
+		if (dt.x < dt.y)
+		{
+			it->at.x += it->delta.x;
+			it->t += dt.x;
+		}
+		else
+		{
+			it->at.y += it->delta.y;
+			it->t += dt.y;
+		}
+	}
+
+	return result;
+}
+
 fn void RayCast(const map_t *map, v2s from, v2s to)
 {
-	v2 a = SV2S(from);
-	v2 b = SV2S(to);
+	v2 a = SToF2(from);
+	v2 b = SToF2(to);
 
 	v2 ray = Sub(b, a);
-	v2 distance_to_edge = SV2S(Sign2(ray));
+	v2 distance_to_edge = SToF2(Sign2(ray));
 	v2s delta = Sign2(ray);
 
 	v2s at = from;
 	f32 t = 0.0f;
 	while (InMapBounds(map, at) && !CompareVectors(at, to))
 	{
-		v2 ray_p = SV2S(from);
+		v2 ray_p = SToF2(from);
 		
-		v2 edge = Add(SV2S(at), distance_to_edge);
+		v2 edge = Add(SToF2(at), distance_to_edge);
 		v2 dt = Sub(edge, ray_p);
 		dt = Div(dt, ray);
 		if (dt.x < dt.y)

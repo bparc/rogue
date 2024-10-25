@@ -9,7 +9,7 @@ fn v2 SV2(s32 x, s32 y)
 	return V2((f32)x, (f32)y);
 }
 
-fn v2 SV2S(v2s v)
+fn v2 SToF2(v2s v)
 {
 	return SV2(v.x, v.y);
 }

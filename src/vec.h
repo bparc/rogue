@@ -26,7 +26,7 @@ fn b32 IsZero(v2s x)
 // NOTE(): Constructors.
 fn v2s V2S(s32 x, s32 y);
 fn v2 V2(f32 x, f32 y);
-fn v2 SV2S(v2s v);
+fn v2 SToF2(v2s v);
 fn v2 SV2(s32 x, s32 y);
 fn v4 V4(f32 x, f32 y, f32 z, f32 w);
 fn v4 RGB(u8 r, u8 g, u8 b); // NOTE(): Converts each component from 0-255 to 0.0-1.0 range.
