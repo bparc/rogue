@@ -45,7 +45,7 @@ fn particle_t *CreateParticle(particles_t *particles, v2 p, particle_type_t type
 	return result;
 }
 
-fn void CreateNumberParticle(particles_t *particles, v2 p, s32 number)
+fn void CreateDamageNumber(particles_t *particles, v2 p, s32 number)
 {
 	particle_t *result = CreateParticle(particles, p, particle_type_number);
 	result->number = number;
@@ -54,12 +54,13 @@ fn void CreateNumberParticle(particles_t *particles, v2 p, s32 number)
 	random_offset.x = RandomFloat();
 	random_offset.y = RandomFloat();
 	random_offset = Normalize(random_offset);
-	random_offset = Scale(random_offset, 10.0f);
+	random_offset = Scale(random_offset, 5.0f);
 	result->p = Add(result->p, random_offset);
 }
 
 typedef struct
 {
+	assets_t *assets;
 	log_t *log;
 	cursor_t *cursor;
 	entity_storage_t *storage;
@@ -94,12 +95,14 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *asset
 {
 	state->memory = Split(memory, MB(1));
 
+	state->assets = assets;
 	state->log = log;
 	state->cursor = PushStruct(cursor_t, memory);
 	state->turns = PushStruct(turn_queue_t, memory);
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->particles = PushStruct(particles_t, memory);
 	state->map = CreateMap(30, 20, memory, TILE_PIXEL_SIZE);
+
 	DefaultActionBar(&state->slot_bar,  assets);
 	state->camera_position = V2(0, 0);
 }
@@ -244,7 +247,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		DrawBitmap(out, bitmap_p, bitmap_sz, bitmap_color, bitmap);
 
 		RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
-		HealthBar(out_top, CameraToScreen(state, p), assets, entity);
+		HealthBar(out_top, CameraToScreen(state, entity->deferred_p), assets, entity);
 	}
 
  	// NOTE(): Particles

@@ -78,7 +78,6 @@ fn s32 SRandInt(s32 seed) {
     return rand_val;
 }
 
-
 fn s32 RandomInt(void)
 {
 	s32 result = rand();
@@ -87,7 +86,15 @@ fn s32 RandomInt(void)
 
 fn f32 RandomFloat(void)
 {
-	f32 result = (f32)rand() / (f32)INT32_MAX;
+	s32 random_value = rand();
+	f32 result = (f32)random_value / (f32)RAND_MAX;
+	return result;
+}
+
+fn b32 RandomChance(s32 percentange)
+{
+	f32 random_value = RandomFloat();
+	b32 result = (random_value <= ((f32)percentange / 100.0f));
 	return result;
 }
 

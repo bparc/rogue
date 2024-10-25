@@ -219,3 +219,35 @@ fn b32 IsWall(const map_t *map, v2s p)
 	b32 result = GetTileValue(map, p.x, p.y) == 2;
 	return result;
 }
+
+fn void RayCast(const map_t *map, v2s from, v2s to)
+{
+	v2 a = SV2S(from);
+	v2 b = SV2S(to);
+
+	v2 ray = Sub(b, a);
+	v2 distance_to_edge = SV2S(Sign2(ray));
+	v2s delta = Sign2(ray);
+
+	v2s at = from;
+	f32 t = 0.0f;
+	while (InMapBounds(map, at) && !CompareVectors(at, to))
+	{
+		v2 ray_p = SV2S(from);
+		
+		v2 edge = Add(SV2S(at), distance_to_edge);
+		v2 dt = Sub(edge, ray_p);
+		dt = Div(dt, ray);
+		if (dt.x < dt.y)
+		{
+			at.x += delta.x;
+			t += dt.x;
+		}
+		else
+		{
+			at.y += delta.y;
+			t += dt.y;
+		}
+		continue;
+	}
+}

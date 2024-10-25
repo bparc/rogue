@@ -76,6 +76,7 @@ fn f32 Smoothstep(f32 x, f32 edge);
 
 fn s32 SRandIntFixed(int upper, int lower, int seed); //rand in range with seed
 fn s32 SRandInt(int seed); //rand in 0 - 2^32 range with seed
+fn b32 RandomChance(s32 percentange);
 
 fn s32 RandomInt(void);
 fn u16 Min16U(u16 a, u16 b);

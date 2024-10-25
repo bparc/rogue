@@ -26,6 +26,7 @@ fn b32 IsZero(v2s x)
 // NOTE(): Constructors.
 fn v2s V2S(s32 x, s32 y);
 fn v2 V2(f32 x, f32 y);
+fn v2 SV2S(v2s v);
 fn v2 SV2(s32 x, s32 y);
 fn v4 V4(f32 x, f32 y, f32 z, f32 w);
 fn v4 RGB(u8 r, u8 g, u8 b); // NOTE(): Converts each component from 0-255 to 0.0-1.0 range.
@@ -37,6 +38,7 @@ fn v2s YXs(v2s v);
 // NOTE(): Interpolation.
 fn v2 Lerp2(v2 a, v2 b, f32 t);
 fn v4 Lerp4(v4 a, v4 b, f32 t);
+fn v2 EaseInThenOut(f32 min, f32 max, f32 mid, f32 t);
 
 // NOTE(): Boolean masks.
 fn v2 GreaterThan(v2 a, v2 b);
@@ -73,6 +75,7 @@ fn v2 Perp(v2 v); // NOTE(): Perpendicular
 fn v2 Invert(v2 v);
 fn v2 Normalize(v2 v);
 fn v2 GetDirection(v2 a, v2 b);
+fn v2s Sign2(v2 v);
 
 fn v2 ClampLength(v2 v, float max);
 fn v2 ClampToLine(v2 a, v2 b, v2 p);

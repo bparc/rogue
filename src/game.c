@@ -124,12 +124,12 @@ fn void DoDamage(game_world_t *game, entity_t *target, s32 damage, const char *d
     LogLn(game->log, "%shit! inflicted %i %s of %sdamage upon the target!",
         damage_type_prefix, damage, damage == 1 ? "point" : "points", damage_type_prefix);
     TakeHP(target, (s16)damage);
-    CreateNumberParticle(game->particles, target->deferred_p, damage);
+    CreateDamageNumber(game->particles, Add(target->deferred_p, V2(-25.0f, -25.0f)), damage);
 }
 
 fn void HandleAttack(game_world_t *state, entity_t *user, entity_t *target, action_type_t action_type)
 {
-// todo: add critical hits, distance measure
+    // todo: add critical hits, distance measure
     if ((IsPlayer(user) && state->turns->god_mode_enabled))
     {
         DoDamage(state, target, target->health, "");
@@ -140,12 +140,11 @@ fn void HandleAttack(game_world_t *state, entity_t *user, entity_t *target, acti
         s32 roll = rand() % 100;
         s32 roll_crit = rand() % 100;
 
-        b32 did_not_missed = (roll < chance);
-        b32 missed = !did_not_missed;
+        b32 missed = !(roll < chance);
         b32 crited = (roll_crit < CRITICAL_DAMAGE_MULTIPLIER);
         b32 grazed = ((roll >= chance)) && (roll < (chance + GRAZE_THRESHOLD));
 
-        if (did_not_missed)
+        if ((missed == false))
         {    
             if (crited)
                 DoDamage(state, target, user->attack_dmg * CRITICAL_DAMAGE_MULTIPLIER, "critical ");
@@ -153,14 +152,13 @@ fn void HandleAttack(game_world_t *state, entity_t *user, entity_t *target, acti
                 DoDamage(state, target, user->attack_dmg, "");
         }
         else
-        if (missed)
         {
             if (grazed)
                 DoDamage(state, target, user->attack_dmg / 2, "graze ");
             else
             {
                 LogLn(state->log, "missed!");
-                CreateNumberParticle(state->particles, target->deferred_p, 0);
+                CreateDamageNumber(state->particles, target->deferred_p, 0);
             }
         }
     }

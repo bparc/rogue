@@ -8,20 +8,20 @@ fn void DefaultActionBar(slot_bar_t *bar, assets_t *assets)
         bar->slots[i].action.icon = NULL;
     }
 
-    bar->slots[0].action.type = action_ranged_attack;
-    bar->slots[0].action.icon = &assets->CombatUI.action_bar_icons[1][0];
+    bar->slots[1].action.type = action_ranged_attack;
+    bar->slots[1].action.icon = &assets->CombatUI.action_bar_icons[1][0];
 
-    bar->slots[1].action.type = action_melee_attack;
-    bar->slots[1].action.icon = &assets->CombatUI.action_bar_icons[0][0];
+    bar->slots[0].action.type = action_melee_attack;
+    bar->slots[0].action.icon = &assets->CombatUI.action_bar_icons[0][0];
 
-    bar->slots[2].action.type = action_throw;
-    bar->slots[2].action.icon = &assets->CombatUI.action_bar_icons[2][0];
+    bar->slots[8].action.type = action_throw;
+    bar->slots[8].action.icon = &assets->CombatUI.action_bar_icons[2][0];
 
-    bar->slots[3].action.type = action_push;
-    bar->slots[3].action.icon = &assets->CombatUI.action_bar_icons[3][0];
+    bar->slots[7].action.type = action_push;
+    bar->slots[7].action.icon = &assets->CombatUI.action_bar_icons[3][0];
 
-    bar->slots[4].action.type = action_heal_self;
-    bar->slots[4].action.icon = &assets->CombatUI.action_bar_icons[4][0];
+    bar->slots[2].action.type = action_heal_self;
+    bar->slots[2].action.icon = &assets->CombatUI.action_bar_icons[4][0];
 
     bar->selected_slot = 1;
 }

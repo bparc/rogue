@@ -100,28 +100,56 @@ fn void Perish(game_world_t *game, entity_t *entity)
 
 fn entity_id_t AttemptAttack(game_world_t *World, entity_t *requestee, s32 effective_range)
 {
+	turn_queue_t *queue = World->turns;
 	entity_id_t result = 0;
 
 	// TODO(): This should be like, a nearest player in range.
-	entity_t *target = 0;
-	for (s32 index = 0; index < World->storage->num; index++)
-	{
-		entity_t *entity = &World->storage->entities[index];
-		if (entity->flags & entity_flags_controllable)
-		{
-			target = entity;
-			break;
-		}
-	}
-
+	entity_t *target = DEBUGGetPlayer(World->storage);
 	if (target && IsInsideCircle(target->p, target->size, requestee->p, effective_range))
+	{
 		result = target->id;
+
+		f32 random_chance = RandomFloat();
+		DebugLog("%f", random_chance);
+
+		if (RandomChance(35))
+			queue->enemy_action = enemy_action_slash;
+		else
+			queue->enemy_action = enemy_action_shoot;
+
+	}
 	return result;
 }
 
-fn void AnimateAttack(game_world_t *World, entity_t *entity, entity_t *target, f32 time, f32 dt, assets_t *assets, command_buffer_t *out, b32 inflict_damage)
+fn void DrawDiegeticText(game_world_t *game, v2 p, v2 offset, v4 color, const char *format, ...)
 {
-	DrawRangedAnimation(out, entity->deferred_p, target->deferred_p, &assets->SlimeBall, time);
-	if (inflict_damage)
-		TakeHP(target, entity->attack_dmg);
+	command_buffer_t *out = Debug.out_top;
+	v2 screen_p = CameraToScreen(game, p);
+	screen_p = Add(screen_p, offset);
+	DrawText(out, game->assets->Font, screen_p, format, color);
+}
+
+fn void DoEnemyAction(game_world_t *game, entity_t *entity, entity_t *target, f32 t, f32 dt, assets_t *assets, command_buffer_t *out, b32 inflict_damage)
+{
+	turn_queue_t *queue = game->turns;
+	switch (queue->enemy_action)
+	{
+	case enemy_action_shoot:
+		{
+			if (t < 1.0f)
+				DrawRangedAnimation(out, entity->deferred_p, target->deferred_p, &assets->SlimeBall, t);
+			if (inflict_damage)
+				DoDamage(game, target, entity->attack_dmg, "");
+		} break;
+	case enemy_action_slash:
+		{
+			v2 p = EaseInThenOut(40.0f, 60.0f, 15.0f, t);
+			f32 alpha = 1.0f - p.y;
+
+			DrawDiegeticText(game, entity->deferred_p, V2((-20.0f + p.x), -80.0f), A(White(), alpha), "SLASH!");
+			if (inflict_damage)
+				DoDamage(game, target, (entity->attack_dmg + 10), "");
+		} break;
+	}
+	
 }

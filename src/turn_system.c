@@ -299,6 +299,96 @@ fn void DebugDrawPathSystem(turn_queue_t *queue, map_t *map, command_buffer_t *o
 	}
 }
 
+fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets, entity_t *entity)
+{
+	s32 range = ENEMY_DEBUG_RANGE;
+	RenderRange(out, map, entity->p, range, Green()); // Range
+	f32 speed_mul = TURN_SPEED_NORMAL;
+	queue->time += dt * speed_mul;
+	switch(queue->interp_state)
+	{
+	case interp_wait_for_input:
+		{
+			if (queue->request_step)
+			{
+				queue->interp_state = queue->requested_state;
+				queue->time = 0.0f;
+			}
+		} break;
+	Request:
+	case interp_request:
+		{
+			queue->starting_p = entity->p;
+			s32 cost = Decide(state, entity);
+				queue->action_points -= cost;
+			
+			if (!ChangeQueueState(queue, interp_transit))
+				break;
+			queue->time = dt;
+		}; // NOTE(): Intentional fall-through. We want to start handling transit immediatly, instead of waiting an addidional frame.
+	case interp_transit:
+		{
+			v2 a = GetTileCenter(map, queue->starting_p);
+			v2 b = GetTileCenter(map, entity->p);
+			entity->deferred_p = Lerp2(a, b, queue->time);
+			if ((queue->time >= 1.0f))
+			{
+				queue->time = 0.0f;
+			 	if (queue->action_points > 0)
+			 	{
+			 		if (ChangeQueueState(queue, interp_request))
+			 			goto Request;
+			 	}
+			 	else
+			 	{
+			 		entity_id_t target = AttemptAttack(state, entity, range);
+			 		if (target)
+			 		{
+						ChangeQueueState(queue, interp_attack);
+						queue->attack_target = target;
+						queue->action_executed = false;
+					}
+					else
+					{
+						ChangeQueueState(queue, interp_accept);
+					}
+			 	}
+			}
+		} break;
+	case interp_attack:
+		{
+			entity_t *target = GetEntity(storage, queue->attack_target);
+			b32 finish = true;
+			if (target)
+			{
+				f32 distance = Distance(entity->deferred_p, target->deferred_p);
+				f32 t = (queue->time * 0.1f);
+				if (queue->enemy_action == enemy_action_shoot)
+					t /= (distance * 0.005f);
+
+				finish = t >= 1.0f;
+
+				b32 execute = (t >= 0.5f && !queue->action_executed);
+				DoEnemyAction(state, entity, target, t / 0.5f, dt, assets, out, execute);
+				if (execute)
+					queue->action_executed = true;
+			}
+			if (finish)
+				ChangeQueueState(queue, interp_accept);
+		} break;
+	case interp_accept:
+		{
+			if (queue->time > 0.1f)
+			{
+				#if ENABLE_TURN_SYSTEM_DEBUG_LOGS
+				DebugLog("turn finished in %.2f seconds", queue->seconds_elapsed);
+				#endif
+				AcceptTurn(queue, entity);
+			}
+		} break;
+	}	
+}
+
 fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
 	// NOTE(): Setup
@@ -314,6 +404,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 	}
 	if (entity)
 	{
+		// NOTE(): Setup
 		if ((queue->turn_inited == false))
 		{
 			queue->movement_points = BeginTurn(state, entity);
@@ -334,7 +425,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		queue->seconds_elapsed += dt;
 		// NOTE(): The turn will "stall" until AcceptTurn() is called.
 
-		// NOTE(): DEBUG draw the "discrete" p.
+		// NOTE(): DEBUG Draw the "discrete" position.
 		#if _DEBUG
 		RenderIsoTile(out, map, entity->p, Red(), (queue->interp_state == interp_wait_for_input), 0);
 		#endif
@@ -351,105 +442,18 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			// animation is still being played.
 			if (queue->action_count == 0)
 				ListenForUserInput(entity, state, storage, map, queue, dt, input, cons, log, out, assets);
-			ResolveAsynchronousActionQueue(queue, entity, out, dt, assets, state);
 
 			// NOTE(): End the turn if we run out of all action points.
-			if (WentDown(cons.y) || ((queue->movement_points <= 0) && (queue->movement_points == 0)
-			&& entity->flags & entity_flags_hostile))
+			if (WentDown(cons.y) || ((queue->movement_points <= 0) && (queue->movement_points == 0)))
 				AcceptTurn(queue, entity);
 		}
 		else // NOTE(): AI
 		{
-			s32 range = ENEMY_DEBUG_RANGE;
-			RenderRange(out, map, entity->p, range, Green()); // Range
-
-			f32 speed_mul = TURN_SPEED_NORMAL;
-			queue->time += dt * speed_mul;
-
-			switch(queue->interp_state)
-			{
-			case interp_wait_for_input:
-				{
-					if (queue->request_step)
-					{
-						queue->interp_state = queue->requested_state;
-						queue->time = 0.0f;
-					}
-				} break;
-			Request:
-			case interp_request:
-				{
-					// TODO(): Move the player code somewhere around here maybe?
-					// It could potentially be a better way to structure this.
-					queue->starting_p = entity->p;
-
-					s32 cost = Decide(state, entity);
-						queue->action_points -= cost;
-					
-					if (!ChangeQueueState(queue, interp_transit))
-						break;
-					queue->time = dt;
-				}; // NOTE(): Intentional fall-through. We want to start handling transit immediatly, instead of waiting an addidional frame.
-			case interp_transit:
-				{
-					v2 a = GetTileCenter(map, queue->starting_p);
-					v2 b = GetTileCenter(map, entity->p);
-					entity->deferred_p = Lerp2(a, b, queue->time);
-
-					if ((queue->time >= 1.0f))
-					{
-						queue->time = 0.0f;
-
-					 	if (queue->action_points > 0)
-					 	{
-					 		if (ChangeQueueState(queue, interp_request))
-					 			goto Request;
-					 	}
-					 	else
-					 	{
-					 		entity_id_t target = AttemptAttack(state, entity, range);
-					 		if (target)
-					 		{
-								ChangeQueueState(queue, interp_attack);
-								queue->attack_target = target;
-							}
-							else
-							{
-								ChangeQueueState(queue, interp_accept);
-							}
-					 	}
-					}
-				} break;
-			case interp_attack:
-				{
-					entity_t *target = GetEntity(storage, queue->attack_target);
-					b32 finish = true;
-
-					if (target)
-					{
-						f32 distance = Distance(entity->deferred_p, target->deferred_p);
-						f32 t = queue->time / (distance * 0.005f);
-						finish = t >= 1.0f;
-						AnimateAttack(state, entity, target, t, dt, assets, out, finish);
-					}
-
-					if (finish)
-						ChangeQueueState(queue, interp_accept);
-				} break;
-			case interp_accept:
-				{
-					if (queue->time > 0.1f)
-					{
-						#if ENABLE_TURN_SYSTEM_DEBUG_LOGS
-						DebugLog("turn finished in %.2f seconds", queue->seconds_elapsed);
-						#endif
-						AcceptTurn(queue, entity);
-					}
-				} break;
-			}
+			AI(state, storage, map, queue, dt, input, cons, log, out, assets, entity);
 		}
 	}
 
+	ResolveAsynchronousActionQueue(queue, entity, out, dt, assets, state);
 	GarbageCollect(state, queue, dt);
 	DebugDrawPathSystem(queue, map, out);
 }

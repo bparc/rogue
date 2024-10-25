@@ -58,9 +58,9 @@ fn void RenderIsoCubeFilled(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 c
 	DrawQuad(out, A[0], A[1], A[2], A[3], color);
 	if (height != 0)
 	{
-		DrawQuadv(out, B, Red());
-		DrawQuad(out, A[3], B[3], B[2], A[2], Green());
-		DrawQuad(out, B[2], B[1], A[1], A[2], Blue());
+		DrawQuadv(out, B, color);
+		DrawQuad(out, A[3], B[3], B[2], A[2], Scale3(color, 0.8f));
+		DrawQuad(out, B[2], B[1], A[1], A[2], Scale3(color, 0.8f));
 	}
 }
 
@@ -99,7 +99,7 @@ fn void DrawRangedAnimation(command_buffer_t *out, v2 from, v2 to, bitmap_t *bit
 {
 	v2 target_center = to;
 	v2 bitmap_p = Lerp2(from, target_center, t);
-	v2 bitmap_sz = Scale(bitmap->scale, 0.5f);
+	v2 bitmap_sz = bitmap->scale;
 
 	bitmap_p = ScreenToIso(bitmap_p);
 	bitmap_p = Sub(bitmap_p, Scale(bitmap_sz, 0.5f));

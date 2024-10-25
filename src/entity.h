@@ -47,6 +47,7 @@ typedef struct
 
 	status_effect_t status_effects[MAX_STATUS_EFFECTS];
 
+	// NOTE(): AI stuff
 	s32 DEBUG_step_count;
 } entity_t;
 

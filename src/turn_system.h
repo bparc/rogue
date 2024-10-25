@@ -36,10 +36,14 @@ typedef struct
 	f32 time_remaining;
 } evicted_entity_t;
 
+typedef enum
+{
+	enemy_action_shoot,
+	enemy_action_slash,
+} enemy_action_t;
+
 typedef struct
 {
-	path_t path;
-	
 	// NOTE(): Stores the turns as an list of entity ids
 // in a *reverse* order (the last turn in the queue will be executed first).
 	s32 num;
@@ -62,11 +66,7 @@ typedef struct
 	f32 seconds_elapsed; // NOTE(): Seconds elapsed from the start of the turn.
 
 	s32 god_mode_enabled;
-	s32 break_mode_enabled;
-	interpolator_state_t requested_state;
-	s32 request_step;
-
-	v2 focus_p;
+	v2 focus_p; // Camera
 
 	s32 action_count;
 	async_action_t actions[1];
@@ -80,6 +80,17 @@ typedef struct
 	#define ENTITY_EVICTION_SPEED 2.0f
 	s32 num_evicted_entities;
 	evicted_entity_t evicted_entities[8];
+
+	// NOTE(): AI stuff
+	path_t path;
+
+	b32 action_executed;
+	enemy_action_t enemy_action;
+
+	s32 break_mode_enabled;
+	interpolator_state_t requested_state;
+	s32 request_step;
+
 } turn_queue_t;
 
 fn void DefaultTurnOrder(turn_queue_t *queue);

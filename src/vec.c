@@ -9,6 +9,11 @@ fn v2 SV2(s32 x, s32 y)
 	return V2((f32)x, (f32)y);
 }
 
+fn v2 SV2S(v2s v)
+{
+	return SV2(v.x, v.y);
+}
+
 fn v2 Scale(v2 v, f32 scalar)
 {
 	v2 result = {v.x * scalar, v.y * scalar};
@@ -99,6 +104,14 @@ fn v2 GetDirection(v2 a, v2 b)
 	return result;
 }
 
+fn v2s Sign2(v2 v)
+{
+	v2s result = {};
+	result.x = v.x >= 0 ? 1 : -1;
+	result.y = v.y >= 0 ? 1 : -1;
+	return result;
+}
+
 fn v2 Vec(v2 a, v2 b)
 {
 	v2 result = Sub(b, a);
@@ -139,6 +152,21 @@ fn v2 EaseOut2(v2 a, v2 b, f32  t)
 {
 	t = 1.0f - t;
 	v2 result = Lerp2(b, a, t * t);
+	return result;
+}
+
+fn v2 EaseInThenOut(f32 min, f32 max, f32 mid, f32 t)
+{
+	v2 result = {0};
+
+	f32 t0 = t;
+	f32 t1 = Smoothstep(t0, 0.9f);
+	f32 t2 = Smoothstep(1.0f - t0, 0.95f);
+	f32 t3 = Smoothstep(t0, 0.2f);
+
+	result.x = (min * t1) - (max * t2) + (t3 * mid);
+	result.y = t1 + t2;
+
 	return result;
 }
 
@@ -263,6 +291,12 @@ fn v4 Scale4(v4 v, f32 scalar)
 	return result;
 }
 
+fn v4 Scale3(v4 v, f32 scalar)
+{
+	v4 result = { v.x * scalar, v.y * scalar,
+	v.z * scalar, v.w};
+	return result;
+}
 
 //radius calc (manhattan distance)
 fn int IsInsideCircle(v2s position, v2s size, v2s center, s32 radius) {
@@ -289,4 +323,12 @@ fn int IsInsideCircle(v2s position, v2s size, v2s center, s32 radius) {
     //if 75% of entity is within circle then its attackable
     return percentageInside >= 0.75f;
 
+}
+
+fn v2 GreaterThanEqual(v2 a, v2 b)
+{
+	v2 result = {0};
+	result.x = a.x >= b.x ? 1.0f : 0.0f;
+	result.y = a.y >= b.y ? 1.0f : 0.0f;
+	return result;
 }

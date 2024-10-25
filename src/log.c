@@ -38,12 +38,9 @@ fn void MessageLog(command_buffer_t *out, const bmfont_t *font, v2 p, log_t *Log
 		if (seconds_elapsed <= lifetime)
 		{
 			f32 t0 = seconds_elapsed / lifetime;
-			f32 t1 = Smoothstep(t0, 0.9f);
-			f32 t2 = Smoothstep(1.0f - t0, 0.95f);
-			f32 t = t1 + t2;
-			f32 x = (17.0f + (20.0f * t1)) - (10.0f * t2);
-			v4 color = White();
-			color.w = 1.0f - t;
+			v2 ease = EaseInThenOut(20.0f, 10.0f, 0.0f, t0);
+			f32 x = (17.0f + ease.x);
+			v4 color = A(White(), 1.0f - ease.y);
 			DrawText(out, font, V2(p.x + x, p.y), line->text, color);
 			p.y -= 25.0f;
 			continue;

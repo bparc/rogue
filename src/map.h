@@ -54,6 +54,7 @@ fn s32 DetectEdge(const map_t *map, v2s offset);
 fn bb_t GetTileBounds(const map_t *map, s32 x, s32 y);
 fn v2 GetTileCenter(const map_t *map, v2s p);
 fn v2 MapToScreen(const map_t *map, v2s p);
+fn void RayCast(const map_t *map, v2s from, v2s to);
 
 // NOTE(): Assets
 fn bitmap_t *PickTileBitmap(const map_t* map, s32 x, s32 y, assets_t *assets);

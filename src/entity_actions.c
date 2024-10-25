@@ -90,7 +90,7 @@ fn action_params_t DefineHealAction(entity_t *user) {
         .area_of_effect = {1, 1},
         .action_point_cost = 2,
         .accuracy = 1.0f,
-        .damage = 9.0f,
+        .damage = 20.0f,
         .is_healing = true,
         .is_status_effect = false,
         .status_effect = status_effect_none,
