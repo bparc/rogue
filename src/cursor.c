@@ -65,7 +65,7 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 
 		b32 in_range = false;
 		in_range = IsInsideCircle(requestedPos, V2S(1,1), user->p, equipped.params.range);
-		if (move_requested && in_range)
+		if (move_requested && in_range && IsLineOfSight(map, user->p, requestedPos))
 				cursor->p = requestedPos;
 		// NOTE(): If the cursor somehow ended up out of its range -
 		// move it back to the user.
@@ -78,9 +78,9 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 		entity_t *Enemy = FindClosestHostile(storage, cursor->p);
 		if (Enemy)
 		{ 
-			if (IsInsideCircle(Enemy->p, Enemy->size, user->p, equipped.params.range))
+			if (IsInsideCircle(Enemy->p, Enemy->size, user->p, equipped.params.range)
+				&& IsLineOfSight(map, user->p, Enemy->p))
 			{
-
 				RenderIsoTileArea(out, map, Enemy->p, Add32(Enemy->p, Enemy->size), A(Red(), 0.8f)); //render target for all size enemies
 				if (WentDown(cons.snap_cursor))
 					cursor->p = Enemy->p;

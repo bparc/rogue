@@ -106,7 +106,7 @@ fn v2 GetDirection(v2 a, v2 b)
 
 fn v2s Sign2(v2 v)
 {
-	v2s result = {};
+	v2s result = {0};
 	result.x = v.x >= 0 ? 1 : -1;
 	result.y = v.y >= 0 ? 1 : -1;
 	return result;

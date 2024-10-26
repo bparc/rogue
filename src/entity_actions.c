@@ -37,7 +37,7 @@ fn action_params_t DefineRangedAttack(entity_t *user) {
         .range = 5,
         .target = 0,
         .area_of_effect = {1, 1},
-        .action_point_cost = 4,
+        .action_point_cost = 1,
         .accuracy = (f32)user->ranged_accuracy,
         .damage = user->attack_dmg,
         .is_healing = false,
