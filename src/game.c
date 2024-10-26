@@ -171,7 +171,7 @@ fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target
 {
     entity_storage_t *storage = state->storage;
     turn_queue_t *queue = state->turns;
-    if (ConsumeActionPoints(queue, queue->god_mode_enabled ? 0 : action->params.action_point_cost))
+    if (IsLineOfSight(state->map, user->p, target->p) && ConsumeActionPoints(queue, queue->god_mode_enabled ? 0 : action->params.action_point_cost))
     {
         switch(action->type)
         {

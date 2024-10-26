@@ -230,7 +230,7 @@ fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
 			RenderIsoTile(out, map, Add32(base_p, directions[index]), A(Orange(), 0.5f), true, 0);
 		#endif
 		
-		if (input_valid && (cursor_mode_active == false) && (queue->action_points > 0))
+		if (input_valid && (cursor_mode_active == false))
 		{
 	        if (queue->movement_points > 0 && Move(state, entity, directions[direction]) && (queue->god_mode_enabled == false))
 	        {
@@ -446,7 +446,7 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 				ListenForUserInput(entity, state, storage, map, queue, dt, input, cons, log, out, assets);
 
 			// NOTE(): End the turn if we run out of all action points.
-			if (WentDown(cons.y) || ((queue->movement_points <= 0) && (queue->movement_points == 0)))
+			if (WentDown(cons.y) || queue->movement_points <= 0 && queue->action_points == 0)
 				AcceptTurn(queue, entity);
 		}
 		else // NOTE(): AI

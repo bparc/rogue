@@ -75,9 +75,13 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 		RenderIsoTile(out, map, cursor->p, A(Pink(), 0.8f), true, 0);
 
 		// NOTE(): Move the cursor.
-		v2s requested_p = Add32(cursor->p, move_requested ? dirs[direction] : V2S(0, 0));
-		if (move_requested && IsInsideCircle(requested_p, V2S(1,1), user->p, equipped.params.range))
-				cursor->p = requested_p;
+		v2s requestedPos = Add32(cursor->p, move_requested ? dirs[direction] : V2S(0, 0));
+		if (move_requested &&
+			IsInsideCircle(requestedPos, V2S(1,1), user->p, equipped.params.range) &&
+			IsLineOfSight(map, user->p, requestedPos))
+		{
+				cursor->p = requestedPos;
+		}
 		// NOTE(): If the cursor somehow ended up out of its range -
 		// move it back to the user.
 		if ((IsInsideCircle(cursor->p, V2S(1,1), user->p, equipped.params.range) == false))
@@ -86,7 +90,9 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 		// NOTE(): Find the closest hostile to the cursor, draw
 		// tiles underneath them, then snap to them if the button went down.
 		entity_t *Enemy = FindClosestHostile(storage, cursor->p);
-		if (Enemy && IsInsideCircle(Enemy->p, Enemy->size, user->p, equipped.params.range))
+		if (Enemy &&
+			IsInsideCircle(Enemy->p, Enemy->size, user->p, equipped.params.range) &&
+			IsLineOfSight(map, user->p, Enemy->p))
 		{
 			RenderIsoTileArea(out, map, Enemy->p, Add32(Enemy->p, Enemy->size), A(Red(), 0.8f)); //render target for all size enemies
 			if (WentDown(cons.snap_cursor))

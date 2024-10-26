@@ -275,3 +275,19 @@ fn b32 ContinueDDALine(dda_line_t *it)
 
 	return result;
 }
+
+fn b32 IsLineOfSight(const map_t *map, v2s from, v2s to) {
+	dda_line_t dda = BeginDDALine(map, from, to);
+
+	while (ContinueDDALine(&dda)) {
+		if (CompareVectors(dda.at, from)) {
+			continue;
+		}
+
+		if (GetTileValue(map, dda.at.x, dda.at.y) == 2) { // if wall
+			return false;
+		}
+	}
+
+	return true;
+}
