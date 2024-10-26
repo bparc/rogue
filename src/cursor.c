@@ -11,6 +11,20 @@ fn void RenderHitChance(command_buffer_t *out, assets_t *assets, v2 p, s32 hit_c
     DrawText(out, assets->Font, screen_position, hit_chance_text, White());
 }
 
+fn void DrawDiegeticText(game_world_t *game, v2 p, v2 offset, v4 color, const char *format, ...)
+{
+	char string[256] = "";
+	va_list args = {0};
+	va_start(args, format);
+	vsnprintf(string, sizeof(string), format, args);
+	va_end(args);
+
+	command_buffer_t *out = Debug.out_top;
+	v2 screen_p = CameraToScreen(game, p);
+	screen_p = Add(screen_p, offset);
+	DrawText(out, game->assets->Font, screen_p, string, color);
+}
+
 fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 	command_buffer_t *out, virtual_controls_t cons,
 	entity_t *user, // the entity that currently uses the cursor
@@ -61,45 +75,37 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 		RenderIsoTile(out, map, cursor->p, A(Pink(), 0.8f), true, 0);
 
 		// NOTE(): Move the cursor.
-		v2s requestedPos = Add32(cursor->p, move_requested ? dirs[direction] : V2S(0, 0));
-
-		b32 in_range = false;
-		in_range = IsInsideCircle(requestedPos, V2S(1,1), user->p, equipped.params.range);
-		if (move_requested && in_range)
-				cursor->p = requestedPos;
+		v2s requested_p = Add32(cursor->p, move_requested ? dirs[direction] : V2S(0, 0));
+		if (move_requested && IsInsideCircle(requested_p, V2S(1,1), user->p, equipped.params.range))
+				cursor->p = requested_p;
 		// NOTE(): If the cursor somehow ended up out of its range -
 		// move it back to the user.
-		in_range = IsInsideCircle(cursor->p, V2S(1,1), user->p, equipped.params.range);
-		if ((in_range == false))
+		if ((IsInsideCircle(cursor->p, V2S(1,1), user->p, equipped.params.range) == false))
 			cursor->p = user->p;
 
 		// NOTE(): Find the closest hostile to the cursor, draw
 		// tiles underneath them, then snap to them if the button went down.
 		entity_t *Enemy = FindClosestHostile(storage, cursor->p);
-		if (Enemy)
-		{ 
-			if (IsInsideCircle(Enemy->p, Enemy->size, user->p, equipped.params.range))
-			{
-
-				RenderIsoTileArea(out, map, Enemy->p, Add32(Enemy->p, Enemy->size), A(Red(), 0.8f)); //render target for all size enemies
-				if (WentDown(cons.snap_cursor))
-					cursor->p = Enemy->p;
-			}
+		if (Enemy && IsInsideCircle(Enemy->p, Enemy->size, user->p, equipped.params.range))
+		{
+			RenderIsoTileArea(out, map, Enemy->p, Add32(Enemy->p, Enemy->size), A(Red(), 0.8f)); //render target for all size enemies
+			if (WentDown(cons.snap_cursor))
+				cursor->p = Enemy->p;
 		}
 
 		// NOTE(): Pick a target.
 		entity_t *target = GetEntityByPosition(storage, cursor->p);
-		b32 target_valid = IsHostile(target);
-		if (target_valid && target)
+		if (IsHostile(target))
 		{
+			s32 chance = CalculateHitChance(user, target, equipped.type);
+			DrawDiegeticText(Game, target->deferred_p, V2(-20.0f, -85.0f), White(), "%i%%", chance);
+
 			cursor->Target = target->id;
-			
-			s32 hit_chance = CalculateHitChance(user, target, equipped.type);
-			RenderHitChance(out, assets, MapToScreen(map, target->p), hit_chance);
 		}
 		// NOTE(): Perform an action on the target.
 		if (WentUp(cons.confirm))
 		{
+			b32 target_valid = IsHostile(target);
 			if (equipped.type == action_throw) // NOTE(): "action_throw" can also target traversable tiles.
 				target_valid |= IsTraversable(map, cursor->p); 
 

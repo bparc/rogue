@@ -121,12 +121,42 @@ fn entity_id_t AttemptAttack(game_world_t *World, entity_t *requestee, s32 effec
 	return result;
 }
 
-fn void DrawDiegeticText(game_world_t *game, v2 p, v2 offset, v4 color, const char *format, ...)
+fn void RenderEntity(command_buffer_t *out, const entity_t *entity, f32 alpha, assets_t *assets, const map_t *map)
 {
-	command_buffer_t *out = Debug.out_top;
-	v2 screen_p = CameraToScreen(game, p);
-	screen_p = Add(screen_p, offset);
-	DrawText(out, game->assets->Font, screen_p, format, color);
+	v2 p = entity->deferred_p;
+	bitmap_t *bitmap = IsHostile(entity) ? &assets->Slime : &assets->Player[0];
+	v2 bitmap_p = p;
+	// TODO(): Still somewhat hard-coded.
+	v2 cube_bb_sz = V2(24, 24);
+	if ((entity->size.x == 2) && (entity->size.y == 2))
+	{
+		bitmap = &assets->SlimeBig;
+		bitmap_p = Add(bitmap_p, Scale(map->tile_sz, 0.5f));
+		p = Add(p, Scale(map->tile_sz, 0.5f));
+		cube_bb_sz = V2(64.0f, 64.0f);
+	}
+	// NOTE(): Bitmap
+	v4 bitmap_color = PureWhite();
+	v2 bitmap_sz = bitmap->scale;
+	bitmap_p = ScreenToIso(bitmap_p);
+	bitmap_p = Sub(bitmap_p, Scale(bitmap_sz, 0.5f)); //center bitmap
+	bitmap_p.y -= bitmap_sz.y * 0.25f; //center bitmap "cube"
+
+	// NOTE(): Flickering
+	if (entity->blink_time > 0)
+	{
+		f32 t = entity->blink_time;
+		t = t * t;
+		f32 blink_rate = 0.4f;
+		if (fmodf(t, blink_rate) >= (blink_rate * 0.5f))
+			bitmap_color = Red();
+		else
+			bitmap_color = A(Blue(), 0.9f);
+	}
+
+	bitmap_color.w = alpha;
+	DrawBitmap(out, bitmap_p, bitmap_sz, bitmap_color, bitmap);
+	RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
 }
 
 fn void DoEnemyAction(game_world_t *game, entity_t *entity, entity_t *target, f32 t, f32 dt, assets_t *assets, command_buffer_t *out, b32 inflict_damage)
@@ -148,7 +178,7 @@ fn void DoEnemyAction(game_world_t *game, entity_t *entity, entity_t *target, f3
 
 			DrawDiegeticText(game, entity->deferred_p, V2((-20.0f + p.x), -80.0f), A(White(), alpha), "SLASH!");
 			if (inflict_damage)
-				DoDamage(game, target, (entity->attack_dmg + 10), "");
+				DoDamage(game, target, (entity->attack_dmg + 7), "");
 		} break;
 	}
 	
