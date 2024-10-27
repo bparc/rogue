@@ -23,6 +23,13 @@ fn void DefaultActionBar(slot_bar_t *bar, assets_t *assets)
     bar->slots[2].action.type = action_heal_self;
     bar->slots[2].action.icon = &assets->CombatUI.action_bar_icons[4][0];
 
+    //bar->slots[i].action.params = GetParameters()
+    for (s32 index = 0; index < ArraySize(bar->slots); index++)
+    {
+        action_t *action = &bar->slots[index].action;
+        action->params = GetParameters(action->type);
+    }
+
     bar->selected_slot = 1;
 }
 

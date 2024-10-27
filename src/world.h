@@ -103,7 +103,7 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *asset
 	state->particles = PushStruct(particles_t, memory);
 	state->map = CreateMap(30, 20, memory, TILE_PIXEL_SIZE);
 	
-	SetupActionDataTable(memory);
+	SetupActionDataTable(memory, assets);
 	DefaultActionBar(&state->slot_bar,  assets);
 	state->camera_position = V2(0, 0);
 }

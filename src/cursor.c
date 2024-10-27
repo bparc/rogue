@@ -91,9 +91,8 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 		// NOTE(): Find the closest hostile to the cursor, draw
 		// tiles underneath them, then snap to them if the button went down.
 		entity_t *Enemy = FindClosestHostile(storage, cursor->p);
-		if (Enemy &&
-			IsInsideCircle(Enemy->p, Enemy->size, user->p, range) &&
-			IsLineOfSight(map, user->p, Enemy->p))
+		if (Enemy && (IsInsideCircle(Enemy->p, Enemy->size, user->p, range) &&
+			IsLineOfSight(map, user->p, Enemy->p)))
 		{
 			RenderIsoTileArea(out, map, Enemy->p, Add32(Enemy->p, Enemy->size), A(Red(), 0.8f)); //render target for all size enemies
 			if (WentDown(cons.snap_cursor))

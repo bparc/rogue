@@ -102,7 +102,7 @@ fn void RenderRange(command_buffer_t *out, map_t *map,v2s center, int radius, v4
     }
 }
 
-fn void DrawRangedAnimation(command_buffer_t *out, v2 from, v2 to, bitmap_t *bitmap, f32 t)
+fn void DrawRangedAnimation(command_buffer_t *out, v2 from, v2 to, const bitmap_t *bitmap, f32 t)
 {
 	v2 target_center = to;
 	v2 bitmap_p = Lerp2(from, target_center, t);

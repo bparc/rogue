@@ -21,20 +21,6 @@ typedef enum
 	target_hostile = 1 << 2,
 } target_flags_t;
 
-typedef struct
-{
-	const char *name;
-	s32 range;
-	union
-	{
-	s32 damage;
-	s32 value;
-	};
-	s32 cost;
-	v2s area; // (1, 1) if not specified
-	target_flags_t target; // "Any" if not specified
-} action_params_t;
-
 typedef enum {
 	action_none = 0,
 	action_melee_attack,
@@ -45,8 +31,27 @@ typedef enum {
 	action_type_count,
 } action_type_t;
 
+typedef struct
+{
+	action_type_t type;
+	const char *name;
+	s32 range;
+	union
+	{
+	s32 damage;
+	s32 value;
+	};
+	s32 cost;
+	v2s area; // (1, 1) if not specified
+	target_flags_t target; // "Any" if not specified
+
+	const bitmap_t *animation_ranged;
+	//const bitmap_t *animation;
+} action_params_t;
+
 typedef struct {
 	action_type_t type;
+	const action_params_t *params;
 	bitmap_t *icon;
 } action_t;
 
@@ -118,12 +123,13 @@ void DefaultActionValues(void)
 	for (s32 index = 0; index < ArraySize(_Global_Action_Data); index++)
 	{
 		action_params_t *Params = &_Global_Action_Data[index];
+		Params->type = (action_type_t)index;
 		if (Params->name == NULL)
 			Params->name = _Global_Action_Names[index];
 	}
 }
 
-fn void SetupActionDataTable(memory_t *memory)
+fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
 {
 	#define ACTION(Type) \
 	_Global_Action_Names[action_##Type] = InferNameFromActionType(#Type, memory); \
@@ -133,7 +139,6 @@ fn void SetupActionDataTable(memory_t *memory)
 	{
 		.damage = 3,
 		.range  = 2,
-		.damage = 10,
 		.cost   = 1,
 	};
 	ACTION(ranged_attack)
@@ -156,10 +161,11 @@ fn void SetupActionDataTable(memory_t *memory)
 	};
 	ACTION(throw)
 	{
+		.animation_ranged = &assets->PlayerGrenade,
 		.damage = 20,
-		.range = 6,
-		.area  = {2, 2},
-		.cost  = 1,
+		.range  = 6,
+		.area   = {2, 2},
+		.cost   = 1,
 	};
 
 	#undef ACTION

@@ -246,10 +246,11 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 	for (s32 index = 0; index < queue->action_count; index++)
 	{
 		async_action_t *action = &queue->actions[index];
-		action_type_t type = action->action_type.type;
+		const action_params_t *params = GetParameters(action->action_type.type);
 
 		b32 finished = true;
-		if (IsActionRanged(type))
+
+		if (IsActionRanged(params->type) && params->animation_ranged)
 		{
 			// NOTE(): Ranged actions take some amount of time
 			// to finish.
@@ -260,8 +261,7 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 			f32 t = action->elapsed / (Distance(user->deferred_p, target_p) * 0.005f);
 			finished = t >= 1.0f;
 
-			DrawRangedAnimation(out, user->deferred_p, target_p, &assets->PlayerGrenade, t);
-			
+			DrawRangedAnimation(out, user->deferred_p, target_p, params->animation_ranged, t);
 		}
 
 		if (finished)
