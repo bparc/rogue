@@ -64,7 +64,7 @@ fn void RenderIsoCubeFilled(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 c
 	}
 }
 
-fn void RenderIsoTile(command_buffer_t *out, const map_t *map, v2s offset, v4 color, s32 Filled, f32 height)
+fn void RenderIsoTile(command_buffer_t *out, map_t *map, v2s offset, v4 color, s32 Filled, f32 height)
 {
 	v2 p = MapToScreen(map, offset);
 	p = ScreenToIso(p);

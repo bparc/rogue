@@ -127,7 +127,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log, as
 
 fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets)
 {
-	const map_t *map = state->map;
+	map_t *map = state->map;
 	entity_storage_t *storage = state->storage;
 	entity_t *player = DEBUGGetPlayer(storage);
 	particles_t *particles = state->particles;
@@ -169,6 +169,13 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 					//p.x -= bitmap->scale.x * 0.5f;
 					DrawBitmap(out, p, bitmap->scale, PureWhite(), bitmap);
 					//DrawRectOutline(out, p, bitmap->scale, Red());
+
+					// Draw temporary blood overlay
+					tile_t *tile = GetTile(map, x, y);
+					if (tile && tile->blood != 0) {
+						v4 blood_highlight = (tile->blood == blood_red) ? A(Red(), 0.8f) : A(Green(), 0.8f);
+						DrawBitmap(out, p, bitmap->scale, blood_highlight, bitmap);
+					}
 				}
 				#endif
 				
