@@ -14,17 +14,25 @@ const char *action_type_t_names[] =
 	"Heal",
 };
 
-typedef struct {
-	s32 range;
-	entity_id_t target;
-	v2s area_of_effect;
-	s32 action_point_cost;
-	f32 accuracy;
-	f32 damage;
-	b32 is_healing;
-	b32 is_status_effect;
-	status_effect_type_t status_effect;
+typedef enum
+{
+	target_self	   = 1 << 0,
+	target_field   = 1 << 1,
+	target_hostile = 1 << 2,
+} target_flags_t;
+
+typedef struct
+{
 	const char *name;
+	s32 range;
+	union
+	{
+	s32 damage;
+	s32 value;
+	};
+	s32 cost;
+	v2s area; // (1, 1) if not specified
+	target_flags_t target; // "Any" if not specified
 } action_params_t;
 
 typedef enum {
@@ -34,12 +42,12 @@ typedef enum {
 	action_throw,
 	action_push,
 	action_heal_self,
+	action_type_count,
 } action_type_t;
 
 typedef struct {
 	action_type_t type;
 	bitmap_t *icon;
-	action_params_t params;
 } action_t;
 
 typedef struct {
@@ -57,3 +65,103 @@ typedef struct {
 	slot_t slots[MAX_SLOTS];
 	s32 selected_slot;
 } slot_bar_t;
+
+static action_params_t _Global_Action_Data[action_type_count];
+static const char *_Global_Action_Names[action_type_count];
+
+static inline const action_params_t *GetParameters(action_type_t type)
+{
+	return &_Global_Action_Data[type];
+}
+
+fn inline s32 GetAPCost(action_type_t type)
+{
+	s32 result = GetParameters(type)->cost;
+	return result;
+}
+
+fn inline b32 IsTargetSelf(action_type_t type)
+{
+	return _Global_Action_Data[type].target & target_self;
+}
+
+fn inline s32 IsActionRanged(action_type_t type)
+{
+	return (_Global_Action_Data[type].range > 1);
+}
+
+fn const char *InferNameFromActionType(const char *name, memory_t *memory)
+{
+	s32 length = StringLength(name);
+	char *result = PushSize(memory, (length + 1));
+	result[length] = 0;
+	if (length)
+		result[0] = ToUpper(result[0]);
+
+	s32 at = 0;
+	while (at < length)
+	{
+		char *ch = &result[at];
+		*ch = name[at];
+
+		if (*ch == '_')
+			*ch = ' ';
+
+		at++;
+	}
+
+	return result;
+}
+
+void DefaultActionValues(void)
+{
+	for (s32 index = 0; index < ArraySize(_Global_Action_Data); index++)
+	{
+		action_params_t *Params = &_Global_Action_Data[index];
+		if (Params->name == NULL)
+			Params->name = _Global_Action_Names[index];
+	}
+}
+
+fn void SetupActionDataTable(memory_t *memory)
+{
+	#define ACTION(Type) \
+	_Global_Action_Names[action_##Type] = InferNameFromActionType(#Type, memory); \
+	_Global_Action_Data[action_##Type]  = (action_params_t)
+
+	ACTION(melee_attack)
+	{
+		.range  = 1,
+		.damage = 10,
+		.cost   = 1,
+	};
+	ACTION(ranged_attack)
+	{
+		.range  = 5,
+		.cost   = 1,
+		.damage = 4,
+	};
+	ACTION(heal_self)
+	{
+		.cost = 2,
+		.damage = 10,
+		.value 	= 10,
+		.target = target_self,
+	};
+	ACTION(push)
+	{
+		.range = 2,
+		.cost  = 3,
+	};
+	ACTION(throw)
+	{
+		.damage = 20,
+		.range = 6,
+		.area  = {2, 2},
+		.cost  = 1,
+	};
+
+	#undef ACTION
+
+	DefaultActionValues();
+}

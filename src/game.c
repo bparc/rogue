@@ -223,11 +223,20 @@ fn void HandleAttack(game_world_t *state, entity_t *user, entity_t *target, acti
 #define GRENADE_EXPLOSION_RADIUS 3  // temp value
 #define GRENADE_DAMAGE 50           // temp value
 // todo: In the future make walls protect entities from explosions using ray casting
-fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target, action_t *action)
+fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target, action_t *action, v2s target_p)
 {
+    const action_params_t *Params = GetParameters(action->type);
+
     entity_storage_t *storage = state->storage;
     turn_queue_t *queue = state->turns;
-    if (IsLineOfSight(state->map, user->p, target->p) && ConsumeActionPoints(queue, queue->god_mode_enabled ? 0 : action->params.action_point_cost))
+
+    b32 LOSTest = IsLineOfSight(state->map, user->p, target_p);
+
+    b32 ExecuteAction = false;
+    if (LOSTest)
+        ExecuteAction = ConsumeActionPoints(queue, queue->god_mode_enabled ? 0 : Params->cost);
+
+    if (ExecuteAction)
     {
         switch(action->type)
         {
@@ -247,11 +256,12 @@ fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target
             }
             case action_throw:
             {
-                const char *Prefix = "blast ";
-                s32 damage = (s32)action->params.damage * 2;
+                const char *prefix = "blast ";
+                s32 damage = Params->damage;
 
-                s32 radius_inner = action->params.area_of_effect.x;
-                s32 radius_outer = action->params.area_of_effect.x * (s32)2;
+                v2s area = Params->area;
+                s32 radius_inner = area.x;
+                s32 radius_outer = area.x * (s32)2;
                 v2s explosion_center = state->cursor->p;
 
                 for (s32 i = 0; i < storage->num; i++)
@@ -260,9 +270,9 @@ fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target
                     f32 distance = DistanceV2S(explosion_center, entity->p);
                     
                     if (distance <= radius_inner) {
-                        DoDamage(state, user, entity, damage, Prefix);
+                        DoDamage(state, user, entity, damage, prefix);
                     } else if (distance <= radius_outer) {
-                        DoDamage(state, user, entity, damage, Prefix);
+                        DoDamage(state, user, entity, damage, prefix);
                         PushEntity(state, explosion_center, entity, 2, 25);
                     }
 
@@ -278,8 +288,8 @@ fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target
             {
                 if (target == user)
                 {
-                    Heal(target, (s16)action->params.damage);
-                    DebugLog("healed up for %i hp", (s16)action->params.damage);
+                    Heal(target, (s16) Params->value);
+                    DebugLog("healed up for %i hp", (s16)Params->value);
                 }
             }   break;
             case action_none:

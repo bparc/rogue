@@ -47,9 +47,9 @@ fn void ActionMenu(entity_t *user, game_world_t *state, command_buffer_t *out, a
 
     for (s32 i = 0; i < ArraySize(Bar->slots); i++)
     {
-        slot_t *Slot = &Bar->slots[i];
-        action_t *action = &Slot->action;
-
+        slot_t *slot = &Bar->slots[i];
+        action_t *action = &slot->action;
+        
         v2 slot_offset = V2(i * (slot_size.x + padding), 0.0f);
         v2 slot_p = Add(slot_start_pos, slot_offset);
 
@@ -60,7 +60,7 @@ fn void ActionMenu(entity_t *user, game_world_t *state, command_buffer_t *out, a
         {
             v4 color = PureWhite();
 
-            if (queue->action_points < GetAPCost(*action, user))
+            if (queue->action_points < GetAPCost(action->type))
                 color = RGB(30, 30, 30);
             DrawBitmap(out, slot_p, slot_size, color, action->icon);
         }

@@ -1,5 +1,5 @@
-fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target, action_t *action);
 fn void HandleAttack(game_world_t *state, entity_t *user, entity_t *target, action_type_t action_type);
+fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target, action_t *action, v2s target_p);
 
 #define BASE_HIT_CHANCE 50
 #define MELEE_BONUS 15

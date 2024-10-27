@@ -47,40 +47,10 @@ fn s32 BeginTurn(game_world_t *game, entity_t *entity)
 
 fn s32 Decide(game_world_t *game, entity_t *entity)
 {
-	#if 1
 	path_t *path = &game->turns->path;
 	s32 index = entity->DEBUG_step_count++;
 	if (index < path->length)
 		entity->p = path->tiles[index].p;
-	#else
-	int randomIndex = rand() % 4;
-
-	v2s chosenDir;
-	if (rand() % 100 < 25) {
-		chosenDir = cardinal_directions[randomIndex]; //NOTE(): replaced by enemy ai
-	} else {
-		chosenDir = GetDirectionToClosestPlayer(World->storage, requestee->p);
-	}
-
-	int canMove = false;
-	int attempts = 0;
-
-	v2s peekPos = Add32(requestee -> p, chosenDir);
-
-	while(!canMove && attempts < 5){
-		canMove = MoveFitsWithSize(World, requestee, peekPos);
-		
-		if(canMove) {
-			Move(World, requestee, chosenDir);
-			ApplyTileEffects(requestee->p, World, requestee);
-			break;
-		}
-
-		peekPos = Add32(requestee -> p, chosenDir);
-		chosenDir = cardinal_directions[(randomIndex + 1 ) % 4];
-		attempts++;
-	}
-	#endif
 	return 1;
 }
 

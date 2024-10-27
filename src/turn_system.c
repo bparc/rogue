@@ -246,32 +246,31 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 	for (s32 index = 0; index < queue->action_count; index++)
 	{
 		async_action_t *action = &queue->actions[index];
-		action->action_type.params = DefineActionTypeParams(user, action->action_type);
-		b32 Finished = false;
+		action_type_t type = action->action_type.type;
 
-		if ((action->action_type.type == action_ranged_attack) ||
-			(action->action_type.type == action_throw))
+		b32 finished = true;
+		if (IsActionRanged(type))
 		{
-			v2 target_p = GetTileCenter(state->map, action->target_p);
-			f32 distance = Distance(user->deferred_p, target_p);
-			f32 t = action->t / (distance * 0.005f);
+			// NOTE(): Ranged actions take some amount of time
+			// to finish.
 
-			action->t += dt * 1.5f;
-			
+			// NOTE(): The duration is proportional to the distance.
+
+			v2 target_p = GetTileCenter(state->map, action->target_p);
+			f32 t = action->elapsed / (Distance(user->deferred_p, target_p) * 0.005f);
+			finished = t >= 1.0f;
+
 			DrawRangedAnimation(out, user->deferred_p, target_p, &assets->PlayerGrenade, t);
 			
-			Finished = (t >= 1.0f);
-		}
-		else
-		{
-			Finished = true;
 		}
 
-		if (Finished)
+		if (finished)
 		{
 			queue->actions[index--] = queue->actions[--queue->action_count];
-			ActivateSlotAction(state, user, GetEntity(queue->storage, action->target_id), &action->action_type);
+			ActivateSlotAction(state, user, GetEntity(queue->storage, action->target_id), &action->action_type, action->target_p);
 		}
+
+		action->elapsed += dt * 1.5f;
 	}
 }
 

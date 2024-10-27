@@ -17,13 +17,11 @@ const char *interpolator_state_t_names[] = {
 
 typedef struct
 {
-	b32 blocking;
+	f32 elapsed;
 	action_t action_type;
 
 	entity_id_t target_id;
 	v2s target_p;
-	
-	f32 t;
 } async_action_t;
 
 typedef struct

@@ -38,22 +38,28 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 
 	// NOTE(): Setup
 	action_t equipped = GetEquippedAction(bar, user);
+	const action_params_t *settings = GetParameters(equipped.type);
+	const s32 range = settings->range;
+	const v2s area  = settings->area;
 
 	Assert(user);
 	cursor->Target = 0;
 	
 	// NOTE(): Open the cursor.
-	if ((cursor->active == false) && WentDown(cons.confirm))
+	if (WentDown(cons.confirm) && (cursor->active == false) && (equipped.type != action_none))
 	{
-		switch (equipped.type)
+		// NOTE(): Actions that only targets "self"
+		// are activated directly from the menu, without opening the cursor.
+		if (IsTargetSelf(equipped.type))
 		{
-		case action_none: DebugLog("An unsupported action was selected! Can't open the cursor!"); break;
-		case action_heal_self: QueryAsynchronousAction(queue, equipped.type, user, cursor->p); break;
-		default:
-		// NOTE(): The cursor was just activated.
-		// Setup a starting state.	
+			QueryAsynchronousAction(queue, equipped.type, user, cursor->p);
+		}
+		else
+		{
+			// NOTE(): The cursor was just activated.
+			// Setup a starting state.	
 			cursor->active = true;
-			cursor->p = user->p;
+			cursor->p = user->p;	
 		}
 	}
 
@@ -64,34 +70,31 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 			cursor->active = false;
 
 		// NOTE(): Draw the maximum range of the cursor.
-		RenderRange(out, map, user->p, equipped.params.range, Pink());
+		RenderRange(out, map, user->p, range, Pink());
 
 		// NOTE() : Draw the explosion radius.
 		if (equipped.type == action_throw) {
-			RenderRange(out, map, cursor->p, equipped.params.area_of_effect.x, Red()); // inner
-			RenderRange(out, map, cursor->p, equipped.params.area_of_effect.x * (s32)2, Red()); // outer
+			RenderRange(out, map, cursor->p, area.x, Red()); // inner
+			RenderRange(out, map, cursor->p, area.x * (s32)2, Red()); // outer
 		}
 		// NOTE(): Draw the cursor.
 		RenderIsoTile(out, map, cursor->p, A(Pink(), 0.8f), true, 0);
 
 		// NOTE(): Move the cursor.
-		v2s requestedPos = Add32(cursor->p, move_requested ? dirs[direction] : V2S(0, 0));
-		if (move_requested &&
-			IsInsideCircle(requestedPos, V2S(1,1), user->p, equipped.params.range) &&
-			IsLineOfSight(map, user->p, requestedPos))
-		{
-				cursor->p = requestedPos;
-		}
+		v2s requested_p = Add32(cursor->p, move_requested ? dirs[direction] : V2S(0, 0));
+		if (move_requested && IsInsideCircle(requested_p, V2S(1,1), user->p, range) && IsLineOfSight(map, user->p, requested_p))
+				cursor->p = requested_p;
+
 		// NOTE(): If the cursor somehow ended up out of its range -
 		// move it back to the user.
-		if ((IsInsideCircle(cursor->p, V2S(1,1), user->p, equipped.params.range) == false))
+		if ((IsInsideCircle(cursor->p, V2S(1,1), user->p, range) == false))
 			cursor->p = user->p;
 
 		// NOTE(): Find the closest hostile to the cursor, draw
 		// tiles underneath them, then snap to them if the button went down.
 		entity_t *Enemy = FindClosestHostile(storage, cursor->p);
 		if (Enemy &&
-			IsInsideCircle(Enemy->p, Enemy->size, user->p, equipped.params.range) &&
+			IsInsideCircle(Enemy->p, Enemy->size, user->p, range) &&
 			IsLineOfSight(map, user->p, Enemy->p))
 		{
 			RenderIsoTileArea(out, map, Enemy->p, Add32(Enemy->p, Enemy->size), A(Red(), 0.8f)); //render target for all size enemies
