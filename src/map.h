@@ -9,10 +9,17 @@ typedef enum
 	trap_type_poison,
 } trap_type_t;
 
+typedef enum {
+    blood_none = 0,
+    blood_red,
+    blood_green
+} blood_type_t;
+
 typedef struct
 {
 	u8 value;
 	trap_type_t trap_type;
+	blood_type_t blood;
 } tile_t;
 
 typedef struct

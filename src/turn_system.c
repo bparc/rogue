@@ -342,7 +342,9 @@ fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queu
 			 	else
 			 	{
 			 		entity_id_t target = AttemptAttack(state, entity, range);
-			 		if (target)
+			 		entity_t *player = GetEntity(storage, target);
+
+			 		if (player && IsLineOfSight(map, entity->p, player->p))
 			 		{
 						ChangeQueueState(queue, interp_attack);
 						queue->attack_target = target;

@@ -118,21 +118,77 @@ fn s32 CalculateHitChance(const entity_t *user, const entity_t *target, action_t
     return final_hit_chance;
 }
 
-fn void DoDamage(game_world_t *game, entity_t *target, s32 damage, const char *damage_type_prefix)
+typedef enum
+{
+    high_velocity,
+    low_velocity
+} hit_velocity_t;
+
+fn void AddBloodOnNearbyTiles(map_t *map, v2s shooter_position, v2s hit_position,
+                              blood_type_t blood_type, hit_velocity_t hit_velocity) {
+
+    v2s extended_position = Add32(hit_position, Sub32(hit_position, shooter_position));
+    dda_line_t dda = BeginDDALine(map, hit_position, extended_position);
+
+    int splatter_length;
+    if (hit_velocity == high_velocity) {
+        splatter_length = (rand() % 3) + 1;
+    } else {
+        splatter_length = 0;
+    }
+    int trail_count = 0;
+
+    while(ContinueDDALine(&dda) && trail_count < splatter_length) {
+        if (IsTraversable(map, dda.at)) {
+            tile_t *tile = GetTile(map, dda.at.x, dda.at.y);
+            if (tile) {
+                tile->blood = blood_type;
+                trail_count++;
+            }
+        } else {
+            break;
+        }
+    }
+
+        if (hit_velocity == low_velocity) {
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (rand() % 100 < 94) {
+                    continue;
+                }
+                v2s splatter_pos = V2S(hit_position.x + dx, hit_position.y + dy);
+                if (IsTraversable(map, splatter_pos)) {
+                    tile_t *tile = GetTile(map, splatter_pos.x, splatter_pos.y);
+                    if (tile) {
+                        tile->blood = blood_type;
+                    }
+                }
+            }
+        }
+    }
+}
+
+#define BLOOD_SPLATTER_CHANCE 0.3f
+fn void DoDamage(game_world_t *game, entity_t *user, entity_t *target, s32 damage, const char *damage_type_prefix)
 {
     damage = damage + (rand() % 3);
     LogLn(game->log, "%shit! inflicted %i %s of %sdamage upon the target!",
         damage_type_prefix, damage, damage == 1 ? "point" : "points", damage_type_prefix);
     TakeHP(target, (s16)damage);
     CreateDamageNumber(game->particles, Add(target->deferred_p, V2(-25.0f, -25.0f)), damage);
+
+    if ((rand() / (float)RAND_MAX) < 20) {
+        blood_type_t blood_type = (target->enemy_type == 0) ? blood_red : blood_green;
+        hit_velocity_t hit_velocity = (rand() % 2 == 0) ? high_velocity : low_velocity; // Just a temporary thing until we add ammo types
+        AddBloodOnNearbyTiles(game->map, user->p, target->p, blood_type, hit_velocity);
+    }
 }
 
 fn void HandleAttack(game_world_t *state, entity_t *user, entity_t *target, action_type_t action_type)
 {
-    // todo: add critical hits, distance measure
     if ((IsPlayer(user) && state->turns->god_mode_enabled))
     {
-        DoDamage(state, target, target->health, "");
+        DoDamage(state, user, target, target->health, "");
     }
     else
     {
@@ -147,14 +203,14 @@ fn void HandleAttack(game_world_t *state, entity_t *user, entity_t *target, acti
         if ((missed == false))
         {    
             if (crited)
-                DoDamage(state, target, user->attack_dmg * CRITICAL_DAMAGE_MULTIPLIER, "critical ");
+                DoDamage(state, user, target, user->attack_dmg * CRITICAL_DAMAGE_MULTIPLIER, "critical ");
             else
-                DoDamage(state, target, user->attack_dmg, "");
+                DoDamage(state, user, target, user->attack_dmg, "");
         }
         else
         {
             if (grazed)
-                DoDamage(state, target, user->attack_dmg / 2, "graze ");
+                DoDamage(state, user, target, user->attack_dmg / 2, "graze ");
             else
             {
                 LogLn(state->log, "missed!");
@@ -166,7 +222,7 @@ fn void HandleAttack(game_world_t *state, entity_t *user, entity_t *target, acti
 
 #define GRENADE_EXPLOSION_RADIUS 3  // temp value
 #define GRENADE_DAMAGE 50           // temp value
-// todo: In the future make walls protect entities from explosions
+// todo: In the future make walls protect entities from explosions using ray casting
 fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target, action_t *action)
 {
     entity_storage_t *storage = state->storage;
@@ -204,9 +260,9 @@ fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target
                     f32 distance = DistanceV2S(explosion_center, entity->p);
                     
                     if (distance <= radius_inner) {
-                        DoDamage(state, entity, damage, Prefix);
+                        DoDamage(state, user, entity, damage, Prefix);
                     } else if (distance <= radius_outer) {
-                        DoDamage(state, entity, damage, Prefix);
+                        DoDamage(state, user, entity, damage, Prefix);
                         PushEntity(state, explosion_center, entity, 2, 25);
                     }
 

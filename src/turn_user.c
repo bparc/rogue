@@ -169,7 +169,7 @@ fn void DoEnemyAction(game_world_t *game, entity_t *entity, entity_t *target, f3
 			if (t < 1.0f)
 				DrawRangedAnimation(out, entity->deferred_p, target->deferred_p, &assets->SlimeBall, t);
 			if (inflict_damage)
-				DoDamage(game, target, entity->attack_dmg, "");
+				DoDamage(game, entity, target, entity->attack_dmg, "");
 		} break;
 	case enemy_action_slash:
 		{
@@ -178,7 +178,7 @@ fn void DoEnemyAction(game_world_t *game, entity_t *entity, entity_t *target, f3
 
 			DrawDiegeticText(game, entity->deferred_p, V2((-20.0f + p.x), -80.0f), A(White(), alpha), "SLASH!");
 			if (inflict_damage)
-				DoDamage(game, target, (entity->attack_dmg + 7), "");
+				DoDamage(game, entity, target, (entity->attack_dmg + 7), "");
 		} break;
 	}
 	
