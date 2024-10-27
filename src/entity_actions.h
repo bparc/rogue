@@ -170,7 +170,7 @@ fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
 		.cost   = 1,
 	};
 
-	#undef ACTION
+	#undef ACT
 
 	DefaultActionValues();
 }
