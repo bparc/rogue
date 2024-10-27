@@ -126,6 +126,10 @@ typedef enum
 
 fn void AddBloodOnNearbyTiles(map_t *map, v2s shooter_position, v2s hit_position,
                               blood_type_t blood_type, hit_velocity_t hit_velocity) {
+    tile_t *initial_tile = GetTile(map, hit_position.x, hit_position.y);
+    if (initial_tile && IsTraversable(map, hit_position)) {
+        initial_tile->blood = blood_type;
+    }
 
     v2s extended_position = Add32(hit_position, Sub32(hit_position, shooter_position));
     dda_line_t dda = BeginDDALine(map, hit_position, extended_position);

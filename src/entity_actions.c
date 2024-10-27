@@ -71,7 +71,7 @@ fn action_params_t DefinePushAction(entity_t *user) {
         .range = 2,
         .target = 0,
         .area_of_effect = {1, 1},
-        .action_point_cost = 4,
+        .action_point_cost = 3,
         .accuracy = (f32)user->melee_accuracy,
         .damage = 0.0f,
         .is_healing = false,
