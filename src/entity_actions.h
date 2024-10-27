@@ -87,7 +87,7 @@ fn inline b32 IsTargetSelf(action_type_t type)
 
 fn inline s32 IsActionRanged(action_type_t type)
 {
-	return (_Global_Action_Data[type].range > 1);
+	return (_Global_Action_Data[type].range > 2);
 }
 
 fn const char *InferNameFromActionType(const char *name, memory_t *memory)
@@ -131,7 +131,8 @@ fn void SetupActionDataTable(memory_t *memory)
 
 	ACTION(melee_attack)
 	{
-		.range  = 1,
+		.damage = 3,
+		.range  = 2,
 		.damage = 10,
 		.cost   = 1,
 	};
