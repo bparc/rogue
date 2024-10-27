@@ -227,7 +227,7 @@ fn void HandleAttack(game_world_t *state, entity_t *user, entity_t *target, acti
 #define GRENADE_EXPLOSION_RADIUS 3  // temp value
 #define GRENADE_DAMAGE 50           // temp value
 // todo: In the future make walls protect entities from explosions using ray casting
-fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target, action_t *action, v2s target_p)
+fn void CommitAction(game_world_t *state, entity_t *user, entity_t *target, action_t *action, v2s target_p)
 {
     const action_params_t *Params = GetParameters(action->type);
 

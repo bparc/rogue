@@ -278,7 +278,7 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 		if (finished)
 		{
 			queue->actions[index--] = queue->actions[--queue->action_count];
-			ActivateSlotAction(state, user, GetEntity(queue->storage, action->target_id), &action->action_type, action->target_p);
+			CommitAction(state, user, GetEntity(queue->storage, action->target_id), &action->action_type, action->target_p);
 		}
 
 		action->elapsed += dt * 1.5f;
