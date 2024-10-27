@@ -250,7 +250,7 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 
 		b32 finished = true;
 
-		if (IsActionRanged(params->type) && params->animation_ranged)
+		if (params->animation_ranged)
 		{
 			// NOTE(): Ranged actions take some amount of time
 			// to finish.

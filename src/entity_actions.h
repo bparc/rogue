@@ -90,11 +90,6 @@ fn inline b32 IsTargetSelf(action_type_t type)
 	return _Global_Action_Data[type].target & target_self;
 }
 
-fn inline s32 IsActionRanged(action_type_t type)
-{
-	return (_Global_Action_Data[type].range > 2);
-}
-
 fn const char *InferNameFromActionType(const char *name, memory_t *memory)
 {
 	s32 length = StringLength(name);
