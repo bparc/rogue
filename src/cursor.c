@@ -41,8 +41,6 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 	const action_params_t *settings = GetParameters(equipped.type);
 	const s32 range = settings->range;
 	const v2s area  = settings->area;
-
-	Assert(user);
 	cursor->Target = 0;
 	
 	// NOTE(): Open the cursor.
