@@ -188,7 +188,31 @@ fn void DoDamage(game_world_t *game, entity_t *user, entity_t *target, s32 damag
     }
 }
 
-fn void HandleAttack(game_world_t *state, entity_t *user, entity_t *target, action_type_t action_type)
+fn inline void AOE(game_world_t *state, entity_t *user, entity_t *target, const action_params_t *params)
+{
+    entity_storage_t *storage = state->storage;
+    
+    const char *prefix = "blast ";
+    s32 damage = params->damage;
+    v2s area = params->area;
+    s32 radius_inner = area.x;
+    s32 radius_outer = area.x * (s32)2;
+    v2s explosion_center = state->cursor->p;
+    for (s32 i = 0; i < storage->num; i++)
+    {
+        entity_t *entity = &storage->entities[i];
+        f32 distance = DistanceV2S(explosion_center, entity->p);
+        
+        if (distance <= radius_inner) {
+            DoDamage(state, user, entity, damage, prefix);
+        } else if (distance <= radius_outer) {
+            DoDamage(state, user, entity, damage, prefix);
+            PushEntity(state, explosion_center, entity, 2, 25);
+        }
+    }
+}
+
+fn inline void SingleTarget(game_world_t *state, entity_t *user, entity_t *target, const action_params_t *params)
 {
     if ((IsPlayer(user) && state->turns->god_mode_enabled))
     {
@@ -196,7 +220,7 @@ fn void HandleAttack(game_world_t *state, entity_t *user, entity_t *target, acti
     }
     else
     {
-        s32 chance = CalculateHitChance(user, target, action_type);
+        s32 chance = CalculateHitChance(user, target, params->type);
         s32 roll = rand() % 100;
         s32 roll_crit = rand() % 100;
 
@@ -229,65 +253,27 @@ fn void HandleAttack(game_world_t *state, entity_t *user, entity_t *target, acti
 // todo: In the future make walls protect entities from explosions using ray casting
 fn void CommitAction(game_world_t *state, entity_t *user, entity_t *target, action_t *action, v2s target_p)
 {
-    const action_params_t *Params = GetParameters(action->type);
+    const action_params_t *params = GetParameters(action->type);
 
-    entity_storage_t *storage = state->storage;
-    turn_queue_t *queue = state->turns;
-
-    switch(action->type)
+    switch (params->mode)
     {
-        case action_ranged_attack:
+    case action_mode_damage:
+    {
+        if (IsZero(params->area))
         {
-            HandleAttack(state, user, target, action->type);
-            user->has_hitchance_boost = false;
-            user->hitchance_boost_multiplier = 1.0f;
-            break;
+            SingleTarget(state, user, target, params);
         }
-        case action_melee_attack:
+        else
         {
-            HandleAttack(state, user, target, action->type);
-            user->has_hitchance_boost = false;
-            user->hitchance_boost_multiplier = 1.0f;
-            break;
+            AOE(state, user, target, params);
         }
-        case action_throw:
-        {
-            const char *prefix = "blast ";
-            s32 damage = Params->damage;
-            v2s area = Params->area;
-            s32 radius_inner = area.x;
-            s32 radius_outer = area.x * (s32)2;
-            v2s explosion_center = state->cursor->p;
-            for (s32 i = 0; i < storage->num; i++)
-            {
-                entity_t *entity = &storage->entities[i];
-                f32 distance = DistanceV2S(explosion_center, entity->p);
-                
-                if (distance <= radius_inner) {
-                    DoDamage(state, user, entity, damage, prefix);
-                } else if (distance <= radius_outer) {
-                    DoDamage(state, user, entity, damage, prefix);
-                    PushEntity(state, explosion_center, entity, 2, 25);
-                }
-            }
-            break;
-        }
-        case action_push:
-        {
-            PushEntity(state, user->p, target, 4, 25);
-            break;
-        }
-        case action_heal_self:
-        {
-            if (target == user)
-            {
-                Heal(target, (s16) Params->value);
-                DebugLog("healed up for %i hp", (s16)Params->value);
-            }
-        }   break;
-        case action_none:
-        default:
-            break;
+
+        // NOTE(): Reset per-turn attack buffs/modifiers.
+        user->has_hitchance_boost = false;
+        user->hitchance_boost_multiplier = 1.0f;
+    } break;
+    case action_mode_heal: Heal(target, (s16) params->value); break;
+    case action_mode_dash: user->p = target_p; break;
     }
 }
 

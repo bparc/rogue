@@ -1,6 +1,19 @@
+fn inline void SetMenuShortcut(slot_bar_t *menu, assets_t *assets, s32 index, action_type_t type)
+{
+    action_t *shortcut = &(menu->slots[index].action);
+#define Icons assets->CombatUI.action_bar_icons
+    if (assets && (type < ArraySize(Icons)))
+        shortcut->icon = &Icons[type][0];
+    else
+        shortcut->icon = NULL;
+#undef Icons
+    shortcut->params = GetParameters(type);
+    shortcut->type = type;
+}
+
 fn void DefaultActionBar(slot_bar_t *bar, assets_t *assets)
 {
-    // NOTE(Arc): I'm calling this from Setup()!
+    bar->selected_slot = 1;
 
     for (s32 i = 0; i < ArraySize(bar->slots); i++)
     {
@@ -8,29 +21,14 @@ fn void DefaultActionBar(slot_bar_t *bar, assets_t *assets)
         bar->slots[i].action.icon = NULL;
     }
 
-    bar->slots[1].action.type = action_ranged_attack;
-    bar->slots[1].action.icon = &assets->CombatUI.action_bar_icons[1][0];
-
-    bar->slots[0].action.type = action_melee_attack;
-    bar->slots[0].action.icon = &assets->CombatUI.action_bar_icons[0][0];
-
-    bar->slots[8].action.type = action_throw;
-    bar->slots[8].action.icon = &assets->CombatUI.action_bar_icons[2][0];
-
-    bar->slots[7].action.type = action_push;
-    bar->slots[7].action.icon = &assets->CombatUI.action_bar_icons[3][0];
-
-    bar->slots[2].action.type = action_heal_self;
-    bar->slots[2].action.icon = &assets->CombatUI.action_bar_icons[4][0];
-
-    //bar->slots[i].action.params = GetParameters()
-    for (s32 index = 0; index < ArraySize(bar->slots); index++)
-    {
-        action_t *action = &bar->slots[index].action;
-        action->params = GetParameters(action->type);
-    }
-
-    bar->selected_slot = 1;
+    s32 Index = 0;
+    SetMenuShortcut(bar, assets, Index++, action_melee_attack);
+    SetMenuShortcut(bar, assets, Index++, action_ranged_attack);
+    SetMenuShortcut(bar, assets, Index++, action_heal);
+    SetMenuShortcut(bar, assets, Index++, action_throw);
+    SetMenuShortcut(bar, assets, Index++, action_push);
+    SetMenuShortcut(bar, 0, Index++, action_slash);
+    SetMenuShortcut(bar, 0, Index++, action_dash);
 }
 
 fn void ActionMenu(entity_t *user, game_world_t *state, command_buffer_t *out, assets_t *assets, const client_input_t *input, turn_queue_t *queue) {
@@ -56,7 +54,8 @@ fn void ActionMenu(entity_t *user, game_world_t *state, command_buffer_t *out, a
     {
         slot_t *slot = &Bar->slots[i];
         action_t *action = &slot->action;
-        
+        const action_params_t *params = GetParameters(action->type);
+
         v2 slot_offset = V2(i * (slot_size.x + padding), 0.0f);
         v2 slot_p = Add(slot_start_pos, slot_offset);
 
@@ -73,7 +72,8 @@ fn void ActionMenu(entity_t *user, game_world_t *state, command_buffer_t *out, a
         }
         else
         {
-            DrawText(out, assets->Font, slot_p, action_type_t_names[action->type], Black());
+            if (params->name)
+                DrawText(out, assets->Font, Add(slot_p, V2(4, 2)), params->name, White());
         }
 
         if (IsKeyPressed(input, key_code_1 + (u8)i))

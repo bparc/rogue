@@ -16,11 +16,7 @@ typedef struct {
 	bitmap_t action_bar_elements[3];
 	bitmap_t action_bar_full;
 
-	bitmap_t action_bar_icons[5][1]; //icons:variations, order as in world.c
-
-	
-	
-
+	bitmap_t action_bar_icons[16][1]; //icons:variations, order as in world.c
 } combat_ui_t;
 
 
@@ -44,9 +40,6 @@ typedef struct
 
 	b32 Loaded;
 } assets_t;
-
-
-
 
 typedef enum {
 	tile_center = 0, //all 4 cardinal surrounding tiles connect to this
@@ -135,11 +128,11 @@ fn b32 LoadAssets(assets_t *assets, bmfont_t *font)
 	Bitmap(assets, &assets->CombatUI.action_bar_elements[2], "assets/ui/world/combat_action_bar_right.png",0, 0);
 
 //order matters basically everywhere
-	Bitmap(assets, &assets->CombatUI.action_bar_icons[0][0], "assets/ui/world/icons/action_base_melee_attack_icon.png", 0, 0);
-	Bitmap(assets, &assets->CombatUI.action_bar_icons[1][0], "assets/ui/world/icons/action_base_ranged_attack_icon.png", 0, 0);
-	Bitmap(assets, &assets->CombatUI.action_bar_icons[2][0], "assets/ui/world/icons/action_base_throw_grenade_icon.png", 0, 0);
-	Bitmap(assets, &assets->CombatUI.action_bar_icons[3][0], "assets/ui/world/icons/action_base_push_icon.png", 0, 0);
-	Bitmap(assets, &assets->CombatUI.action_bar_icons[4][0], "assets/ui/world/icons/action_base_heal_icon.png", 0, 0);
+	Bitmap(assets, &assets->CombatUI.action_bar_icons[1][0], "assets/ui/world/icons/action_base_melee_attack_icon.png", 0, 0);
+	Bitmap(assets, &assets->CombatUI.action_bar_icons[2][0], "assets/ui/world/icons/action_base_ranged_attack_icon.png", 0, 0);
+	Bitmap(assets, &assets->CombatUI.action_bar_icons[3][0], "assets/ui/world/icons/action_base_throw_grenade_icon.png", 0, 0);
+	Bitmap(assets, &assets->CombatUI.action_bar_icons[4][0], "assets/ui/world/icons/action_base_push_icon.png", 0, 0);
+	Bitmap(assets, &assets->CombatUI.action_bar_icons[5][0], "assets/ui/world/icons/action_base_heal_icon.png", 0, 0);
 
 
 	Bitmap(assets, &assets->Player[0], "assets/player/player_standing_front.png", 0, 0);

@@ -17,8 +17,8 @@ const char *action_type_t_names[] =
 typedef enum
 {
 	target_self	   = 1 << 0,
-	target_field   = 1 << 1,
-	target_hostile = 1 << 2,
+	//target_field   = 1 << 1,
+	//target_hostile = 1 << 2,
 } target_flags_t;
 
 typedef enum {
@@ -27,7 +27,9 @@ typedef enum {
 	action_ranged_attack,
 	action_throw,
 	action_push,
-	action_heal_self,
+	action_heal,
+	action_slash,
+	action_dash,
 	action_type_count,
 } action_type_t;
 
@@ -36,12 +38,22 @@ typedef enum
 	action_display_move_name = 1 << 0,
 } action_flags_t;
 
+typedef enum
+{
+	action_mode_custom,
+	action_mode_heal,
+	action_mode_damage,
+	action_mode_dash,
+} action_mode_t; // NOTE(): Basic mode of interaction.
+
 typedef struct
 {
+	action_mode_t mode;
 	action_type_t type;
 	const char *name;
 	s32 range;
 	s32 flags;
+	s32 pushback;
 	union
 	{
 	s32 damage;
@@ -49,7 +61,8 @@ typedef struct
 	};
 	s32 cost;
 	v2s area; // (1, 1) if not specified
-	target_flags_t target; // "Any" if not specified
+
+	target_flags_t target; // A list of valid targets. "Any" if not specified.
 
 	const bitmap_t *animation_ranged;
 	//const bitmap_t *animation;
@@ -96,6 +109,12 @@ fn inline b32 IsTargetSelf(action_type_t type)
 	return _Global_Action_Data[type].target & target_self;
 }
 
+fn inline b32 IsTargetAny(action_type_t type)
+{
+	s32 result = (GetParameters(type)->target == 0);
+	return result;
+}
+
 fn const char *NameFromActionType(const char *name, memory_t *memory)
 {
 	s32 length = StringLength(name);
@@ -108,7 +127,7 @@ fn const char *NameFromActionType(const char *name, memory_t *memory)
 	while (at < length)
 	{
 		char *ch = &result[at];
-		*ch = name[at];
+		*ch = ToUpper(name[at]);
 
 		if (*ch == '_')
 			*ch = ' ';
@@ -127,6 +146,8 @@ void DefaultActionValues(void)
 		Params->type = (action_type_t)index;
 		if (Params->name == NULL)
 			Params->name = _Global_Action_Names[index];
+		if (!Params->range)
+			Params->range = 2;
 	}
 }
 
@@ -138,19 +159,20 @@ fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
 
 	ACT(melee_attack)
 	{
+		.mode = action_mode_damage,
 		.damage = 3,
-		.range  = 2,
 		.cost   = 1,
-		.flags  = action_display_move_name,
 	};
 	ACT(ranged_attack)
 	{
+		.mode = action_mode_damage,
 		.range  = 5,
 		.cost   = 1,
 		.damage = 4,
 	};
-	ACT(heal_self)
+	ACT(heal)
 	{
+		.mode = action_mode_heal,
 		.cost = 2,
 		.damage = 10,
 		.value 	= 10,
@@ -158,18 +180,34 @@ fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
 	};
 	ACT(push)
 	{
+		.mode = action_mode_damage,
 		.range = 2,
 		.cost  = 3,
+		.pushback = 2,
 	};
 	ACT(throw)
 	{
+		.mode = action_mode_damage,
 		.animation_ranged = &assets->PlayerGrenade,
 		.damage = 20,
 		.range  = 6,
 		.area   = {2, 2},
 		.cost   = 1,
 	};
-
+	ACT(slash)
+	{
+		.mode = action_mode_damage,
+		.damage = 30,
+		.cost   = 3,
+		.flags  = action_display_move_name,
+	};
+	ACT(dash)
+	{
+		.mode   = action_mode_dash,
+		.flags  = action_display_move_name,
+		.range  = 5,
+		.cost   = 1,
+	};
 	#undef ACT
 
 	DefaultActionValues();

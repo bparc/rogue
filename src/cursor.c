@@ -25,6 +25,20 @@ fn void DrawDiegeticText(game_world_t *game, v2 p, v2 offset, v4 color, const ch
 	DrawText(out, game->assets->Font, screen_p, string, color);
 }
 
+fn inline s32 DoAction(cursor_t *cursor, map_t *map, entity_t *user, entity_t *target, turn_queue_t *queue, const action_params_t *settings)
+{
+	entity_id_t id = target ? target->id : 0;
+	v2s p = target ? target->p : cursor->p;
+
+	b32 Query = false;
+	b32 LOSTest = IsLineOfSight(map, user->p, p);
+    if (LOSTest)
+       	Query = ConsumeActionPoints(queue, queue->god_mode_enabled ? 0 : settings->cost);
+    if (Query)
+		QueryAsynchronousAction(queue, settings->type, id, p);
+	return Query;
+}
+
 fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 	command_buffer_t *out, virtual_controls_t cons,
 	entity_t *user, // the entity that currently uses the cursor
@@ -50,7 +64,7 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 		// are activated directly from the menu, without opening the cursor.
 		if (IsTargetSelf(equipped.type))
 		{
-			QueryAsynchronousAction(queue, equipped.type, user->id, cursor->p);
+			DoAction(cursor, map, user, user, queue, settings);
 		}
 		else
 		{
@@ -64,7 +78,7 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 	if (cursor->active)
 	{
 		// NOTE(): Close the cursor, if needed.
-		if (WentDown(cons.cancel) || ((equipped.type == action_none || equipped.type == action_heal_self)))
+		if (WentDown(cons.cancel) || ((equipped.type == action_none || equipped.type == action_heal)))
 			cursor->active = false;
 
 		// NOTE(): Draw the maximum range of the cursor.
@@ -112,23 +126,12 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 		if (WentUp(cons.confirm))
 		{
 			b32 target_valid = IsHostile(target);
-			if (equipped.type == action_throw) // NOTE(): "action_throw" can also target traversable tiles.
+			if (IsTargetAny(equipped.type))
 				target_valid |= IsTraversable(map, cursor->p); 
 
 			b32 positioned_on_user = CompareVectors(cursor->p, user->p);
 			if (target_valid && (positioned_on_user == false))
-			{
-				entity_id_t ID = target ? target->id : 0;
-				v2s p = target ? target->p : cursor->p;
-
-				b32 query_action = false;
-				b32 LOSTest = IsLineOfSight(map, user->p, p);
-    			if (LOSTest)
-        			query_action = ConsumeActionPoints(queue, queue->god_mode_enabled ? 0 : settings->cost);
-
-        		if (query_action)
-					QueryAsynchronousAction(queue, equipped.type, ID, p);
-			}
+				DoAction(cursor, map, user, target, queue, settings);
 		}
 	}
 }
