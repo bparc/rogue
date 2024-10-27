@@ -132,6 +132,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	entity_t *player = DEBUGGetPlayer(storage);
 	particles_t *particles = state->particles;
 	command_buffer_t *out_top = Debug.out;
+	turn_queue_t *queue = state->turns;
 
 	SetGlobalOffset(out, V2(0.0f, 0.0f));
 	DrawRect(out, V2(0, 0), V2(1920, 1080), SKY_COLOR); // NOTE(): Background
@@ -210,53 +211,17 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		{
 			entity->deferred_p = Lerp2(entity->deferred_p, GetTileCenter(state->map, entity->p), 10.0f * dt);
 		}
+		entity->blink_time = MaxF32(entity->blink_time - (dt * 1.5f), 0.0f);
 
-		v2 p = entity->deferred_p;
-		bitmap_t *bitmap = IsHostile(entity) ? &assets->Slime : &assets->Player[0];
-		v2 bitmap_p = p;
-
-		// TODO(): Still somewhat hard-coded.
-		v2 cube_bb_sz = V2(24, 24);
-		if ((entity->size.x == 2) && (entity->size.y == 2))
-		{
-			bitmap = &assets->SlimeBig;
-			bitmap_p = Add(bitmap_p, Scale(map->tile_sz, 0.5f));
-			p = Add(p, Scale(map->tile_sz, 0.5f));
-			cube_bb_sz = V2(64.0f, 64.0f);
-		}
-
-		// NOTE(): Bitmap
-		v4 bitmap_color = PureWhite();
-		v2 bitmap_sz = bitmap->scale;
-		bitmap_p = ScreenToIso(bitmap_p);
-		bitmap_p = Sub(bitmap_p, Scale(bitmap_sz, 0.5f)); //center bitmap
-		bitmap_p.y -= bitmap_sz.y * 0.25f; //center bitmap "cube"
-
-		// NOTE(): Flickering
-		entity->blink_time -= dt * 1.5f;
-		if (entity->blink_time <= 0)
-			entity->blink_time = 0;
-		if (entity->blink_time > 0)
-		{
-			f32 t = entity->blink_time;
-			t = t * t;
-
-			f32 blink_rate = 0.4f;
-			if (fmodf(t, blink_rate) >= (blink_rate * 0.5f))
-				bitmap_color = Red();
-			else
-				bitmap_color = A(Blue(), 0.9f);
-		}
-
-		if (CompareVectors(entity->p, player->p) && !IsPlayer(entity))
-			bitmap_color.w = 0.6f;
-
-		DrawBitmap(out, bitmap_p, bitmap_sz, bitmap_color, bitmap);
-
-		RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
-		HealthBar(out_top, CameraToScreen(state, entity->deferred_p), assets, entity);
+		RenderEntity(out, entity, 1.0f, assets, map);
+		RenderHealth(out_top, CameraToScreen(state, entity->deferred_p), assets, entity);
 	}
-
+	for (s32 index = 0; index < queue->num_evicted_entities; index++)
+	{
+		evicted_entity_t *entity = &queue->evicted_entities[index];
+		entity->deferred_p = Sub(entity->deferred_p, Scale(V2(10.0f, 10.0f), dt));
+		RenderEntity(out, &entity->entity, entity->time_remaining, assets, map);
+	}
  	// NOTE(): Particles
 	for (s32 index = 0; index < particles->num; index++)
 	{

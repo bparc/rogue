@@ -161,7 +161,11 @@ fn v2 EaseInThenOut(f32 min, f32 max, f32 mid, f32 t)
 
 	f32 t0 = t;
 	f32 t1 = Smoothstep(t0, 0.9f);
+	t1 *= t1;
+
 	f32 t2 = Smoothstep(1.0f - t0, 0.95f);
+	t2 *= t2;
+	
 	f32 t3 = Smoothstep(t0, 0.2f);
 
 	result.x = (min * t1) - (max * t2) + (t3 * mid);
