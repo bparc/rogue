@@ -92,7 +92,7 @@ fn void RenderRange(command_buffer_t *out, map_t *map,v2s center, int radius, v4
         	v2s target = V2S(x, y);
 
             if (IsInsideCircle(target, V2S(1,1), center, radius)) {
-				if (GetTile(map, x, y) != 0 && InMapBounds(map, target)) { // this doesn't work, its supposed to not draw range area over grids where floor isnt placed
+				if (GetTile(map, x, y) != 0 && IsTraversable(map, target)) { // this doesn't work, its supposed to not draw range area over grids where floor isnt placed
 					if (IsLineOfSight(map, center, target)) {
 						RenderIsoTile(out, map, V2S(x,y), A(color, 0.5f), true, 0);
 					}
