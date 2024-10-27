@@ -82,7 +82,7 @@ fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count)
 	return sufficient;
 }
 
-fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_t *target, v2s target_p)
+fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_id_t target, v2s target_p)
 {
 	async_action_t *result = 0;
 	if ((queue->action_count < ArraySize(queue->actions)))
@@ -90,15 +90,9 @@ fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_
 		result = &queue->actions[queue->action_count++];
 		
 		ZeroStruct(result);
-		if (target)
-		{
-			result->target_id = target->id;
-			result->target_p = target->p;
-		}
-		else
-		{
-			result->target_p = target_p;
-		}
+		result->target_id = target;
+		result->target_p  = target_p;
+
 		result->action_type.type = type;
 	}
 }
@@ -241,8 +235,16 @@ fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
 		}
 }
 
+const f32 ScaleTByDistance(v2 a, v2 b, f32 t)
+{
+	f32 result = t / (Distance(a, b) * 0.005f);
+	return result;
+}
+
 fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, command_buffer_t *out, f32 dt, assets_t *assets, game_world_t *state)
 {
+	const map_t *map = state->map;
+
 	for (s32 index = 0; index < queue->action_count; index++)
 	{
 		async_action_t *action = &queue->actions[index];
@@ -257,11 +259,20 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 
 			// NOTE(): The duration is proportional to the distance.
 
-			v2 target_p = GetTileCenter(state->map, action->target_p);
-			f32 t = action->elapsed / (Distance(user->deferred_p, target_p) * 0.005f);
-			finished = t >= 1.0f;
-
-			DrawRangedAnimation(out, user->deferred_p, target_p, params->animation_ranged, t);
+			v2 From = GetTileCenter(map, action->target_p);
+			v2 To = user->deferred_p;
+			f32 time = ScaleTByDistance(From, To, action->elapsed);
+			finished = (time >= 1.0f);
+			DrawRangedAnimation(out, To, From, params->animation_ranged, time);
+		}
+		else
+		if (params->flags & action_display_move_name)
+		{
+			f32 time = action->elapsed;
+			v2 X = EaseInThenOut(40.0f, 60.0f, 15.0f, time);
+			f32 alpha = 1.0f - X.y;
+			DrawDiegeticText(state, user->deferred_p, V2((-20.0f + X.x), -80.0f), A(White(), alpha), params->name);
+			finished =  (time >= 1.0f);
 		}
 
 		if (finished)

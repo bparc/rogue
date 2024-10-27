@@ -234,72 +234,60 @@ fn void ActivateSlotAction(game_world_t *state, entity_t *user, entity_t *target
     entity_storage_t *storage = state->storage;
     turn_queue_t *queue = state->turns;
 
-    b32 LOSTest = IsLineOfSight(state->map, user->p, target_p);
-
-    b32 ExecuteAction = false;
-    if (LOSTest)
-        ExecuteAction = ConsumeActionPoints(queue, queue->god_mode_enabled ? 0 : Params->cost);
-
-    if (ExecuteAction)
+    switch(action->type)
     {
-        switch(action->type)
+        case action_ranged_attack:
         {
-            case action_ranged_attack:
-            {
-                HandleAttack(state, user, target, action->type);
-                user->has_hitchance_boost = false;
-                user->hitchance_boost_multiplier = 1.0f;
-                break;
-            }
-            case action_melee_attack:
-            {
-                HandleAttack(state, user, target, action->type);
-                user->has_hitchance_boost = false;
-                user->hitchance_boost_multiplier = 1.0f;
-                break;
-            }
-            case action_throw:
-            {
-                const char *prefix = "blast ";
-                s32 damage = Params->damage;
-
-                v2s area = Params->area;
-                s32 radius_inner = area.x;
-                s32 radius_outer = area.x * (s32)2;
-                v2s explosion_center = state->cursor->p;
-
-                for (s32 i = 0; i < storage->num; i++)
-                {
-                    entity_t *entity = &storage->entities[i];
-                    f32 distance = DistanceV2S(explosion_center, entity->p);
-                    
-                    if (distance <= radius_inner) {
-                        DoDamage(state, user, entity, damage, prefix);
-                    } else if (distance <= radius_outer) {
-                        DoDamage(state, user, entity, damage, prefix);
-                        PushEntity(state, explosion_center, entity, 2, 25);
-                    }
-
-                }
-                break;
-            }
-            case action_push:
-            {
-                PushEntity(state, user->p, target, 4, 25);
-                break;
-            }
-            case action_heal_self:
-            {
-                if (target == user)
-                {
-                    Heal(target, (s16) Params->value);
-                    DebugLog("healed up for %i hp", (s16)Params->value);
-                }
-            }   break;
-            case action_none:
-            default:
-                break;
+            HandleAttack(state, user, target, action->type);
+            user->has_hitchance_boost = false;
+            user->hitchance_boost_multiplier = 1.0f;
+            break;
         }
+        case action_melee_attack:
+        {
+            HandleAttack(state, user, target, action->type);
+            user->has_hitchance_boost = false;
+            user->hitchance_boost_multiplier = 1.0f;
+            break;
+        }
+        case action_throw:
+        {
+            const char *prefix = "blast ";
+            s32 damage = Params->damage;
+            v2s area = Params->area;
+            s32 radius_inner = area.x;
+            s32 radius_outer = area.x * (s32)2;
+            v2s explosion_center = state->cursor->p;
+            for (s32 i = 0; i < storage->num; i++)
+            {
+                entity_t *entity = &storage->entities[i];
+                f32 distance = DistanceV2S(explosion_center, entity->p);
+                
+                if (distance <= radius_inner) {
+                    DoDamage(state, user, entity, damage, prefix);
+                } else if (distance <= radius_outer) {
+                    DoDamage(state, user, entity, damage, prefix);
+                    PushEntity(state, explosion_center, entity, 2, 25);
+                }
+            }
+            break;
+        }
+        case action_push:
+        {
+            PushEntity(state, user->p, target, 4, 25);
+            break;
+        }
+        case action_heal_self:
+        {
+            if (target == user)
+            {
+                Heal(target, (s16) Params->value);
+                DebugLog("healed up for %i hp", (s16)Params->value);
+            }
+        }   break;
+        case action_none:
+        default:
+            break;
     }
 }
 

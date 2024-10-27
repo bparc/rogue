@@ -31,11 +31,17 @@ typedef enum {
 	action_type_count,
 } action_type_t;
 
+typedef enum
+{
+	action_display_move_name = 1 << 0,
+} action_flags_t;
+
 typedef struct
 {
 	action_type_t type;
 	const char *name;
 	s32 range;
+	s32 flags;
 	union
 	{
 	s32 damage;
@@ -90,7 +96,7 @@ fn inline b32 IsTargetSelf(action_type_t type)
 	return _Global_Action_Data[type].target & target_self;
 }
 
-fn const char *InferNameFromActionType(const char *name, memory_t *memory)
+fn const char *NameFromActionType(const char *name, memory_t *memory)
 {
 	s32 length = StringLength(name);
 	char *result = PushSize(memory, (length + 1));
@@ -126,35 +132,36 @@ void DefaultActionValues(void)
 
 fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
 {
-	#define ACTION(Type) \
-	_Global_Action_Names[action_##Type] = InferNameFromActionType(#Type, memory); \
+	#define ACT(Type) \
+	_Global_Action_Names[action_##Type] = NameFromActionType(#Type, memory); \
 	_Global_Action_Data[action_##Type]  = (action_params_t)
 
-	ACTION(melee_attack)
+	ACT(melee_attack)
 	{
 		.damage = 3,
 		.range  = 2,
 		.cost   = 1,
+		.flags  = action_display_move_name,
 	};
-	ACTION(ranged_attack)
+	ACT(ranged_attack)
 	{
 		.range  = 5,
 		.cost   = 1,
 		.damage = 4,
 	};
-	ACTION(heal_self)
+	ACT(heal_self)
 	{
 		.cost = 2,
 		.damage = 10,
 		.value 	= 10,
 		.target = target_self,
 	};
-	ACTION(push)
+	ACT(push)
 	{
 		.range = 2,
 		.cost  = 3,
 	};
-	ACTION(throw)
+	ACT(throw)
 	{
 		.animation_ranged = &assets->PlayerGrenade,
 		.damage = 20,

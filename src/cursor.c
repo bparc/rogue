@@ -50,7 +50,7 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 		// are activated directly from the menu, without opening the cursor.
 		if (IsTargetSelf(equipped.type))
 		{
-			QueryAsynchronousAction(queue, equipped.type, user, cursor->p);
+			QueryAsynchronousAction(queue, equipped.type, user->id, cursor->p);
 		}
 		else
 		{
@@ -118,7 +118,16 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 			b32 positioned_on_user = CompareVectors(cursor->p, user->p);
 			if (target_valid && (positioned_on_user == false))
 			{
-				QueryAsynchronousAction(queue, equipped.type, target, cursor->p);
+				entity_id_t ID = target ? target->id : 0;
+				v2s p = target ? target->p : cursor->p;
+
+				b32 query_action = false;
+				b32 LOSTest = IsLineOfSight(map, user->p, p);
+    			if (LOSTest)
+        			query_action = ConsumeActionPoints(queue, queue->god_mode_enabled ? 0 : settings->cost);
+
+        		if (query_action)
+					QueryAsynchronousAction(queue, equipped.type, ID, p);
 			}
 		}
 	}

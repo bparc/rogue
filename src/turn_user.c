@@ -145,7 +145,6 @@ fn void DoEnemyAction(game_world_t *game, entity_t *entity, entity_t *target, f3
 		{
 			v2 p = EaseInThenOut(40.0f, 60.0f, 15.0f, t);
 			f32 alpha = 1.0f - p.y;
-
 			DrawDiegeticText(game, entity->deferred_p, V2((-20.0f + p.x), -80.0f), A(White(), alpha), "SLASH!");
 			if (inflict_damage)
 				DoDamage(game, entity, target, (entity->attack_dmg + 7), "");

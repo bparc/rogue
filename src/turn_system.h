@@ -92,7 +92,7 @@ typedef struct
 } turn_queue_t;
 
 fn void DefaultTurnOrder(turn_queue_t *queue);
-fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_t *target, v2s target_p);
+fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_id_t target, v2s target_p);
 
 fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count);
 fn entity_t *GetActiveUnit(const turn_queue_t *queue);
