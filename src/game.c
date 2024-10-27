@@ -231,14 +231,14 @@ fn inline void SingleTarget(game_world_t *state, entity_t *user, entity_t *targe
         if ((missed == false))
         {    
             if (crited)
-                DoDamage(state, user, target, user->attack_dmg * CRITICAL_DAMAGE_MULTIPLIER, "critical ");
+                DoDamage(state, user, target, params->damage * CRITICAL_DAMAGE_MULTIPLIER, "critical ");
             else
-                DoDamage(state, user, target, user->attack_dmg, "");
+                DoDamage(state, user, target, params->damage, "");
         }
         else
         {
             if (grazed)
-                DoDamage(state, user, target, user->attack_dmg / 2, "graze ");
+                DoDamage(state, user, target, params->damage / 2, "graze ");
             else
             {
                 LogLn(state->log, "missed!");
@@ -248,8 +248,6 @@ fn inline void SingleTarget(game_world_t *state, entity_t *user, entity_t *targe
     }
 }
 
-#define GRENADE_EXPLOSION_RADIUS 3  // temp value
-#define GRENADE_DAMAGE 50           // temp value
 // todo: In the future make walls protect entities from explosions using ray casting
 fn void CommitAction(game_world_t *state, entity_t *user, entity_t *target, action_t *action, v2s target_p)
 {
