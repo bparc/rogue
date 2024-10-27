@@ -126,6 +126,44 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log, as
 	HUD(Debug.out, state, state->turns, state->storage, assets, &input);
 }
 
+fn inline void RenderEntity(command_buffer_t *out, const entity_t *entity, f32 alpha, assets_t *assets, const map_t *map)
+{
+	v2 p = entity->deferred_p;
+	bitmap_t *bitmap = IsHostile(entity) ? &assets->Slime : &assets->Player[0];
+	v2 bitmap_p = p;
+	// TODO(): Still somewhat hard-coded.
+	v2 cube_bb_sz = V2(24, 24);
+	if ((entity->size.x == 2) && (entity->size.y == 2))
+	{
+		bitmap = &assets->SlimeBig;
+		bitmap_p = Add(bitmap_p, Scale(map->tile_sz, 0.5f));
+		p = Add(p, Scale(map->tile_sz, 0.5f));
+		cube_bb_sz = V2(64.0f, 64.0f);
+	}
+	// NOTE(): Bitmap
+	v4 bitmap_color = PureWhite();
+	v2 bitmap_sz = bitmap->scale;
+	bitmap_p = ScreenToIso(bitmap_p);
+	bitmap_p = Sub(bitmap_p, Scale(bitmap_sz, 0.5f)); //center bitmap
+	bitmap_p.y -= bitmap_sz.y * 0.25f; //center bitmap "cube"
+
+	// NOTE(): Flickering
+	if (entity->blink_time > 0)
+	{
+		f32 t = entity->blink_time;
+		t = t * t;
+		f32 blink_rate = 0.4f;
+		if (fmodf(t, blink_rate) >= (blink_rate * 0.5f))
+			bitmap_color = Red();
+		else
+			bitmap_color = A(Blue(), 0.9f);
+	}
+
+	bitmap_color.w = alpha;
+	DrawBitmap(out, bitmap_p, bitmap_sz, bitmap_color, bitmap);
+	RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
+}
+
 fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets)
 {
 	map_t *map = state->map;

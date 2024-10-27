@@ -45,6 +45,11 @@ fn entity_t *GetActiveUnit(const turn_queue_t *queue)
 	return result;
 }
 
+fn b32 ActionQueueCompleted(const turn_queue_t *queue)
+{
+	return (queue->action_count == 0);
+}
+
 fn int32_t IsEntityActive(turn_queue_t *queue, entity_storage_t *storage, entity_id_t id)
 {
 	entity_t *result = NextInOrder(queue, storage);
@@ -281,7 +286,7 @@ fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, comm
 			CommitAction(state, user, GetEntity(queue->storage, action->target_id), &action->action_type, action->target_p);
 		}
 
-		action->elapsed += dt * 1.5f;
+		action->elapsed += dt * 1.0f;
 	}
 }
 
@@ -315,6 +320,7 @@ fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queu
 	RenderRange(out, map, entity->p, range, Green()); // Range
 	f32 speed_mul = TURN_SPEED_NORMAL;
 	queue->time += dt * speed_mul;
+
 	switch(queue->interp_state)
 	{
 	case interp_wait_for_input:
@@ -343,7 +349,6 @@ fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queu
 			entity->deferred_p = Lerp2(a, b, queue->time);
 			if ((queue->time >= 1.0f))
 			{
-				queue->time = 0.0f;
 			 	if (queue->action_points > 0)
 			 	{
 			 		if (ChangeQueueState(queue, interp_request))
@@ -351,41 +356,19 @@ fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queu
 			 	}
 			 	else
 			 	{
-			 		entity_id_t target = AttemptAttack(state, entity, range);
-			 		entity_t *player = GetEntity(storage, target);
-
-			 		if (player && IsLineOfSight(map, entity->p, player->p))
-			 		{
-						ChangeQueueState(queue, interp_attack);
-						queue->attack_target = target;
-						queue->action_executed = false;
-					}
+			 		b32 success = ScheduleEnemyAction(state, entity, range);
+			 		if ((ActionQueueCompleted(queue) == false))
+						ChangeQueueState(queue, interp_action);
 					else
-					{
 						ChangeQueueState(queue, interp_accept);
-					}
 			 	}
 			}
 		} break;
-	case interp_attack:
+	case interp_action:
 		{
-			entity_t *target = GetEntity(storage, queue->attack_target);
-			b32 finish = true;
-			if (target)
-			{
-				f32 distance = Distance(entity->deferred_p, target->deferred_p);
-				f32 t = (queue->time * 0.1f);
-				if (queue->enemy_action == enemy_action_shoot)
-					t /= (distance * 0.005f);
-
-				finish = t >= 1.0f;
-
-				b32 execute = (t >= 0.5f && !queue->action_executed);
-				DoEnemyAction(state, entity, target, t / 0.5f, dt, assets, out, execute);
-				if (execute)
-					queue->action_executed = true;
-			}
-			if (finish)
+			if (!ActionQueueCompleted(queue))
+				queue->time = 0.0f;
+			if (queue->time >= 3.0f)
 				ChangeQueueState(queue, interp_accept);
 		} break;
 	case interp_accept:

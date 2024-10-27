@@ -68,7 +68,7 @@ fn void Perish(game_world_t *game, entity_t *entity)
 	}
 }
 
-fn entity_id_t AttemptAttack(game_world_t *World, entity_t *requestee, s32 effective_range)
+fn b32 ScheduleEnemyAction(game_world_t *World, entity_t *requestee, s32 effective_range)
 {
 	turn_queue_t *queue = World->turns;
 	entity_id_t result = 0;
@@ -77,78 +77,19 @@ fn entity_id_t AttemptAttack(game_world_t *World, entity_t *requestee, s32 effec
 	entity_t *target = DEBUGGetPlayer(World->storage);
 	if (target && IsInsideCircle(target->p, target->size, requestee->p, effective_range))
 	{
-		result = target->id;
-
-		f32 random_chance = RandomFloat();
-		DebugLog("%f", random_chance);
-
+		action_type_t action_type = action_none;
 		if (RandomChance(30))
-			queue->enemy_action = enemy_action_slash;
+			action_type = action_slash;
 		else
-			queue->enemy_action = enemy_action_shoot;
+			action_type = action_slime_ranged;
 
-	}
-	return result;
-}
-
-fn void RenderEntity(command_buffer_t *out, const entity_t *entity, f32 alpha, assets_t *assets, const map_t *map)
-{
-	v2 p = entity->deferred_p;
-	bitmap_t *bitmap = IsHostile(entity) ? &assets->Slime : &assets->Player[0];
-	v2 bitmap_p = p;
-	// TODO(): Still somewhat hard-coded.
-	v2 cube_bb_sz = V2(24, 24);
-	if ((entity->size.x == 2) && (entity->size.y == 2))
-	{
-		bitmap = &assets->SlimeBig;
-		bitmap_p = Add(bitmap_p, Scale(map->tile_sz, 0.5f));
-		p = Add(p, Scale(map->tile_sz, 0.5f));
-		cube_bb_sz = V2(64.0f, 64.0f);
-	}
-	// NOTE(): Bitmap
-	v4 bitmap_color = PureWhite();
-	v2 bitmap_sz = bitmap->scale;
-	bitmap_p = ScreenToIso(bitmap_p);
-	bitmap_p = Sub(bitmap_p, Scale(bitmap_sz, 0.5f)); //center bitmap
-	bitmap_p.y -= bitmap_sz.y * 0.25f; //center bitmap "cube"
-
-	// NOTE(): Flickering
-	if (entity->blink_time > 0)
-	{
-		f32 t = entity->blink_time;
-		t = t * t;
-		f32 blink_rate = 0.4f;
-		if (fmodf(t, blink_rate) >= (blink_rate * 0.5f))
-			bitmap_color = Red();
-		else
-			bitmap_color = A(Blue(), 0.9f);
-	}
-
-	bitmap_color.w = alpha;
-	DrawBitmap(out, bitmap_p, bitmap_sz, bitmap_color, bitmap);
-	RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
-}
-
-fn void DoEnemyAction(game_world_t *game, entity_t *entity, entity_t *target, f32 t, f32 dt, assets_t *assets, command_buffer_t *out, b32 inflict_damage)
-{
-	turn_queue_t *queue = game->turns;
-	switch (queue->enemy_action)
-	{
-	case enemy_action_shoot:
+		// TODO(Arc): LINE OF SIGHT TEST (etc.) GOES HERE.
+		b32 LOSTest = true;
+		if (LOSTest)
 		{
-			if (t < 1.0f)
-				DrawRangedAnimation(out, entity->deferred_p, target->deferred_p, &assets->SlimeBall, t);
-			if (inflict_damage)
-				DoDamage(game, entity, target, entity->attack_dmg, "");
-		} break;
-	case enemy_action_slash:
-		{
-			v2 p = EaseInThenOut(40.0f, 60.0f, 15.0f, t);
-			f32 alpha = 1.0f - p.y;
-			DrawDiegeticText(game, entity->deferred_p, V2((-20.0f + p.x), -80.0f), A(White(), alpha), "SLASH!");
-			if (inflict_damage)
-				DoDamage(game, entity, target, (entity->attack_dmg + 7), "");
-		} break;
+			QueryAsynchronousAction(queue, action_type, target->id, target->p);
+			result = target->id;
+		}
 	}
-	
+	return true;
 }

@@ -2,7 +2,7 @@ typedef enum
 {
 	interp_request,
 	interp_transit,
-	interp_attack,
+	interp_action,
 	interp_accept,
 	interp_wait_for_input,
 } interpolator_state_t;
@@ -34,12 +34,6 @@ typedef struct
 	f32 time_remaining;
 } evicted_entity_t;
 
-typedef enum
-{
-	enemy_action_shoot,
-	enemy_action_slash,
-} enemy_action_t;
-
 typedef struct
 {
 	// NOTE(): Stores the turns as an list of entity ids
@@ -54,7 +48,6 @@ typedef struct
 	// Maybe we could move this out into
 	// some kind of "turn state" to make this a little bit easier.
 	v2s starting_p;
-	entity_id_t attack_target;
 	interpolator_state_t interp_state;
 	f32 time; // NOTE(): A variable within 0.0 to 1.0 range for interpolating values.
 	s32 max_action_points;
@@ -82,13 +75,9 @@ typedef struct
 	// NOTE(): AI stuff
 	path_t path;
 
-	b32 action_executed;
-	enemy_action_t enemy_action;
-
 	s32 break_mode_enabled;
 	interpolator_state_t requested_state;
 	s32 request_step;
-
 } turn_queue_t;
 
 fn void DefaultTurnOrder(turn_queue_t *queue);
@@ -96,3 +85,5 @@ fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_
 
 fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count);
 fn entity_t *GetActiveUnit(const turn_queue_t *queue);
+
+fn b32 ActionQueueCompleted(const turn_queue_t *queue);
