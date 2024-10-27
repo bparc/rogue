@@ -134,7 +134,7 @@ fn void AddBloodOnNearbyTiles(map_t *map, v2s shooter_position, v2s hit_position
     if (hit_velocity == high_velocity) {
         splatter_length = (rand() % 3) + 1;
     } else {
-        splatter_length = 1;
+        splatter_length = 0;
     }
     int trail_count = 0;
 
