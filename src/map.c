@@ -220,20 +220,6 @@ fn b32 IsWall(const map_t *map, v2s p)
 	return result;
 }
 
-typedef struct
-{
-	const map_t *map;
-	v2s from;
-	v2s to;
-
-	f32 t;
-	v2s at;
-
-	v2s delta;
-	v2 ray;
-	v2 distance_to_edge;
-} dda_line_t;
-
 fn dda_line_t BeginDDALine(const map_t *map, v2s from, v2s to)
 {
 	dda_line_t result = {0};
@@ -276,17 +262,15 @@ fn b32 ContinueDDALine(dda_line_t *it)
 	return result;
 }
 
-fn b32 IsLineOfSight(const map_t *map, v2s from, v2s to) {
+fn b32 IsLineOfSight(const map_t *map, v2s from, v2s to)
+{
 	dda_line_t dda = BeginDDALine(map, from, to);
 
 	while (ContinueDDALine(&dda)) {
-		if (CompareVectors(dda.at, from)) {
+		if (CompareVectors(dda.at, from))
 			continue;
-		}
-
-		if (GetTileValue(map, dda.at.x, dda.at.y) == 2) { // if wall
+		if (IsWall(map, dda.at))
 			return false;
-		}
 	}
 
 	return true;

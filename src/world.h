@@ -183,56 +183,32 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	{
 		for (s32 x = 0; x < map->x; x++)
 		{
-			s32 value = GetTileValue(map, x, y);
-			if (value > 0)
+			v2s at = V2S(x, y);
+			//s32 x = at.x;
+			//s32 y = at.y;
+			if (!IsEmpty(map, at))
 			{
-				v4 color = White();
-				b32 Filled = 0;
-				f32 height = 0;
-
-				if (IsWall(map, V2S(x, y)))
+				const tile_t *Tile = GetTile(map, x, y);
+				RenderIsoTile(out, map, at, White(), false, 0);
+	
+				if (IsWall(map, at))
+					RenderIsoTile(out, map, at, White(), true, 15);
+	
+				if (IsTraversable(map, at))
 				{
-					Filled = true;
-					height = 15;
-				}
-
-				RenderIsoTile(out, map, V2S(x, y), color, Filled, height);
-
-				#if RENDER_TILE_BITMAPS
-				if (value == 1)
-				{
-					bitmap_t* bitmap = PickTileBitmap(map, x, y, assets);
+					bitmap_t *bitmap = PickTileBitmap(map, x, y, assets);
+					RenderTileAlignedBitmap(out, map, at, bitmap, PureWhite());
 					
-					v2 p = MapToScreen(map, V2S(x, y));
-					p = ScreenToIso(p);
-					p = Sub(p, Scale(bitmap->scale, 0.5f));
-					//p.x -= bitmap->scale.x * 0.5f;
-					DrawBitmap(out, p, bitmap->scale, PureWhite(), bitmap);
-					//DrawRectOutline(out, p, bitmap->scale, Red());
-
 					// Draw temporary blood overlay
-					tile_t *tile = GetTile(map, x, y);
-					if (tile && tile->blood != 0) {
-						v4 blood_highlight = (tile->blood == blood_red) ? A(Red(), 0.8f) : A(Green(), 0.8f);
-						DrawBitmap(out, p, bitmap->scale, blood_highlight, bitmap);
+					if (Tile->blood)
+					{
+						v4 color = (Tile->blood == blood_red) ? Red() : Green();
+						RenderTileAlignedBitmap(out, map, at, bitmap, A(color, 0.8f));
 					}
 				}
-				#endif
-				
-				if (GetTileTrapType(map, x, y) != trap_type_none)
-					RenderIsoTile(out, map, V2S(x, y), LightGrey(), true, 0);
-
-				u8 tileValue = GetTileTrapType(map, x, y);
-				if ( tileValue != trap_type_none){
-						//RenderIsoTile(out, map, V2S(x, y), LightGrey(), true, 0);
-						bitmap_t* bitmap = &assets->Traps[tileValue - 1];
-						
-						v2 p = MapToScreen(map, V2S(x, y));
-						p = ScreenToIso(p);
-						p = Sub(p, Scale(bitmap->scale, 0.5f));
-						//p.x -= bitmap->scale.x * 0.5f;
-						DrawBitmap(out, p, bitmap->scale, PureWhite(), bitmap);
-				}
+	
+				if ((Tile->trap_type != trap_type_none))
+					RenderTileAlignedBitmap(out, map, at, &assets->Traps[(Tile->trap_type - 1)], PureWhite());	
 			}
 		}
 	}

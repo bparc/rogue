@@ -89,6 +89,12 @@ fn inline v4 A(v4 color, f32 a)
 	return color;
 }
 
+fn inline v4 W(v4 color, f32 w)
+{
+	color.w = w;
+	return color;
+}
+
 fn inline v4 ColorFromPalette(s32 index)
 {
 	const v4 colors[8] = {Red(), Green(), Pink(), Blue()};

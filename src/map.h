@@ -18,14 +18,24 @@ typedef enum {
 typedef struct
 {
 	u8 value;
-	trap_type_t trap_type;
-	blood_type_t blood;
+	u8 trap_type;
+	u8 blood;
 } tile_t;
 
 typedef struct
 {
-	s32 x;
-	s32 y;
+	union
+	{
+		struct
+		{
+			s32 x;
+			s32 y;
+		};
+		struct
+		{
+			v2s size;
+		};
+	};
 	tile_t *tiles;
 	v2 tile_sz;
 } map_t;
@@ -65,3 +75,22 @@ fn void RayCast(const map_t *map, v2s from, v2s to);
 
 // NOTE(): Assets
 fn bitmap_t *PickTileBitmap(const map_t* map, s32 x, s32 y, assets_t *assets);
+
+// NOTE(): Iterators
+
+typedef struct
+{
+	const map_t *map;
+	v2s from;
+	v2s to;
+
+	f32 t;
+	v2s at;
+
+	v2s delta;
+	v2 ray;
+	v2 distance_to_edge;
+} dda_line_t;
+
+fn dda_line_t BeginDDALine(const map_t *map, v2s from, v2s to);
+fn b32 ContinueDDALine(dda_line_t *it);
