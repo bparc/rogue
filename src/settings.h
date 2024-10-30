@@ -11,8 +11,6 @@
 // NOTE(): RENDERING
 #define TILE_PIXEL_SIZE 32
 #define SKY_COLOR RGB(59, 44, 81)
-#define DISABLE_ALL_DEBUG_RENDERING false // TODO(): To be implemented...
-#define ENABLE_ASSET_RELOADING false // NOTE(): Allows for reloading the assets via the 'R' key.
 #define RENDER_TILE_BITMAPS true
 #define VIEWPORT_INTEGER_SCALE 4 // 1, 2, 3,
 

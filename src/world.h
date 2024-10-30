@@ -101,7 +101,7 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *asset
 	state->turns = PushStruct(turn_queue_t, memory);
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->particles = PushStruct(particles_t, memory);
-	state->map = CreateMap(30, 20, memory, TILE_PIXEL_SIZE);
+	state->map = CreateMap(32, 32, memory, TILE_PIXEL_SIZE);
 	
 	SetupActionDataTable(memory, assets);
 	DefaultActionBar(&state->slot_bar,  assets);
@@ -164,7 +164,120 @@ fn inline void RenderEntity(command_buffer_t *out, const entity_t *entity, f32 a
 	RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
 }
 
-fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets)
+fn v2s ViewportToMap(const game_world_t *World, v2 p)
+{
+	p = Div(p, V2(VIEWPORT_INTEGER_SCALE, VIEWPORT_INTEGER_SCALE));
+	p = Sub(p, World->camera_position);
+	p = IsoToScreen(p);
+	p = Div(p, World->map->tile_sz);
+	v2s result = {0};
+	result.x = (s32)p.x;
+	result.y = (s32)p.y;
+	return result;
+}
+
+fn inline void RenderTile(command_buffer_t *out, map_t *map, s32 x, s32 y, assets_t *assets)
+{
+	v2s at = {x, y};
+	if (!IsEmpty(map, at))
+	{
+		const tile_t *Tile = GetTile(map, x, y);
+		RenderIsoTile(out, map, at, White(), false, 0);
+
+		if (IsTraversable(map, at))
+		{
+			bitmap_t *bitmap = PickTileBitmap(map, x, y, assets);
+			RenderTileAlignedBitmap(out, map, at, bitmap, PureWhite());
+			
+			// Draw temporary blood overlay
+			if (Tile->blood)
+			{
+				v4 color = (Tile->blood == blood_red) ? Red() : Green();
+				RenderTileAlignedBitmap(out, map, at, bitmap, A(color, 0.8f));
+			}
+		}
+		if (IsWall(map, at))
+			RenderIsoTile(out, map, at, White(), true, 15);
+		if ((Tile->trap_type != trap_type_none))
+			RenderTileAlignedBitmap(out, map, at, &assets->Traps[(Tile->trap_type - 1)], PureWhite());	
+	}
+}
+
+fn inline void ClipToViewport(game_world_t *World, map_t *map, bb_t clipplane, command_buffer_t *out)
+{
+	v2 viewport = Sub(clipplane.max, clipplane.min);
+	assets_t *assets = World->assets;
+
+	// NOTE(): Tessalate the clipplane into a parallelogram and two
+	// triangles.
+	v2s top_corner = ViewportToMap(World, TopMaxCorner(clipplane));
+	v2s bot_corner = ViewportToMap(World, BotMinCorner(clipplane));
+
+	f32 projection_coefficient = 0.5f;
+	viewport = Ratio(viewport, 1.0f / projection_coefficient);
+
+	v2s min1 = ViewportToMap(World, clipplane.min);
+	v2s max1 = ViewportToMap(World, Add(clipplane.min, viewport));
+
+	v2s min2 = ViewportToMap(World, clipplane.max);
+	v2s max2 = ViewportToMap(World, Sub(clipplane.max, viewport));
+
+	#ifdef _DEBUG
+	DrawRectOutline(Debug.out_top, clipplane.min, Sub(clipplane.max, clipplane.min), Orange());
+	DrawLine(Debug.out_top, clipplane.min, Add(clipplane.min, viewport), Red());
+	DrawLine(Debug.out_top, clipplane.max, Sub(clipplane.max, viewport), Red());
+	#endif
+
+	// NOTE(): Sort by Y
+	v2s top_min;
+    v2s top_max;
+    v2s bot_min;
+    v2s bot_max;
+    if(min1.y<min2.y)
+    {
+        top_min = min1;
+        top_max = max1;
+        bot_min = max2;
+        bot_max = min2;
+    }
+    else
+    {
+        top_min = max2;
+        top_max = min2;
+        bot_min = min1;
+        bot_max = max1;
+    }
+
+    // NOTE(): Top triangle
+    v2s min = top_min;
+    v2s max = top_max;
+    v2s corner = top_corner;
+    for(s32 y = 0; y < min.y - corner.y; y++)
+    for(s32 x = -y; x <= y; x++)
+            RenderTile(out,map,corner.x+x,corner.y+y,assets);
+    // NOTE(): Parallelogram
+    if(min1.y<min2.y)
+    {
+        for(s32 y = 0; y <= min2.y - min.y; y++)
+        for(s32 x = 0; x <= max.x-min.x;x++)
+        	RenderTile(out, map,min.x+x+y,min.y+y,assets);
+    }
+    else
+    {
+        for(s32 y = 0; y <= min1.y - min.y; y++)
+        for(s32 x = 0; x <= max.x-min.x;x++)
+           RenderTile(out,map,(min.x+x)-y,min.y+y,assets);
+    }
+    // NOTE(): Bot triangle
+    min = bot_min;
+    max = bot_max;
+    corner = bot_corner;
+    for(s32 y = 1; y < (corner.y - max.y); y++)
+    for(s32 x = y; x < (max.x - min.x)-y; x++)
+    	RenderTile(out,map,min.x+x,min.y+y,assets);
+}
+
+fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets, v2 viewport)
 {
 	map_t *map = state->map;
 	entity_storage_t *storage = state->storage;
@@ -177,41 +290,12 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	DrawRect(out, V2(0, 0), V2(1920, 1080), SKY_COLOR); // NOTE(): Background
 	SetGlobalOffset(out, state->camera_position);
 
-	// NOTE(): Map
+	bb_t view = {0.0f};
+	view.min = V2(0.0f, 0.0f);
+	view.max = Add(view.min, viewport);
+	view = Shrink(view, 64.0f);
 
-	for (s32 y = 0; y < map->y; y++)
-	{
-		for (s32 x = 0; x < map->x; x++)
-		{
-			v2s at = V2S(x, y);
-			//s32 x = at.x;
-			//s32 y = at.y;
-			if (!IsEmpty(map, at))
-			{
-				const tile_t *Tile = GetTile(map, x, y);
-				RenderIsoTile(out, map, at, White(), false, 0);
-	
-				if (IsWall(map, at))
-					RenderIsoTile(out, map, at, White(), true, 15);
-	
-				if (IsTraversable(map, at))
-				{
-					bitmap_t *bitmap = PickTileBitmap(map, x, y, assets);
-					RenderTileAlignedBitmap(out, map, at, bitmap, PureWhite());
-					
-					// Draw temporary blood overlay
-					if (Tile->blood)
-					{
-						v4 color = (Tile->blood == blood_red) ? Red() : Green();
-						RenderTileAlignedBitmap(out, map, at, bitmap, A(color, 0.8f));
-					}
-				}
-	
-				if ((Tile->trap_type != trap_type_none))
-					RenderTileAlignedBitmap(out, map, at, &assets->Traps[(Tile->trap_type - 1)], PureWhite());	
-			}
-		}
-	}
+	ClipToViewport(state, map, view, out);
 
 	// NOTE(): Entities
 	for (s32 index = 0; index < storage->num; index++)

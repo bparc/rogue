@@ -215,6 +215,24 @@ fn v2 GetCenter(bb_t bb)
 	return result;
 }
 
+fn bb_t Stretch(bb_t bb, f32 amount)
+{
+	bb.min.x -= amount;
+	bb.min.y -= amount;
+	bb.max.x += amount;
+	bb.max.y += amount;
+	return bb;
+}
+
+fn bb_t Shrink(bb_t bb, f32 amount)
+{
+	bb.min.x += amount;
+	bb.min.y += amount;
+	bb.max.x -= amount;
+	bb.max.y -= amount;
+	return bb;
+}
+
 fn v2s Add32(v2s a, v2s b)
 {
 	v2s result = {a.x + b.x, a.y + b.y};
@@ -335,4 +353,41 @@ fn v2 GreaterThanEqual(v2 a, v2 b)
 	result.x = a.x >= b.x ? 1.0f : 0.0f;
 	result.y = a.y >= b.y ? 1.0f : 0.0f;
 	return result;
+}
+
+fn bb_t Bb(v2 min, v2 max)
+{
+	bb_t result = {min, max};
+	return result;
+}
+
+fn v2 TopMaxCorner(bb_t bb)
+{
+	return(V2(bb.max.x, bb.min.y));
+}
+
+fn v2 BotMinCorner(bb_t bb)
+{
+	return(V2(bb.min.x, bb.max.y));
+}
+
+fn v2 Ratio(v2 sides, float ratio)
+{
+    v2 result = sides;
+    result.x = 0.0f;
+    result.y = 0.0f;
+    
+    if(sides.x/sides.y>ratio)
+    {
+        result.x = (sides.y/sides.x)*ratio;
+        result.y = 1.0f;
+    }
+    else
+    {
+        result.y = (sides.x/sides.y)/ratio;
+        result.x = 1.0f;
+    }
+    
+    result = Mul(result, sides);
+    return result;
 }

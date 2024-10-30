@@ -453,4 +453,5 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 	ResolveAsynchronousActionQueue(queue, entity, out, dt, assets, state);
 	GarbageCollect(state, queue, dt);
 	DebugDrawPathSystem(queue, map, out);
+	ControlPanel(state->turns, &cons, state->storage);
 }

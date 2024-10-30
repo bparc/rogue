@@ -1,3 +1,24 @@
+int IsValidEntity(s32 globalX, s32 globalY, char *Data, s32 startX, s32 startY, v2s size, char entityChar) {
+    s32 n = size.x;
+    s32 m = size.y;
+
+    // within bounds?
+    if (startX < 0 || startY < 0 || startX + n > globalX || startY + m > globalY) {
+        return false;  // Out of bounds
+    }
+
+    // is entire requested size filled with entityChar?
+    for (int y = startY; y < startY + m; y++) {
+        for (int x = startX; x < startX + n; x++) {
+            if (Data[y * globalX + x] != entityChar) {
+                return false;  // Mismatch found
+            }
+        }
+    }
+
+    return true; 
+}
+
 fn void MakeSimpleMap(game_world_t *world)
 {
 	#define X 20
@@ -113,80 +134,14 @@ fn void MakeSimpleMap(game_world_t *world)
 
 }
 
-fn void ReloadAssets(assets_t *assets, log_t *log)
-{
-	LoadAssets(assets, NULL);
-	LogLn(log, "editor: reloading \"assets/\"");
-}
-
 fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *out, const client_input_t *input, log_t *log, assets_t *assets, const virtual_controls_t *cons)
 {
 	if ((editor->inited == false))
 	{
+		DebugLog("MakeSimpleMap()");
 		MakeSimpleMap(state);
 		editor->inited = true;
 	}
-
-	s32 count = input->char_count;
-	while (count--)
-	{
-		switch(ToUpper(input->char_queue[count]))
-		{
-			#if ENABLE_ASSET_RELOADING
-			// TODO(): We should technically free the OpenGL handles here, but since this is strictly a debug feature - it doesn't really matter.
-		case 'R': ReloadAssets(assets, log); break;
-			#endif
-		}
-	}	
-
-	v2 cursor_p = GetCursorP(input);
-	cursor_p = Div(cursor_p, V2(VIEWPORT_INTEGER_SCALE, VIEWPORT_INTEGER_SCALE));
-	cursor_p = Sub(cursor_p, state->camera_position);
-	cursor_p = IsoToScreen(cursor_p);
-	cursor_p = Div(cursor_p, state->map->tile_sz);
-
-	map_t *map = state->map;
-
-	#if 0
-	entity_t *player = DEBUGGetPlayer(state->storage);
-	v2s tile_p = {0};
-	tile_p.x = (s32)cursor_p.x;
-	tile_p.y = (s32)cursor_p.y;
-
-	SetGlobalOffset(out, state->camera_position);
-
-	dda_line_t at = BeginDDALine(map, player->p, tile_p);
-	do
-	{
-		if (IsTraversable(map, at.at) == true)
-		{
-			RenderIsoTile(out, map, at.at, Red(), true, 0);
-			continue;
-		}
-		break;
-	} while(ContinueDDALine(&at));
-	#endif
-
-	ControlPanel(state->turns, cons, state->storage);
-}
-
-int IsValidEntity(s32 globalX, s32 globalY, char *Data, s32 startX, s32 startY, v2s size, char entityChar) {
-    s32 n = size.x;
-    s32 m = size.y;
-
-    // within bounds?
-    if (startX < 0 || startY < 0 || startX + n > globalX || startY + m > globalY) {
-        return false;  // Out of bounds
-    }
-
-    // is entire requested size filled with entityChar?
-    for (int y = startY; y < startY + m; y++) {
-        for (int x = startX; x < startX + n; x++) {
-            if (Data[y * globalX + x] != entityChar) {
-                return false;  // Mismatch found
-            }
-        }
-    }
-
-    return true; 
+	
+	v2s cursor_p = ViewportToMap(state, GetCursorP(input));
 }

@@ -74,6 +74,11 @@ fn void RenderIsoTile(command_buffer_t *out, map_t *map, v2s offset, v4 color, s
 		RenderIsoCube(out, p, map->tile_sz, height, color);
 }
 
+fn void RenderIsoTile32(command_buffer_t *out, map_t *map, s32 x, s32 y, v4 color)
+{
+	RenderIsoTile(out, map, V2S(x, y), color, true, 0);
+}
+
 fn void RenderIsoTileArea(command_buffer_t *out, map_t *map, v2s min, v2s max, v4 color)
 {
 	for (int y = min.y; y < max.y; y++)

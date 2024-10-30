@@ -134,6 +134,14 @@ fn s32 DetectEdge(const map_t *map, v2s offset)
 	return -1;
 }
 
+fn v2s ScreenToMap(const map_t *map, v2 p)
+{
+	v2s result = {0};
+	result.x = (s32)(p.x / map->tile_sz.x);
+	result.y = (s32)(p.y / map->tile_sz.y);
+	return result;
+}
+
 fn v2 MapToScreen(const map_t *map, v2s p)
 {
 	v2 result = SV2(p.x, p.y);

@@ -50,8 +50,8 @@ fn s32 Startup(client_t *state)
 	memory->_memory = state->reserved;
 
 	command_buffer_t *buffers = state->buffers;
-	buffers[0] = PushCommandBuffer(memory, 1024 * 16);
-	buffers[2] = PushCommandBuffer(memory, 1024 * 16);
+	buffers[0] = PushCommandBuffer(memory, 1024 * 512);
+	buffers[2] = PushCommandBuffer(memory, 1024 * 512);
 	buffers[1] = PushCommandBuffer(memory, 1024);
 
 	state->event_log = PushStruct(log_t, memory);
@@ -97,7 +97,7 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 	Editor(&state->editor, &state->world, &state->buffers[2], &input, state->event_log, &state->assets, &virtual_cons);
 
 	Update(&state->world, dt, input, state->event_log, &state->assets, virtual_cons, &state->buffers[2]);
-	DrawFrame(&state->world, &state->buffers[0], dt, &state->assets);
+	DrawFrame(&state->world, &state->buffers[0], dt, &state->assets, V2(input.viewport[0], input.viewport[1]));
 	
 	EndFrame(state, &input);
 

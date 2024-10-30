@@ -80,14 +80,15 @@ fn v2s Sign2(v2 v);
 fn v2 ClampLength(v2 v, float max);
 fn v2 ClampToLine(v2 a, v2 b, v2 p);
 
+fn int IsInsideCircle(v2s realPos, v2s size, v2s center, s32 radius);
+
 typedef struct
 {
 	v2 min;
 	v2 max;
 } bb_t;
 
-fn bb_t Bounds(v2 min, v2 max);
+fn bb_t Bb(v2 min, v2 max);
 fn bb_t RectToBounds(v2 p, v2 sz);
 fn v2 GetCenter(bb_t bb);
-
-fn int IsInsideCircle(v2s realPos, v2s size, v2s center, s32 radius);
+fn bb_t Shrink(bb_t bb, f32 amount);
