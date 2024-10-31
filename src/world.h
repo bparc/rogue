@@ -72,7 +72,7 @@ typedef struct
 	map_t *map;
 	v2 camera_position;
 	
-	memory_t memory;
+	memory_t *memory;
 } game_world_t
 ;
 fn v2 CameraToScreen(const game_world_t *game, v2 p);
@@ -93,15 +93,14 @@ fn b32 Move(game_world_t *world, entity_t *entity, v2s offset);
 
 fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *assets)
 {
-	state->memory = Split(memory, MB(1));
-
+	state->memory = memory;
 	state->assets = assets;
 	state->log = log;
 	state->cursor = PushStruct(cursor_t, memory);
 	state->turns = PushStruct(turn_queue_t, memory);
 	state->storage = PushStruct(entity_storage_t, memory);
 	state->particles = PushStruct(particles_t, memory);
-	state->map = CreateMap(32, 32, memory, TILE_PIXEL_SIZE);
+	state->map = CreateMap(1024, 1024, memory, TILE_PIXEL_SIZE);
 	
 	SetupActionDataTable(memory, assets);
 	DefaultActionBar(&state->slot_bar,  assets);
@@ -293,7 +292,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	bb_t view = {0.0f};
 	view.min = V2(0.0f, 0.0f);
 	view.max = Add(view.min, viewport);
-	view = Shrink(view, 64.0f);
+	view = Shrink(view, 64.0f * 3.0f);
 
 	ClipToViewport(state, map, view, out);
 

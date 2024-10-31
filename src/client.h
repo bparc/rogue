@@ -34,7 +34,7 @@ typedef struct
 	command_buffer_t buffers[3];
 	log_t *event_log;
 	memory_t memory;
-	u8 reserved[MB(64)];
+	u8 reserved[MB(256)];
 	u8 keys_prev[256];
 	b32 inited;
 	f64 timestamp;

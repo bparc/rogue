@@ -41,9 +41,9 @@ typedef enum
 
 typedef enum
 {
+	action_mode_damage, // NOTE(): action_mode_damage is default.
 	action_mode_custom,
 	action_mode_heal,
-	action_mode_damage,
 	action_mode_dash,
 } action_mode_t; // NOTE(): Basic mode of interaction.
 
@@ -149,6 +149,7 @@ void DefaultActionValues(void)
 			Params->name = _Global_Action_Names[index];
 		if (!Params->range)
 			Params->range = 2;
+
 	}
 }
 
@@ -160,13 +161,11 @@ fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
 
 	ACT(melee_attack)
 	{
-		.mode = action_mode_damage,
 		.damage = 3,
 		.cost   = 1,
 	};
 	ACT(ranged_attack)
 	{
-		.mode = action_mode_damage,
 		.range  = 5,
 		.cost   = 1,
 		.damage = 4,
@@ -181,14 +180,12 @@ fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
 	};
 	ACT(push)
 	{
-		.mode = action_mode_damage,
 		.range = 2,
 		.cost  = 3,
 		.pushback = 2,
 	};
 	ACT(throw)
 	{
-		.mode = action_mode_damage,
 		.animation_ranged = &assets->PlayerGrenade,
 		.damage = 20,
 		.range  = 6,
@@ -197,7 +194,6 @@ fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
 	};
 	ACT(slash)
 	{
-		.mode = action_mode_damage,
 		.damage = 9,
 		.cost   = 3,
 		.flags  = action_display_move_name,
@@ -212,7 +208,6 @@ fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
 	ACT(slime_ranged)
 	{
 		.animation_ranged = &assets->SlimeBall,
-		.mode   = action_mode_damage,
 		.range  = 5,
 		.damage = 3,
 	};

@@ -25,7 +25,7 @@ struct path_tile_t
 typedef struct
 {
 	s32 length;
-	path_tile_t tiles[1024];
+	path_tile_t tiles[1024*1024*2];
 } path_t;
 
 typedef struct
@@ -37,5 +37,5 @@ typedef struct
 typedef struct
 {
 	s32 count;
-	min_queue_entry_t entries[1024];
+	min_queue_entry_t entries[1024*1024*2];
 } min_queue_t;

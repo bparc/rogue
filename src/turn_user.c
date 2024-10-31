@@ -18,7 +18,7 @@ fn s32 BeginTurn(game_world_t *game, entity_t *entity)
 		Assert(DebugPlayer);
 
 		path_t *path = &queue->path;
-		if (!FindPath(game->map, entity->p, DebugPlayer->p, path, game->memory))
+		if (!FindPath(game->map, entity->p, DebugPlayer->p, path, *game->memory))
 			DebugLog("Couldn't find a path!");
 		movement_point_count = 6;
 		queue->max_action_points = movement_point_count;

@@ -43,7 +43,7 @@ fn void *_Push(memory_t *_memory, s32 count, const char name[])
 	}
 
 #if _DEBUG
-	if (block_header_sz > 0)
+	if (result && (block_header_sz > 0))
 	{
 		alloc_t *block = (alloc_t *)((u8 *)result - block_header_sz);
 		strncpy(block->name, name, ArraySize(block->name));
