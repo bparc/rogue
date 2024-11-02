@@ -45,7 +45,7 @@ fn void _Assert(const char *message, const char *file, const char *function, int
 	Error("Assertion failed! \n\nProgram: %s\nLine: %i\n\nFunction: %s\nExpression: %s", file, line, function, message);
 }
 
-fn void Win32GetInput(client_input_t *result, HWND window)
+fn void Win32GetInput(client_input_t *result, HWND window, s32 wheel_delta)
 {
 	ZeroMemory(result, sizeof(*result));
 	RECT client_rect = {0};
@@ -57,6 +57,7 @@ fn void Win32GetInput(client_input_t *result, HWND window)
 	ScreenToClient(window, &cursor);
 	result->mouse[0] = (f32)cursor.x;
 	result->mouse[1] = (f32)cursor.y;
+	result->wheel = wheel_delta;
 	result->mouse_buttons[0] = (GetAsyncKeyState(VK_LBUTTON) < 0);
 	result->mouse_buttons[1] = (GetAsyncKeyState(VK_RBUTTON) < 0);
 	for (s32 index = '0'; index <= 'Z'; index++)

@@ -281,11 +281,3 @@ fn void SubdivideLargeSlime(game_world_t *game, entity_t *entity, s32 x, s32 y)
     if (result)
         result->deferred_p = entity->deferred_p;
 }
-
-fn v2 CameraToScreen(const game_world_t *game, v2 p)
-{
-    p = ScreenToIso(p);
-    p = Add(p, game->camera_position);
-    p = Scale(p, VIEWPORT_INTEGER_SCALE);
-    return p;
-}

@@ -108,15 +108,18 @@ fn void ControlPanel(turn_queue_t *queue, const virtual_controls_t *cons, entity
 		queue->break_mode_enabled = !queue->break_mode_enabled;
 	if (WentDown(cons->debug[2])) // Toggle
 		queue->god_mode_enabled = !queue->god_mode_enabled;
+	if (WentDown(cons->debug[3])) // Toggle
+		queue->free_camera_mode_enabled = !queue->free_camera_mode_enabled;
 
 	DebugPrint(
-		"ACT %i | MOV %i | BRK (F1): %s%s%s | GOD (F3): %s",
+		"ACT %i | MOV %i | BRK (F1): %s%s%s | GOD (F3): %s | FREE (F4): %s",
 		(queue->action_points),
 		(queue->movement_points),
 		(queue->break_mode_enabled ? "ON" : "OFF"),
 		(queue->interp_state == interp_wait_for_input) ? " | STEP (F2) -> " : "",
 		(queue->interp_state == interp_wait_for_input) ? interpolator_state_t_names[queue->requested_state] : "",
-		(queue->god_mode_enabled ? "ON" : "OFF"))
+		(queue->god_mode_enabled ? "ON" : "OFF"),
+		(queue->free_camera_mode_enabled ? "ON" : "OFF"))
 	;
 
 	if ((queue->interp_state == interp_wait_for_input) && WentDown(cons->debug[1]))
@@ -294,7 +297,7 @@ fn v2 CameraTracking(v2 p, v2 player_world_pos, v2 viewport, f32 dt)
 {
 	v2 player_iso_pos = ScreenToIso(player_world_pos);
 	
-	v2 screen_center = Scale(Scale(viewport, 1.0f / (f32)VIEWPORT_INTEGER_SCALE), 0.5f);
+	v2 screen_center = Scale(viewport, 0.5f);
 	v2 camera_offset = Sub(screen_center, player_iso_pos);
 	p = Lerp2(p, camera_offset, 5.0f * dt);
 	return p;
@@ -384,11 +387,10 @@ fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queu
 	}	
 }
 
-fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
+fn void TurnSystem(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
 	// NOTE(): Setup
 	queue->storage = storage;
-	SetGlobalOffset(out, state->camera_position); // NOTE(): Let's pass the camera position via the PushRenderOutput call instead of this SetGlobalOffset stuff.
 	// NOTE(): Process the current turn
 
 	entity_t *entity = NextInOrder(queue, storage);
@@ -427,11 +429,25 @@ fn void TurnKernel(game_world_t *state, entity_storage_t *storage, map_t *map, t
 		RenderIsoTile(out, map, entity->p, Red(), (queue->interp_state == interp_wait_for_input), 0);
 		#endif
 
+		// NOTE(): Camera controls.
+
 		// NOTE(): We're focusing the camera either on a cursor or on a player position,
 		// depending on the current mode.
-		queue->focus_p = state->cursor->active ? GetTileCenter(map, state->cursor->p) : entity->deferred_p;
-		state->camera_position = CameraTracking(state->camera_position, queue->focus_p, GetViewport(input), dt);
-		
+		v2 focus_p = state->cursor->active ? GetTileCenter(map, state->cursor->p) : entity->deferred_p;
+		if (!queue->free_camera_mode_enabled)
+		{
+			state->camera->p = CameraTracking(state->camera->p, focus_p, GetViewport(input), dt);
+
+			f32 delta = 0.0f;
+			if (input->wheel)
+				delta = input->wheel > 0 ? 1.0f : -1.0f;
+			delta *= 0.2f;
+
+			state->camera->zoom += delta;
+			if (state->camera->zoom <= 0.0f)
+				state->camera->zoom = 0.0f;
+		}
+
 		if (entity->flags & entity_flags_controllable) // NOTE(): The "player" code.
 		{
 			// TODO(): We should buffer inputs here in case

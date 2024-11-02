@@ -1,6 +1,3 @@
-fn v2 ScreenToIso(v2 p);
-fn v2 IsoToScreen(v2 p);
-
 fn void RenderIsoCube(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 color);
 fn void RenderIsoCubeCentered(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 color);
 fn void RenderIsoCubeFilled(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 color);

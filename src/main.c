@@ -9,6 +9,7 @@
 static const char *Title = "Project 1.exe";
 static const int32_t WindowSize[2] = {1600, 900};
 
+static s32 WheelDelta;
 static u8 EnteredChars[8];
 static s32 NumEnteredChars;
 
@@ -56,7 +57,11 @@ fn LRESULT WINAPI WndProc(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _I
 		{
 			if (((wParam >= ' ' ) && (wParam <= 'z')) && (NumEnteredChars < ArraySize(EnteredChars)))
 				EnteredChars[NumEnteredChars++] = (u8)wParam;
-		}
+		} break;
+	case WM_MOUSEWHEEL:
+		{
+			WheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+		} break;
 	default:
 		result = DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
@@ -108,11 +113,15 @@ extern int main(void)
 		}
 		
 		client_input_t input = {0};
-		Win32GetInput(&input, window);
+		Win32GetInput(&input, window, WheelDelta);
+
 		for (s32 index = 0; index < NumEnteredChars; index++)
 			input.char_queue[index] = EnteredChars[index];
 		input.char_count = NumEnteredChars;
 		input.gpu_driver_desc = title;
+		
+		WheelDelta = 0;
+		NumEnteredChars = 0;
 
 		render_output_t output = {0};
 		Host(state, &output, input);
@@ -120,9 +129,10 @@ extern int main(void)
 		glClear(GL_COLOR_BUFFER_BIT);
 		glClearColor(0.086f, 0.086f, 0.086f, 0.0f);
 		for (int32_t index = 0; index < output.count; index++)
-			OpenGLDispatchBuffer(&output.buffers[index], output.viewports[index]);
+			OpenGLDispatchBuffer(&output.buffers[index], output.viewports[index], output.cameras[index]);
+
 		SwapBuffers(hDC);
-		NumEnteredChars = 0;
+		
 	}
 	
 	return (0);

@@ -149,13 +149,13 @@ fn void TurnQueue(command_buffer_t *out, game_world_t *state, turn_queue_t *queu
     DrawRectOutline(out, V2(x, 100.0f), sz, Red());
 }
 
-fn void RenderHealth(command_buffer_t *out, v2 p, assets_t *assets, entity_t *entity)
+fn void RenderHP(command_buffer_t *out, v2 p, assets_t *assets, entity_t *entity)
 {
     // todo: Add animation when chunk of health is lost, add art asset
     f32 health_percentage = (f32)entity->health / entity->max_health;
 
     v2 bar_size = V2(16*4, 2*4);
-    v2 bar_p = Sub(p, V2(30.0f, 110.0f));
+    v2 bar_p = p;
 
     DrawRect(out, bar_p, bar_size, Black());
     v2 health_bar_size = V2(bar_size.x * health_percentage, bar_size.y);

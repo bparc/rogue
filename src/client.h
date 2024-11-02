@@ -104,9 +104,10 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 	MessageLog(&state->buffers[1], &state->font, V2(10.0f, 650.0f), state->event_log, dt);
 	memset(output, 0, sizeof(*output));
 
-	PushRenderOutput(output, state->buffers[0], V4(0, 0, 1600 / VIEWPORT_INTEGER_SCALE, 900 / VIEWPORT_INTEGER_SCALE));
-	PushRenderOutput(output, state->buffers[2], V4(0, 0, 1600 / VIEWPORT_INTEGER_SCALE, 900 / VIEWPORT_INTEGER_SCALE));
-	PushRenderOutput(output, state->buffers[1], V4(0, 0, 1600, 900)); // NOTE(): Debug.
+	camera_t camera = *state->world.camera;
+	PushRenderOutput(output, state->buffers[0], V4(0, 0, 1600, 900), camera);
+	PushRenderOutput(output, state->buffers[2], V4(0, 0, 1600, 900), camera);
+	PushRenderOutput(output, state->buffers[1], V4(0, 0, 1600, 900), DefaultCamera()); // NOTE(): Debug.
 	
 	return (0);
 }

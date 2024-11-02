@@ -70,12 +70,12 @@ typedef struct
 	turn_queue_t *turns;
 
 	map_t *map;
-	v2 camera_position;
+	camera_t *camera;
 	
 	memory_t *memory;
-} game_world_t
-;
-fn v2 CameraToScreen(const game_world_t *game, v2 p);
+} game_world_t;
+typedef game_world_t video_game_t;
+
 fn entity_t *CreateSlime(game_world_t *state, v2s p);
 fn void CreateBigSlime(game_world_t *state, v2s p);
 fn void CreatePoisonTrap(game_world_t *state, v2s p);
@@ -96,15 +96,19 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *asset
 	state->memory = memory;
 	state->assets = assets;
 	state->log = log;
-	state->cursor = PushStruct(cursor_t, memory);
-	state->turns = PushStruct(turn_queue_t, memory);
-	state->storage = PushStruct(entity_storage_t, memory);
-	state->particles = PushStruct(particles_t, memory);
+	state->camera 		= PushStruct(camera_t, memory);
+	state->cursor 		= PushStruct(cursor_t, memory);
+	state->turns  		= PushStruct(turn_queue_t, memory);
+	state->storage 		= PushStruct(entity_storage_t, memory);
+	state->particles 	= PushStruct(particles_t, memory);
 	state->map = CreateMap(1024, 1024, memory, TILE_PIXEL_SIZE);
 	
 	SetupActionDataTable(memory, assets);
 	DefaultActionBar(&state->slot_bar,  assets);
-	state->camera_position = V2(0, 0);
+
+	state->camera->p = V2(0, 0);
+	state->camera->zoom = 2.0f;
+	state->camera->viewport = V2(1600.0f, 900.0f);
 }
 
 fn void BeginGameWorld(game_world_t *state)
@@ -120,7 +124,7 @@ fn void EndGameWorld(game_world_t *state)
 fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log, assets_t *assets, virtual_controls_t cons, command_buffer_t *out)
 {
 	BeginGameWorld(state);
-	TurnKernel(state, state->storage, state->map, state->turns, dt, &input, cons, log, out, assets);	
+	TurnSystem(state, state->storage, state->map, state->turns, dt, &input, cons, log, out, assets);	
 	EndGameWorld(state);
 	HUD(Debug.out, state, state->turns, state->storage, assets, &input);
 }
@@ -165,8 +169,7 @@ fn inline void RenderEntity(command_buffer_t *out, const entity_t *entity, f32 a
 
 fn v2s ViewportToMap(const game_world_t *World, v2 p)
 {
-	p = Div(p, V2(VIEWPORT_INTEGER_SCALE, VIEWPORT_INTEGER_SCALE));
-	p = Sub(p, World->camera_position);
+	p = Sub(p, World->camera->p);
 	p = IsoToScreen(p);
 	p = Div(p, World->map->tile_sz);
 	v2s result = {0};
@@ -285,9 +288,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	command_buffer_t *out_top = Debug.out;
 	turn_queue_t *queue = state->turns;
 
-	SetGlobalOffset(out, V2(0.0f, 0.0f));
-	DrawRect(out, V2(0, 0), V2(1920, 1080), SKY_COLOR); // NOTE(): Background
-	SetGlobalOffset(out, state->camera_position);
+	//DrawRect(out, V2(0.0f, 0.0f), V2(1000.0f, 1000.0f), SKY_COLOR); // NOTE(): Background
 
 	bb_t view = {0.0f};
 	view.min = V2(0.0f, 0.0f);
@@ -312,7 +313,10 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		entity->blink_time = MaxF32(entity->blink_time - (dt * 1.5f), 0.0f);
 
 		RenderEntity(out, entity, 1.0f, assets, map);
-		RenderHealth(out_top, CameraToScreen(state, entity->deferred_p), assets, entity);
+
+		v2 screen_p = CameraToScreen(state->camera, Sub(entity->deferred_p, V2(60.0f, 60.0f)));
+		screen_p.x -= 25.0f;
+		RenderHP(out_top, screen_p, assets, entity);
 	}
 	for (s32 index = 0; index < queue->num_evicted_entities; index++)
 	{
@@ -335,7 +339,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 					v4 color = White();
 					color.w = (1.0f - Smoothstep(t, 0.5f));
 
-					v2 p = CameraToScreen(state, particle->p);
+					v2 p = CameraToScreen(state->camera, particle->p);
 					p.y -= ((50.0f * t) + (t * t * t) * 20.0f);
 					p.x += (Sine(t) * 2.0f - 1.0f) * 2.0f;
 					DrawFormat(out_top, assets->Font, p, color, "%i", particle->number);

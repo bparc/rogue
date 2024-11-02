@@ -1,3 +1,60 @@
+typedef struct
+{
+	f32 zoom;
+	v2 p;
+	v2 viewport;
+} camera_t;
+
+fn v2 ScreenToIso(v2 p)
+{
+	v2 result = {0};
+	result.x = Dot(p, V2(+0.50f,-0.50f));
+	result.y = Dot(p, V2(+0.25f,+0.25f));
+	return result;
+}
+
+fn v2 IsoToScreen(v2 p)
+{
+	v2 result = {0};
+	result.x = Dot(p, V2(+2.0f,+4.0f));
+	result.y = Dot(p, V2(-2.0f,+4.0f));
+	result = Scale(result, 0.5f);
+	return result;
+}
+
+fn float GetCameraScaleFactor(const camera_t *camera)
+{
+	float result = 0.0f;
+	if (camera->zoom >= 0.0f)
+		result = 1.0f + camera->zoom;
+	else
+		result = (1.0f / (1.0f - camera->zoom));
+	return result;
+}
+
+fn camera_t DefaultCamera(void)
+{
+	camera_t result = {0};
+	return result;
+}
+
+fn v2 CameraToScreen(const camera_t *camera, v2 p)
+{
+    f32 scale = GetCameraScaleFactor(camera);
+
+    p = ScreenToIso(p);
+    p = Add(p, camera->p);
+
+    v2 viewport = camera->viewport;
+    viewport = Scale(viewport, 0.5f);
+
+    v2 relative_p = Sub(p, viewport);
+    relative_p = Scale(relative_p, scale);
+    p = Add(relative_p, viewport);
+
+    return p;
+}
+
 typedef enum
 {
 	command_t_triangle,
@@ -114,15 +171,14 @@ fn void DrawPoint(command_buffer_t *buffer, v2 p, v2 sz, v4 color);
 fn void DrawQuad(command_buffer_t *buffer, v2 a, v2 b, v2 c, v2 d, v4 color);
 fn void DrawQuadv(command_buffer_t *buffer, v2 points[4], v4 color);
 
-fn void SetGlobalOffset(command_buffer_t *buffer, v2 offset);
-
 typedef struct
 {
 	int32_t count;
 	#define COUNT 16
 	command_buffer_t buffers[COUNT];
 	v4 viewports[COUNT];
+	camera_t cameras[COUNT];
 	#undef COUNT
 } render_output_t;
 
-fn void PushRenderOutput(render_output_t *output, const command_buffer_t buffer, v4 viewport);
+fn void PushRenderOutput(render_output_t *output, const command_buffer_t buffer, v4 viewport, camera_t camera);

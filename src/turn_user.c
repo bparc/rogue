@@ -82,7 +82,7 @@ fn b32 ScheduleEnemyAction(game_world_t *World, entity_t *requestee, s32 effecti
 			action_type = action_slash;
 		else
 			action_type = action_slime_ranged;
-
+		
 		// TODO(Arc): LINE OF SIGHT TEST (etc.) GOES HERE.
 		b32 LOSTest = true;
 		if (LOSTest)

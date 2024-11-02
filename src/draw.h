@@ -1,20 +1,3 @@
-fn v2 ScreenToIso(v2 p)
-{
-	v2 result = {0};
-	result.x = Dot(p, V2(+0.50f,-0.50f));
-	result.y = Dot(p, V2(+0.25f,+0.25f));
-	return result;
-}
-
-fn v2 IsoToScreen(v2 p)
-{
-	v2 result = {0};
-	result.x = Dot(p, V2(+2.0f,+4.0f));
-	result.y = Dot(p, V2(-2.0f,+4.0f));
-	result = Scale(result, 0.5f);
-	return result;
-}
-
 fn void MakeIsoRect(v2 points[4], f32 x, f32 y, v2 sz)
 {
 	v2 min = V2(x, y);

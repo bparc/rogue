@@ -29,6 +29,7 @@ typedef struct
 {
 	f32 viewport[2];
 	f32 mouse[2];
+	s32 wheel;
 	s32 mouse_buttons[2];
 	s32 char_count;
 	u8 char_queue[16];

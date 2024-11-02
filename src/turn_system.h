@@ -56,9 +56,6 @@ typedef struct
 	s32 turn_inited;
 	f32 seconds_elapsed; // NOTE(): Seconds elapsed from the start of the turn.
 
-	s32 god_mode_enabled;
-	v2 focus_p; // Camera
-
 	s32 action_count;
 	async_action_t actions[1];
 
@@ -72,12 +69,15 @@ typedef struct
 	s32 num_evicted_entities;
 	evicted_entity_t evicted_entities[8];
 
-	// NOTE(): AI stuff
-	path_t path;
+	s32 free_camera_mode_enabled;
+	s32 god_mode_enabled;
 
 	s32 break_mode_enabled;
 	interpolator_state_t requested_state;
 	s32 request_step;
+
+	// NOTE(): AI stuff
+	path_t path;
 } turn_queue_t;
 
 fn void DefaultTurnOrder(turn_queue_t *queue);

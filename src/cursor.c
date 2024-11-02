@@ -20,7 +20,7 @@ fn void DrawDiegeticText(game_world_t *game, v2 p, v2 offset, v4 color, const ch
 	va_end(args);
 
 	command_buffer_t *out = Debug.out_top;
-	v2 screen_p = CameraToScreen(game, p);
+	v2 screen_p = CameraToScreen(game->camera, p);
 	screen_p = Add(screen_p, offset);
 	DrawText(out, game->assets->Font, screen_p, string, color);
 }
