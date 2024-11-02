@@ -3,6 +3,7 @@
 
 typedef u64 entity_id_t;
 #include "entity_actions.h"
+#include "items.h"
 #include "entity.h"
 #include "entity.c"
 #include "entity_actions.c"
