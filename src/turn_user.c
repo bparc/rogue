@@ -73,8 +73,7 @@ fn b32 ScheduleEnemyAction(game_world_t *World, entity_t *requestee, s32 effecti
 	turn_queue_t *queue = World->turns;
 	entity_id_t result = 0;
 
-	// TODO(): This should be like, a nearest player in range.
-	entity_t *target = DEBUGGetPlayer(World->storage);
+	entity_t *target = FindClosestPlayer(World->storage, requestee->p);
 	if (target && IsInsideCircle(target->p, target->size, requestee->p, effective_range))
 	{
 		action_type_t action_type = action_none;
@@ -83,9 +82,7 @@ fn b32 ScheduleEnemyAction(game_world_t *World, entity_t *requestee, s32 effecti
 		else
 			action_type = action_slime_ranged;
 		
-		// TODO(Arc): LINE OF SIGHT TEST (etc.) GOES HERE.
-		b32 LOSTest = true;
-		if (LOSTest)
+		if (IsLineOfSight(World->map, requestee->p, target->p))
 		{
 			QueryAsynchronousAction(queue, action_type, target->id, target->p);
 			result = target->id;
