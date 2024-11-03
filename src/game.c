@@ -230,19 +230,23 @@ fn inline void SingleTarget(game_world_t *state, entity_t *user, entity_t *targe
 
         if ((missed == false))
         {    
-            if (crited)
+            if (crited) {
                 DoDamage(state, user, target, params->damage * CRITICAL_DAMAGE_MULTIPLIER, "critical ");
-            else
+                CreateCombatText(state->particles, target->deferred_p, 0);
+            } else {
                 DoDamage(state, user, target, params->damage, "");
+                CreateCombatText(state->particles, target->deferred_p, 1);
+            }
         }
         else
         {
-            if (grazed)
+            if (grazed) {
                 DoDamage(state, user, target, params->damage / 2, "graze ");
-            else
-            {
+                CreateCombatText(state->particles, target->deferred_p, 3);
+            } else {
                 LogLn(state->log, "missed!");
                 CreateDamageNumber(state->particles, target->deferred_p, 0);
+                CreateCombatText(state->particles, target->deferred_p, 2);
             }
         }
     }
