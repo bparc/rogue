@@ -14,11 +14,11 @@ fn s32 BeginTurn(game_world_t *game, entity_t *entity)
 
 		// NOTE(): Request a path to the player.
 		turn_queue_t *queue = game->turns;
-		entity_t *DebugPlayer = DEBUGGetPlayer(queue->storage);
-		Assert(DebugPlayer);
+		entity_t *player = FindClosestPlayer(game->storage, entity->p);
+		Assert(player);
 
 		path_t *path = &queue->path;
-		if (!FindPath(game->map, entity->p, DebugPlayer->p, path, *game->memory))
+		if (!FindPath(game->map, entity->p, player->p, path, *game->memory))
 			DebugLog("Couldn't find a path!");
 		movement_point_count = 6;
 		queue->max_action_points = movement_point_count;
