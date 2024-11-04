@@ -22,11 +22,27 @@ typedef enum
 	enemy_type_count,
 } enemy_type_t;
 
+#define MAX_INVENTORY_SIZE 10
+#define BACKPACK_GRID_X_SIZE 10
+#define BACKPACK_GRID_Y_SIZE 10
+typedef struct {
+	item_t items[MAX_INVENTORY_SIZE];
+	s32 backpack_grid[BACKPACK_GRID_X_SIZE][BACKPACK_GRID_Y_SIZE]; // For inventory tetris
+	s32 item_count;
+	s32 carried_weight;
+	s32 max_carry_weight;
+
+	item_t equipped_weapon;
+	item_t equipped_armor;
+} inventory_t;
+
 typedef struct
 {
 	entity_id_t id;
 	u8 enemy_type;
 	u8 flags;
+
+	inventory_t *inventory;
 
 	v2s p; // A position on the tile map.
 	v2 deferred_p;

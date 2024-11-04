@@ -8,6 +8,7 @@ typedef u64 entity_id_t;
 #include "entity.c"
 #include "entity_actions.c"
 #include "turn_system.h"
+#include "inventory.h"
 
 #include "cursor.h"
 

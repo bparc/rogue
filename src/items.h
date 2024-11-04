@@ -23,6 +23,7 @@ typedef struct
 {
     item_categories_t category;
     const char *name;
+    s32 id; // Needs to be unique for each weapon
     s32 range;
     s32 pellet_spread;
     s32 pushback;
@@ -30,12 +31,14 @@ typedef struct
     union
     {
         s32 damage;
-        s32 healing;
+        u16 healing;
     };
     s32 price;
     s32 durability;
     s32 quantity;
     s32 weight;
+    s32 width;  // Width in grid cells (for inventory tetris)
+    s32 height; // Height in grid cells
 
     v2s area; // (1, 1) if not specified
     target_flags_t target; // A list of valid targets. "Any" if not specified.
@@ -50,8 +53,8 @@ typedef struct
 } item_params_t;
 
 typedef struct {
-    action_type_t type;
-    const action_params_t *params;
+    item_type_t type;
+    const item_params_t *params;
     bitmap_t *icon;
 } item_t;
 
