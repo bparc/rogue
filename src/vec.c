@@ -391,3 +391,11 @@ fn v2 Ratio(v2 sides, float ratio)
     result = Mul(result, sides);
     return result;
 }
+
+fn s32 IsPointInBounds(bb_t bb, v2 p)
+{
+	s32 result =
+		(p.x >= bb.min.x && p.x < bb.max.x) &&
+		(p.y >= bb.min.y && p.y < bb.max.y);
+	return result;
+}

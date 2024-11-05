@@ -165,11 +165,143 @@ fn void RenderHP(command_buffer_t *out, v2 p, assets_t *assets, entity_t *entity
     DrawFormat(out, assets->Font, Add(bar_p, V2(4.0f,-10.0f)), White(), "%i/%i", entity->health,entity->max_health);
 }
 
-fn void HUD(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets, const client_input_t *input)
+fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *Input, bmfont_t *Font, interface_t *Interface, entity_t *User)
 {
+    v2 Offset = V2(100.0f, 40.0f);
+    v2 CellSz = V2(32.0f, 32.0f);
+
+    v2 Cursor = GetCursorP(Input);
+    const char *Tooltip = NULL;
+
+    // Grid
+
+    for (s32 y = 0; y < Eq->y; y++)
+    {
+        for (s32 x = 0; x < Eq->x; x++)
+        {   
+            v2 At = {0};
+            At.x = (f32)x;
+            At.y = (f32)y;
+            At = Mul(At, CellSz);
+            At = Add(At, Offset);
+            //DrawRect(Out, At, CellSz, Black());
+            DrawRectOutline(Out, At, CellSz, Red());
+
+            const layout_cell_t *Cell = &Eq->layout[y][x];
+            if (Cell->ID > 0)
+            {
+                bb_t CellBb = RectToBounds(At, CellSz);
+                CellBb = Shrink(CellBb, 2.0f);
+                //DrawRect(Out, CellBb.min, Sub(CellBb.max, CellBb.min), Green());
+            }
+        }
+    }
+
+    // Items
+
+    for (s32 index = 0; index < Eq->item_count; index++)
+    {
+        item_t *Item = &Eq->items[index];
+        const item_params_t *Params = Item->params;
+
+        v2s Index = {0};
+        Index.x = Item->x;
+        Index.y = Item->y;
+
+        v2 At = {0};
+        At.x = (f32)Item->x;
+        At.y = (f32)Item->y;
+        At = Mul(At, CellSz);
+        At = Add(At, Offset);
+
+        v2 EqSz = {0};
+        EqSz.x = (f32)Params->EqSize.x;
+        EqSz.y = (f32)Params->EqSize.y;
+        EqSz = Mul(EqSz, CellSz);
+
+        v4 Colors[4] = { Red(), Blue(), Yellow(), Green() };
+        v4 Color = Colors[Item->type % ArraySize(Colors)];
+
+        bb_t ItemBb = RectToBounds(At, EqSz);
+
+        bb_t BitmapBb = Shrink(ItemBb, 5.0f);
+        DrawRect(Out, BitmapBb.min, Sub(BitmapBb.max, BitmapBb.min), Color);
+
+        if (IsPointInBounds(ItemBb, Cursor) && (Interface->Locked == 0))
+        {
+            Tooltip = Params->name;
+            if (Input->mouse_buttons[0])
+            {
+                Interface->Locked = (0x100 + index);
+                Interface->DraggedItemSz = Params->EqSize;
+                Interface->DraggedItemIndex = index;
+                Interface->DraggedItem = *Item;
+            }
+        }
+    }
+
+    if (Tooltip)
+        DrawText(Out, Font, Cursor, Tooltip, Yellow());
+
+    // Dragging
+    if (Interface->Locked)
+    {
+        v2 Rel = Sub(Cursor, Offset);
+        Rel = Div(Rel, CellSz);
+
+        v2s Index = {0};
+        Index.x = (s32)Rel.x;
+        Index.y = (s32)Rel.y;
+
+        if (!Interface->Buttons[0]) // Place
+        {
+            Interface->Locked = 0;
+            //item_t *Item = &Interface->DraggedItem;
+            //item_t *NewItem = NULL;
+            //RemoveItemFromInventory(User, Interface->DraggedItemIndex);
+            //NewItem = AddItemToInventory(User, Item->type);
+            //NewItem->x = Index.x;
+            //NewItem->y = Index.y;
+        }
+        if (Interface->Interact[1]) // Rotate
+        {
+            v2s RotatedSz = {0};
+            RotatedSz.y = Interface->DraggedItemSz.x;
+            RotatedSz.x = Interface->DraggedItemSz.y;
+
+            Interface->DraggedItemSz = RotatedSz;
+        }
+
+        v2 EqSz = {0};
+        EqSz.x = (f32)Interface->DraggedItemSz.x;
+        EqSz.y = (f32)Interface->DraggedItemSz.y;
+        EqSz = Mul(EqSz, CellSz);
+
+        v2 At = {0};
+        At.x = (f32)Index.x;
+        At.y = (f32)Index.y;
+        At = Mul(At, CellSz);
+        At = Add(At, Offset);
+        bb_t ItemBb = RectToBounds(At, EqSz);
+        ItemBb = Shrink(ItemBb, 4.0f);
+
+        DrawRectOutline(Out, ItemBb.min, Sub(ItemBb.max, ItemBb.min), Green());
+    }
+}
+
+fn void HUD(command_buffer_t *out,game_world_t *state, turn_queue_t *queue, entity_storage_t *storage, assets_t *assets, const client_input_t *input)
+{
+    BeginInterface(state->interface, input);
+
+    entity_t *ActiveEntity = GetActiveUnit(queue);
+
     TurnQueue(out, state, queue, assets, state->cursor);
 
-    entity_t *active = GetActiveUnit(queue);
-    if (IsPlayer(active))
-        ActionMenu(active, state, out, assets, input, queue);
+    if (IsPlayer(ActiveEntity))
+    {
+        Inventory(out, ActiveEntity->inventory, input, assets->Font, state->interface, ActiveEntity);
+        ActionMenu(ActiveEntity, state, out, assets, input, queue);
+    }
+
+    EndInterface(state->interface);
 }

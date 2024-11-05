@@ -13,8 +13,16 @@ fn entity_t *CreatePlayer(game_world_t *state, v2s p)
     entity_t *result = CreateEntity(state->storage, p, V2S(1, 1), entity_flags_controllable,
         player_health, attack_dmg, state->map, player_max_health, player_accuracy, player_evasion,
         MAX_PLAYER_ACTION_POINTS, MAX_PLAYER_MOVEMENT_POINTS, 1);
+    
 	result->inventory = PushStruct(inventory_t, state->memory);
-	result->inventory->item_count = 0;
+    SetupInventory(result->inventory);
+
+    AddItemToInventory(result, item_green_herb);
+    AddItemToInventory(result, item_green_herb);
+    AddItemToInventory(result, item_green_herb);
+
+    AddItemToInventory(result, item_assault_rifle);
+    
     return result;
 }
 

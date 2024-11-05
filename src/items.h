@@ -16,6 +16,7 @@ typedef enum {
     item_none = 0,
     item_assault_rifle,
     item_standard_caseless_rifle,
+    item_green_herb,
     item_type_count
 } item_type_t;
 
@@ -39,6 +40,7 @@ typedef struct
     s32 weight;
     s32 width;  // Width in grid cells (for inventory tetris)
     s32 height; // Height in grid cells
+    v2s EqSize;
 
     v2s area; // (1, 1) if not specified
     target_flags_t target; // A list of valid targets. "Any" if not specified.
@@ -56,10 +58,19 @@ typedef struct {
     item_type_t type;
     const item_params_t *params;
     bitmap_t *icon;
+    s32 x, y;
 } item_t;
 
 static item_params_t _Global_Item_Data[item_type_count];
 static const char *_Global_Item_Names[item_type_count];
+
+fn item_t ItemFromType(item_type_t Type)
+{
+    item_t Result = {0};
+    Result.params = &_Global_Item_Data[Type];
+    Result.type = Type;
+    return Result;
+}
 
 fn const char *NameFromItemType(const char *name, memory_t *memory)
 {
@@ -92,7 +103,8 @@ void DefaultItemValues(void)
         Params->category = (item_categories_t)index;
         if (Params->name == NULL)
             Params->name = _Global_Item_Names[index];
-
+        if (IsZero(Params->EqSize))
+            Params->EqSize = V2S(1, 1);
     }
 }
 
@@ -113,8 +125,14 @@ _Global_Item_Data[item_##Type]  = (item_params_t)
         .description = "Common military-grade caseless rifle round for versatile use and easy logistics.",
     };
 
+    ITM(green_herb)
+    {
+        .name = "Green Herb",
+    };
+
     ITM(assault_rifle)
     {
+        .EqSize = V2S(3, 1),
         .name = "T-17 Assault Rifle",
         .category = rifle,
         .range = 25,

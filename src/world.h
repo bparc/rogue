@@ -83,12 +83,39 @@ fn void CreateDamageNumber(particles_t *particles, v2 p, s32 number)
 
 typedef struct
 {
+    s32 Locked;
+
+    item_t DraggedItem;
+    s32 DraggedItemIndex;
+    v2s DraggedItemSz;
+
+    s32 Interact[2];
+    s32 Buttons[2];
+} interface_t;
+
+fn void BeginInterface(interface_t *Interface, const client_input_t *Input)
+{
+	Interface->Interact[0] = (!Interface->Buttons[0] && Input->mouse_buttons[0]);
+	Interface->Interact[1] = (!Interface->Buttons[1] && Input->mouse_buttons[1]);
+
+	Interface->Buttons[0] = Input->mouse_buttons[0];
+	Interface->Buttons[1] = Input->mouse_buttons[1];
+}
+
+fn void EndInterface(interface_t *Interface)
+{
+
+}
+
+typedef struct
+{
 	assets_t *assets;
 	log_t *log;
 	cursor_t *cursor;
 	entity_storage_t *storage;
 	particles_t *particles;
-
+	interface_t *interface;
+	
 	slot_bar_t slot_bar;
 	turn_queue_t *turns;
 
@@ -116,6 +143,7 @@ fn b32 Move(game_world_t *world, entity_t *entity, v2s offset);
 
 fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *assets)
 {
+
 	state->memory = memory;
 	state->assets = assets;
 	state->log = log;
@@ -124,9 +152,13 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *asset
 	state->turns  		= PushStruct(turn_queue_t, memory);
 	state->storage 		= PushStruct(entity_storage_t, memory);
 	state->particles 	= PushStruct(particles_t, memory);
+	state->interface 	= PushStruct(interface_t, memory);
+
 	state->map = CreateMap(1024, 1024, memory, TILE_PIXEL_SIZE);
 	
+	SetupItemDataTable(memory, assets);
 	SetupActionDataTable(memory, assets);
+
 	DefaultActionBar(&state->slot_bar,  assets);
 
 	state->camera->p = V2(0, 0);
@@ -247,7 +279,7 @@ fn inline void ClipToViewport(game_world_t *World, map_t *map, bb_t clipplane, c
 	v2s min2 = ViewportToMap(World, clipplane.max);
 	v2s max2 = ViewportToMap(World, Sub(clipplane.max, viewport));
 
-	#ifdef _DEBUG
+	#if 0
 	DrawRectOutline(Debug.out_top, clipplane.min, Sub(clipplane.max, clipplane.min), Orange());
 	DrawLine(Debug.out_top, clipplane.min, Add(clipplane.min, viewport), Red());
 	DrawLine(Debug.out_top, clipplane.max, Sub(clipplane.max, viewport), Red());

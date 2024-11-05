@@ -92,3 +92,6 @@ fn bb_t Bb(v2 min, v2 max);
 fn bb_t RectToBounds(v2 p, v2 sz);
 fn v2 GetCenter(bb_t bb);
 fn bb_t Shrink(bb_t bb, f32 amount);
+fn bb_t Stretch(bb_t bb, f32 amount);
+fn s32 IsPointInBounds(bb_t bb, v2 p);
+

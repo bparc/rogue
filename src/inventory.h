@@ -1,28 +1,64 @@
-fn b32 AddItemToInventory(entity_t *entity, item_t item) {
-    if (entity->inventory->item_count < MAX_INVENTORY_SIZE) {
-        s32 new_carried_weight = entity->inventory->carried_weight + item.params->weight;
-        if (new_carried_weight <= entity->inventory->max_carry_weight) {
-            entity->inventory->items[entity->inventory->item_count++] = item;
-            entity->inventory->carried_weight = new_carried_weight;
-            return true;
+fn b32 FindVacantSpace(const inventory_t *Eq, v2s *Index, v2s RequiredSpace)
+{
+    for (s32 y = 0; y < Eq->y; y++)
+    {
+        for (s32 x = 0; x < Eq->x; x++)
+        {
+            const layout_cell_t *Cell = &Eq->layout[y][x];
+            if (Cell->ID == 0)
+            {
+                *Index = V2S(x, y);
+                return (true);
+            }
         }
     }
-    return false;
+    return (false);
 }
 
-fn b32 RemoveItemFromInventory(entity_t *entity, s32 item_id) {
-    for (u8 i = 0; i < entity->inventory->item_count; i++) {
-        item_t *item = &entity->inventory->items[i];
+fn item_t *AddItemToInventory(entity_t *entity, item_type_t type)
+{
+    item_t item = ItemFromType(type);
+    const item_params_t *Params = item.params;
+
+    inventory_t *inventory = entity->inventory;
+
+    v2s VacantSpace = {0};
+    if ((inventory->item_count < ArraySize(inventory->items)) &&
+        FindVacantSpace(inventory, &VacantSpace, Params->EqSize))
+    {
+        s32 new_carried_weight = inventory->carried_weight + item.params->weight;
+        if (new_carried_weight <= inventory->max_carry_weight)
+        {
+            item_t *Item = &inventory->items[inventory->item_count++];
+            *Item = item;
+            Item->x = VacantSpace.x;
+            Item->y = VacantSpace.y;
+            inventory->carried_weight = new_carried_weight;
+
+            // NOTE(): Occupy
+            inventory->layout[VacantSpace.y][VacantSpace.x].ID = true;
+
+            return Item;
+        }
+    }
+    return 0;
+}
+
+fn b32 RemoveItemFromInventory(entity_t *entity, s32 item_id)
+{
+    inventory_t *inventory = entity->inventory;
+    for (u8 i = 0; i < inventory->item_count; i++) {
+        item_t *item = &inventory->items[i];
 
         if (item->params->id == item_id) {
-            entity->inventory->carried_weight -= item->params->weight;
+            inventory->carried_weight -= item->params->weight;
 
-            for (u8 j = i; j < entity->inventory->item_count - 1; j++) {
-                entity->inventory->items[j] = entity->inventory->items[j + 1];
+            for (u8 j = i; j < inventory->item_count - 1; j++) {
+                inventory->items[j] = inventory->items[j + 1];
             }
 
-            ZeroStruct(&entity->inventory->items[entity->inventory->item_count - 1]);
-            entity->inventory->item_count--;
+            ZeroStruct(&inventory->items[inventory->item_count - 1]);
+            inventory->item_count--;
             return true;
         }
     }
@@ -31,9 +67,11 @@ fn b32 RemoveItemFromInventory(entity_t *entity, s32 item_id) {
 
 // Use an item from a menu inside inventory. todo: For consumables it will consume the item;
 // todo: for weapons and armor it will equip/deequip the item
-fn void UseItem(entity_t *entity, s32 item_id) {
-    for (s32 i = 0; i < entity->inventory->item_count; i++) {
-        const item_t item = entity->inventory->items[i];
+fn void UseItem(entity_t *entity, s32 item_id)
+{
+    inventory_t *inventory = entity->inventory;
+    for (s32 i = 0; i < inventory->item_count; i++) {
+        const item_t item = inventory->items[i];
         if (item.params->id == item_id) {
             switch (item.params->category) {
                 case healing:
@@ -47,15 +85,15 @@ fn void UseItem(entity_t *entity, s32 item_id) {
                 case pistol:
                 case shotgun:
                 case explosive:
-                    if (entity->inventory->equipped_weapon.type != item_none)
-                        AddItemToInventory(entity, entity->inventory->equipped_weapon);
-                    entity->inventory->equipped_weapon = item;
+                    if (inventory->equipped_weapon.type != item_none)
+                        AddItemToInventory(entity, inventory->equipped_weapon.type);
+                    inventory->equipped_weapon = item;
                     RemoveItemFromInventory(entity, item.params->id);
                     break;
                 case armor:
-                    if (entity->inventory->equipped_armor.type != item_none)
-                        AddItemToInventory(entity, entity->inventory->equipped_armor);
-                    entity->inventory->equipped_armor = item;
+                    if (inventory->equipped_armor.type != item_none)
+                        AddItemToInventory(entity, inventory->equipped_armor.type);
+                    inventory->equipped_armor = item;
                     RemoveItemFromInventory(entity, item.params->id);
                     break;
                 default:
