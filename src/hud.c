@@ -198,7 +198,9 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
     }
 
     // Items
+    if (IsKeyPressed(Input, 'i')) {
 
+    }
     for (s32 index = 0; index < Eq->item_count; index++)
     {
         item_t *Item = &Eq->items[index];
@@ -241,7 +243,7 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
     }
 
     if (Tooltip)
-        DrawText(Out, Font, Cursor, Tooltip, Yellow());
+        DrawText(Out, Font, Add(Cursor, V2(15,23)), Tooltip, Yellow());
 
     // Dragging
     if (Interface->Locked)
@@ -256,12 +258,13 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         if (!Interface->Buttons[0]) // Place
         {
             Interface->Locked = 0;
-            //item_t *Item = &Interface->DraggedItem;
-            //item_t *NewItem = NULL;
-            //RemoveItemFromInventory(User, Interface->DraggedItemIndex);
-            //NewItem = AddItemToInventory(User, Item->type);
-            //NewItem->x = Index.x;
-            //NewItem->y = Index.y;
+            item_t *Item = &Interface->DraggedItem;
+            item_t *NewItem = NULL;
+            if (RemoveItemFromInventory(User, Interface->DraggedItem.params->id)) {
+                NewItem = AddItemToInventory(User, Item->type);
+                NewItem->x = Index.x;
+                NewItem->y = Index.y;
+            }
         }
         if (Interface->Interact[1]) // Rotate
         {
