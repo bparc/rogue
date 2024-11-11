@@ -57,7 +57,7 @@ typedef struct
 
 typedef struct {
     item_type_t type;
-    const item_params_t *params;
+    item_params_t *params;
     bitmap_t *icon;
     s32 x, y;
 } item_t;

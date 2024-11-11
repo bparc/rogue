@@ -172,8 +172,13 @@ fn void PlaceItemInInventory(inventory_t *Eq, interface_t *Interface,
     const item_params_t *Params = Item->params;
 
     v2 EqSz = {0};
-    EqSz.x = (f32)CellSz.x;
-    EqSz.y = (f32)CellSz.y;
+    if (Interface->DraggedItemRotation == 0) { // No rotation
+        EqSz.x = (f32)CellSz.x;
+        EqSz.y = (f32)CellSz.y;
+    } else { // 90 degrees rotation
+        EqSz.x = (f32)CellSz.y;
+        EqSz.y = (f32)CellSz.x;
+    }
     EqSz = Mul(EqSz, CellSz);
 
     s32 new_x = Index.x;
@@ -362,6 +367,7 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
                 Interface->DraggedItem = *Item;
                 Interface->OriginalX = Item->x;
                 Interface->OriginalY = Item->y;
+                Interface->DraggedItemRotation = Item->params->rotation;
             }
         }
     }
@@ -387,7 +393,7 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         }
         if (Interface->Interact[1]) // Rotate
         {
-            Interface->DraggedItemRotation = 1 - Interface->DraggedItemRotation; // use rotation variable in item_t, instead of interface_t, because it affects all items in inventory
+            Interface->DraggedItem.params->rotation = 1 - Interface->DraggedItemRotation; // use rotation variable in item_t, instead of interface_t, because it affects all items in inventory
 
             v2 RotatedSz = {0};
             RotatedSz.y = (f32)Interface->DraggedItemSz.x;
@@ -396,9 +402,20 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
             Interface->DraggedItemSz = RotatedSz;
         }
 
+        /*
         v2 EqSz = {0};
         EqSz.x = (f32)Interface->DraggedItemSz.x;
         EqSz.y = (f32)Interface->DraggedItemSz.y;
+        EqSz = Mul(EqSz, CellSz); */
+
+        v2 EqSz = {0};
+        if (Interface->DraggedItemRotation == 0) { // No rotation
+            EqSz.x = (f32)Interface->DraggedItemSz.x;
+            EqSz.y = (f32)Interface->DraggedItemSz.y;
+        } else { // 90 degrees rotation
+            EqSz.x = (f32)Interface->DraggedItemSz.y;
+            EqSz.y = (f32)Interface->DraggedItemSz.x;
+        }
         EqSz = Mul(EqSz, CellSz);
 
         v2 At = {0};
