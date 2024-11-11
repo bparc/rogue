@@ -173,8 +173,14 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
     v2 Cursor = GetCursorP(Input);
     const char *Tooltip = NULL;
 
-    // Grid
+    v2 inventory_size;
+    inventory_size.x = Eq->x * CellSz.x;
+    inventory_size.y = Eq->y * CellSz.y;
 
+    v4 background_color = V4(0.0f, 0.0f, 0.0f, 0.7f);
+    DrawRect(Out, Offset, inventory_size, background_color);
+
+    // Grid
     for (s32 y = 0; y < Eq->y; y++)
     {
         for (s32 x = 0; x < Eq->x; x++)
