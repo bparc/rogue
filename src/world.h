@@ -84,6 +84,7 @@ fn void CreateDamageNumber(particles_t *particles, v2 p, s32 number)
 typedef struct
 {
     s32 Locked;
+    b32 inventory_visible;
 
     item_t DraggedItem;
     s32 DraggedItemIndex;
@@ -166,6 +167,8 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *asset
 	state->camera->p = V2(0, 0);
 	state->camera->zoom = 2.0f;
 	state->camera->viewport = V2(1600.0f, 900.0f);
+
+	state->interface->inventory_visible = true;
 }
 
 fn void BeginGameWorld(game_world_t *state)

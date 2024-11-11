@@ -203,6 +203,10 @@ fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
 			directions = diagonal_directions;
 		#endif
 
+		if (WentDown(cons.menu)) {
+			state->interface->inventory_visible = !state->interface->inventory_visible;
+		}
+
 		if (WentDown(cons.select) && queue->movement_points >= 2 && entity->hitchance_boost_multiplier + 0.1f <= 2.0f) {
 			entity->has_hitchance_boost = true;
 

@@ -167,6 +167,10 @@ fn void RenderHP(command_buffer_t *out, v2 p, assets_t *assets, entity_t *entity
 
 fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *Input, bmfont_t *Font, interface_t *Interface, entity_t *User)
 {
+    if (Interface->inventory_visible == false) {
+        return;
+    }
+
     v2 Offset = V2(100.0f, 40.0f);
     v2 CellSz = V2(32.0f, 32.0f);
 
