@@ -40,6 +40,7 @@ typedef struct
     s32 weight;
     s32 width;  // Width in grid cells (for inventory tetris)
     s32 height; // Height in grid cells
+    s32 rotation; // 0 = no rotation, 1 = 90 degrees rotation
     v2s EqSize;
 
     v2s area; // (1, 1) if not specified

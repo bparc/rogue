@@ -88,7 +88,8 @@ typedef struct
 
     item_t DraggedItem;
     s32 DraggedItemIndex;
-    v2s DraggedItemSz;
+    s32 DraggedItemRotation;
+    v2 DraggedItemSz;
     s32 OriginalX;
     s32 OriginalY;
 

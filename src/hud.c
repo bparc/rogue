@@ -165,6 +165,58 @@ fn void RenderHP(command_buffer_t *out, v2 p, assets_t *assets, entity_t *entity
     DrawFormat(out, assets->Font, Add(bar_p, V2(4.0f,-10.0f)), White(), "%i/%i", entity->health,entity->max_health);
 }
 
+fn void PlaceItemInInventory(inventory_t *Eq, interface_t *Interface,
+                            v2s Index, v2 CellSz, v2 Offset, entity_t *User) {
+    item_t *Item = &Interface->DraggedItem;
+    item_t *NewItem = NULL;
+    const item_params_t *Params = Item->params;
+
+    v2 EqSz = {0};
+    EqSz.x = (f32)CellSz.x;
+    EqSz.y = (f32)CellSz.y;
+    EqSz = Mul(EqSz, CellSz);
+
+    s32 new_x = Index.x;
+    s32 new_y = Index.y;
+
+    v2 At = {0};
+    At.x = (f32)Index.x;
+    At.y = (f32)Index.y;
+    At = Mul(At, CellSz);
+    At = Add(At, Offset);
+    bb_t ItemBb = RectToBounds(At, CellSz);
+
+    b32 itemsOverlap = false;
+    for (int i = 0; i < Eq->item_count; i++) {
+        v2 EqSz1 = {0};
+        EqSz1.x = (f32)Eq->items[i].params->EqSize.x;
+        EqSz1.y = (f32)Eq->items[i].params->EqSize.y;
+        EqSz1 = Mul(EqSz1, CellSz);
+
+        v2 At1 = {0};
+        At1.x = (f32)Eq->items[i].x;
+        At1.y = (f32)Eq->items[i].y;
+        At1 = Mul(At1, CellSz);
+        At1 = Add(At1, Offset);
+        bb_t SecondItemBb = RectToBounds(At1, EqSz1);
+
+        if (DoBoundingBoxesOverlap(ItemBb, SecondItemBb) && Item->params->id != Eq->items[i].params->id) {
+            itemsOverlap = true;
+            break;
+        }
+    }
+
+    if (new_x >= 0 && new_y >= 0 &&
+        new_x + Params->EqSize.x <= Eq->x &&
+        new_y + Params->EqSize.y <= Eq->y) {
+        if (!itemsOverlap && RemoveItemFromInventory(User, Params->id)) {
+            NewItem = AddItemToInventory(User, Item->type);
+            NewItem->x = Index.x;
+            NewItem->y = Index.y;
+        }
+    }
+}
+
 fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *Input, bmfont_t *Font, interface_t *Interface, entity_t *User)
 {
     if (Interface->inventory_visible == false) {
@@ -183,6 +235,12 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
 
     v4 background_color = V4(0.0f, 0.0f, 0.0f, 0.7f);
     DrawRect(Out, Offset, inventory_size, background_color);
+
+    const char *hint_text = "i - close";
+    v2 right_hint_pos;
+    right_hint_pos.x = Offset.x + inventory_size.x + 10.0f;
+    right_hint_pos.y = Offset.y;
+    DrawText(Out, Font, right_hint_pos, hint_text, White());
 
     // Grid
     for (s32 y = 0; y < Eq->y; y++)
@@ -224,8 +282,13 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         At = Add(At, Offset);
 
         v2 EqSz = {0};
-        EqSz.x = (f32)Params->EqSize.x;
-        EqSz.y = (f32)Params->EqSize.y;
+        if (Interface->DraggedItemRotation == 0) { // No rotation
+            EqSz.x = (f32)Params->EqSize.x;
+            EqSz.y = (f32)Params->EqSize.y;
+        } else { // 90 degrees rotation
+            EqSz.x = (f32)Params->EqSize.y;
+            EqSz.y = (f32)Params->EqSize.x;
+        }
         EqSz = Mul(EqSz, CellSz);
 
         v4 Colors[4] = { Red(), Blue(), Yellow(), Green() };
@@ -242,7 +305,7 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
             if (Input->mouse_buttons[0])
             {
                 Interface->Locked = (0x100 + index);
-                Interface->DraggedItemSz = Params->EqSize;
+                Interface->DraggedItemSz = V2((f32)Params->EqSize.x, (f32)Params->EqSize.y);
                 Interface->DraggedItemIndex = index;
                 Interface->DraggedItem = *Item;
                 Interface->OriginalX = Item->x;
@@ -267,60 +330,16 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         if (!Interface->Buttons[0]) // Place
         {
             Interface->Locked = 0;
-            item_t *Item = &Interface->DraggedItem;
-            item_t *NewItem = NULL;
-            const item_params_t *Params = Item->params;
 
-            s32 new_x = Index.x;
-            s32 new_y = Index.y;
-
-            v2 EqSz = {0};
-            EqSz.x = (f32)Params->EqSize.x;
-            EqSz.y = (f32)Params->EqSize.y;
-            EqSz = Mul(EqSz, CellSz);
-
-            v2 At = {0};
-            At.x = (f32)Index.x;
-            At.y = (f32)Index.y;
-            At = Mul(At, CellSz);
-            At = Add(At, Offset);
-            bb_t ItemBb = RectToBounds(At, EqSz);
-
-            b32 itemsOverlap = false;
-            for (int i = 0; i < Eq->item_count; i++) {
-                v2 EqSz1 = {0};
-                EqSz1.x = (f32)Eq->items[i].params->EqSize.x;
-                EqSz1.y = (f32)Eq->items[i].params->EqSize.y;
-                EqSz1 = Mul(EqSz1, CellSz);
-
-                v2 At1 = {0};
-                At1.x = (f32)Eq->items[i].x;
-                At1.y = (f32)Eq->items[i].y;
-                At1 = Mul(At1, CellSz);
-                At1 = Add(At1, Offset);
-                bb_t SecondItemBb = RectToBounds(At1, EqSz1);
-
-                if (DoBoundingBoxesOverlap(ItemBb, SecondItemBb) && Item->params->id != Eq->items[i].params->id) {
-                    itemsOverlap = true;
-                    break;
-                }
-            }
-
-            if (new_x >= 0 && new_y >= 0 &&
-                new_x + Params->EqSize.x <= Eq->x &&
-                new_y + Params->EqSize.y <= Eq->y) {
-                if (!itemsOverlap && RemoveItemFromInventory(User, Params->id)) {
-                    NewItem = AddItemToInventory(User, Item->type);
-                    NewItem->x = Index.x;
-                    NewItem->y = Index.y;
-                }
-            }
+            PlaceItemInInventory(Eq, Interface, Index, Interface->DraggedItemSz, Offset, User);
         }
         if (Interface->Interact[1]) // Rotate
         {
-            v2s RotatedSz = {0};
-            RotatedSz.y = Interface->DraggedItemSz.x;
-            RotatedSz.x = Interface->DraggedItemSz.y;
+            Interface->DraggedItemRotation = 1 - Interface->DraggedItemRotation; // use rotation variable in item_t, instead of interface_t, because it affects all items in inventory
+
+            v2 RotatedSz = {0};
+            RotatedSz.y = (f32)Interface->DraggedItemSz.x;
+            RotatedSz.x = (f32)Interface->DraggedItemSz.y;
 
             Interface->DraggedItemSz = RotatedSz;
         }
