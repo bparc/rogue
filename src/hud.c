@@ -198,9 +198,6 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
     }
 
     // Items
-    if (IsKeyPressed(Input, 'i')) {
-
-    }
     for (s32 index = 0; index < Eq->item_count; index++)
     {
         item_t *Item = &Eq->items[index];
@@ -267,10 +264,42 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
             s32 new_x = Index.x;
             s32 new_y = Index.y;
 
+            v2 EqSz = {0};
+            EqSz.x = (f32)Params->EqSize.x;
+            EqSz.y = (f32)Params->EqSize.y;
+            EqSz = Mul(EqSz, CellSz);
+
+            v2 At = {0};
+            At.x = (f32)Index.x;
+            At.y = (f32)Index.y;
+            At = Mul(At, CellSz);
+            At = Add(At, Offset);
+            bb_t ItemBb = RectToBounds(At, EqSz);
+
+            b32 itemsOverlap = false;
+            for (int i = 0; i < Eq->item_count; i++) {
+                v2 EqSz1 = {0};
+                EqSz1.x = (f32)Eq->items[i].params->EqSize.x;
+                EqSz1.y = (f32)Eq->items[i].params->EqSize.y;
+                EqSz1 = Mul(EqSz1, CellSz);
+
+                v2 At1 = {0};
+                At1.x = (f32)Eq->items[i].x;
+                At1.y = (f32)Eq->items[i].y;
+                At1 = Mul(At1, CellSz);
+                At1 = Add(At1, Offset);
+                bb_t SecondItemBb = RectToBounds(At1, EqSz1);
+
+                if (DoBoundingBoxesOverlap(ItemBb, SecondItemBb) && Item->params->id != Eq->items[i].params->id) {
+                    itemsOverlap = true;
+                    break;
+                }
+            }
+
             if (new_x >= 0 && new_y >= 0 &&
                 new_x + Params->EqSize.x <= Eq->x &&
                 new_y + Params->EqSize.y <= Eq->y) {
-                if (RemoveItemFromInventory(User, Params->id)) {
+                if (!itemsOverlap && RemoveItemFromInventory(User, Params->id)) {
                     NewItem = AddItemToInventory(User, Item->type);
                     NewItem->x = Index.x;
                     NewItem->y = Index.y;

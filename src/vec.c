@@ -419,3 +419,12 @@ fn s32 IsBoundingBoxInBounds(bb_t bb, bb_t bb2)
 		(bb2.min.y >= bb.min.y && bb2.max.y < bb.max.y);
 	return result;
 }
+
+fn s32 DoBoundingBoxesOverlap(bb_t bb1, bb_t bb2) {
+    // Basic overlap check (any intersection)
+    b32 basicOverlap = (bb1.min.x < bb2.max.x && bb1.max.x > bb2.min.x) &&
+                       (bb1.min.y < bb2.max.y && bb1.max.y > bb2.min.y);
+
+    // Return true only if they overlap without full containment
+    return basicOverlap;
+}

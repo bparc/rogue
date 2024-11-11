@@ -124,12 +124,14 @@ _Global_Item_Data[item_##Type]  = (item_params_t)
         .price = 15,
         .quantity = 30,
         .description = "Common military-grade caseless rifle round for versatile use and easy logistics.",
+        .EqSize = V2S(1, 1),
     };
 
     ITM(green_herb)
     {
         .id = 3,
         .name = "Green Herb",
+        .EqSize = V2S(1, 1),
     };
 
     ITM(assault_rifle)

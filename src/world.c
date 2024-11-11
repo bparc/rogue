@@ -18,9 +18,6 @@ fn entity_t *CreatePlayer(game_world_t *state, v2s p)
     SetupInventory(result->inventory);
 
     AddItemToInventory(result, item_green_herb);
-    AddItemToInventory(result, item_green_herb);
-    AddItemToInventory(result, item_green_herb);
-
     AddItemToInventory(result, item_assault_rifle);
     
     return result;
