@@ -23,8 +23,8 @@ typedef enum
 } enemy_type_t;
 
 #define MAX_INVENTORY_SIZE 10
-#define BACKPACK_GRID_X_SIZE 10
-#define BACKPACK_GRID_Y_SIZE 10
+#define BACKPACK_GRID_X_SIZE 16
+#define BACKPACK_GRID_Y_SIZE 8
 
 typedef struct
 {

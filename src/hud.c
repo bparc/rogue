@@ -234,13 +234,65 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
     inventory_size.y = Eq->y * CellSz.y;
 
     v4 background_color = V4(0.0f, 0.0f, 0.0f, 0.7f);
-    DrawRect(Out, Offset, inventory_size, background_color);
+    DrawRect(Out, Offset, V2(inventory_size.x + 180, inventory_size.y), background_color);
 
     const char *hint_text = "i - close";
     v2 right_hint_pos;
     right_hint_pos.x = Offset.x + inventory_size.x + 10.0f;
     right_hint_pos.y = Offset.y;
     DrawText(Out, Font, right_hint_pos, hint_text, White());
+
+    // Inventory Stats
+    v2 inventory_stats_pos = right_hint_pos;
+    inventory_stats_pos.y += 20.0f; // Position it below the hint text
+
+    char inventory_stats[128];
+    snprintf(inventory_stats, sizeof(inventory_stats), "Weight: %d/%d",
+             Eq->carried_weight, Eq->max_carry_weight);
+    DrawText(Out, Font, inventory_stats_pos, inventory_stats, White());
+
+    // Separator
+    inventory_stats_pos.y += 40.0f; // Leave some space after inventory stats
+    DrawText(Out, Font, inventory_stats_pos, "PLAYER STATS", White());
+
+    // Player Stats
+    inventory_stats_pos.y += 20.0f; // Position player stats below separator
+    v2 player_stats_pos = inventory_stats_pos;
+
+    char player_stats[256];
+        char health_text[64];
+    snprintf(health_text, sizeof(health_text), "Health: %d/%d", User->health, User->max_health);
+    DrawText(Out, Font, player_stats_pos, health_text, White());
+
+    player_stats_pos.y += 20.0f;  // Move down for next line
+
+    char attack_text[64];
+    snprintf(attack_text, sizeof(attack_text), "Attack: %d", User->attack_dmg);
+    DrawText(Out, Font, player_stats_pos, attack_text, White());
+
+    player_stats_pos.y += 20.0f;
+
+    char ranged_accuracy_text[64];
+    snprintf(ranged_accuracy_text, sizeof(ranged_accuracy_text), "Ranged Accuracy: %d", User->ranged_accuracy);
+    DrawText(Out, Font, player_stats_pos, ranged_accuracy_text, White());
+
+    player_stats_pos.y += 20.0f;
+
+    char melee_accuracy_text[64];
+    snprintf(melee_accuracy_text, sizeof(melee_accuracy_text), "Melee Accuracy: %d", User->melee_accuracy);
+    DrawText(Out, Font, player_stats_pos, melee_accuracy_text, White());
+
+    player_stats_pos.y += 20.0f;
+
+    char evasion_text[64];
+    snprintf(evasion_text, sizeof(evasion_text), "Evasion: %d", User->evasion);
+    DrawText(Out, Font, player_stats_pos, evasion_text, White());
+
+    player_stats_pos.y += 20.0f;
+
+    char action_points_text[64];
+    snprintf(action_points_text, sizeof(action_points_text), "Action Points: %d", User->remaining_action_points);
+    DrawText(Out, Font, player_stats_pos, action_points_text, White());
 
     // Grid
     for (s32 y = 0; y < Eq->y; y++)
