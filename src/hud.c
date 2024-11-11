@@ -238,6 +238,8 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
                 Interface->DraggedItemSz = Params->EqSize;
                 Interface->DraggedItemIndex = index;
                 Interface->DraggedItem = *Item;
+                Interface->OriginalX = Item->x;
+                Interface->OriginalY = Item->y;
             }
         }
     }
@@ -260,10 +262,19 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
             Interface->Locked = 0;
             item_t *Item = &Interface->DraggedItem;
             item_t *NewItem = NULL;
-            if (RemoveItemFromInventory(User, Interface->DraggedItem.params->id)) {
-                NewItem = AddItemToInventory(User, Item->type);
-                NewItem->x = Index.x;
-                NewItem->y = Index.y;
+            const item_params_t *Params = Item->params;
+
+            s32 new_x = Index.x;
+            s32 new_y = Index.y;
+
+            if (new_x >= 0 && new_y >= 0 &&
+                new_x + Params->EqSize.x <= Eq->x &&
+                new_y + Params->EqSize.y <= Eq->y) {
+                if (RemoveItemFromInventory(User, Params->id)) {
+                    NewItem = AddItemToInventory(User, Item->type);
+                    NewItem->x = Index.x;
+                    NewItem->y = Index.y;
+                }
             }
         }
         if (Interface->Interact[1]) // Rotate

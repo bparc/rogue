@@ -399,3 +399,11 @@ fn s32 IsPointInBounds(bb_t bb, v2 p)
 		(p.y >= bb.min.y && p.y < bb.max.y);
 	return result;
 }
+
+fn s32 IsBoundingBoxInBounds(bb_t bb, bb_t bb2)
+{
+	s32 result =
+		(bb2.min.x >= bb.min.x && bb2.max.x < bb.max.x) &&
+		(bb2.min.y >= bb.min.y && bb2.max.y < bb.max.y);
+	return result;
+}
