@@ -255,6 +255,9 @@ fn inline void RenderTile(command_buffer_t *out, map_t *map, s32 x, s32 y, asset
 		}
 		if (IsWall(map, at))
 			RenderIsoTile(out, map, at, White(), true, 15);
+		if (GetTileValue(map, at.x, at.y) == 5)
+			RenderIsoTile(out, map, at, Red(), true, 25);
+
 		if ((Tile->trap_type != trap_type_none))
 			RenderTileAlignedBitmap(out, map, at, &assets->Traps[(Tile->trap_type - 1)], PureWhite());	
 	}

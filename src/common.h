@@ -5,6 +5,7 @@
 #include <string.h>
 #include <float.h>
 #include <stdio.h>
+#include <time.h>
 #define fn static
 #define ArraySize(Array) (sizeof(Array) / sizeof(*Array))
 

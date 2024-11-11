@@ -239,6 +239,18 @@ fn v2s Add32(v2s a, v2s b)
 	return result;
 }
 
+fn v2s Mul32(v2s a, v2s b)
+{
+	v2s result = {a.x * b.x, a.y * b.y};
+	return result;
+}
+
+fn v2s Div32(v2s a, v2s b)
+{
+	v2s result = {a.x / b.x, a.y / b.y};
+	return result;
+}
+
 fn v2s Sub32(v2s a, v2s b)
 {
 	v2s result = {a.x - b.x, a.y - b.y};

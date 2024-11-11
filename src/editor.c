@@ -74,7 +74,7 @@ fn void MakeSimpleMap(game_world_t *world)
 	' ', ' ', ' ', ' ', ' ', 'W', 'W', 'W', 'W', 'W', 'W', 'W', '#', 'W', ' ', ' ', ' ', ' ', ' ', ' ',
 	' ', ' ', ' ', ' ', ' ', ' ', ' ', 'W', 'S', '#', '#', '#', '#', 'W', ' ', ' ', ' ', ' ', ' ', ' ',
 	' ', ' ', ' ', ' ', ' ', ' ', ' ', 'W', 'W', 'W', 'W', 'W', 'W', 'W', ' ', ' ', ' ', ' ', ' ', ' ',
-};
+	};
 
 	#endif
 	ClearMap(world->map);
@@ -134,15 +134,95 @@ fn void MakeSimpleMap(game_world_t *world)
 
 }
 
+fn void RenderDebugGeneratorState(command_buffer_t *out, map_layout_t *Gen, v2s PlayerP, assets_t *Assets)
+{
+	//DrawRect(out, V2(0.0f, 0.0f), V2(1600.0f, 900.0f), Black());
+	//
+
+	v2 ChunkSz = V2(32.0f, 32.0f);
+	v2 ChunkHalfSz = Scale(ChunkSz, 0.5f);
+	v2 GlobalOffset = V2(1080.0f, 10.0f);
+
+	v2s PlayerChunkAt = Div32(PlayerP, V2S(20, 20));
+
+	#if 1
+	for (s32 y = 0; y < Gen->ChunkCountY; y++)
+	{
+		for (s32 x = 0; x < Gen->ChunkCountX; x++)
+		{
+			b32 Occupied = Gen->OccupiedChunks[y][x];
+
+			v2 p = V2((f32)x, (f32)y);
+			p = Mul(p, ChunkSz);
+			p = Add(p, GlobalOffset);
+
+			bb_t Bounds = RectToBounds(p, ChunkSz);
+
+			v4 color = White();
+
+			DrawRect(out, Bounds.min, Sub(Bounds.max, Bounds.min), Black());
+			Bounds = Shrink(Bounds, 4.0f);
+			DrawRectOutline(out, Bounds.min, Sub(Bounds.max, Bounds.min), White());
+		}
+	}
+#endif
+
+	for (s32 index = 0; index < Gen->PlacedRoomCount; index++)
+	{
+		room_t *room = &Gen->PlacedRooms[index];
+
+		v2s Chunk = room->ChunkAt;
+
+		v2 p = V2((f32)Chunk.x, (f32)Chunk.y);
+		p = Mul(p, ChunkSz);
+		p = Add(p, GlobalOffset);
+
+		bb_t Bounds = RectToBounds(p, ChunkSz);
+		Bounds = Shrink(Bounds, 2.0f);
+		v4 color = Blue();
+		if (CompareVectors(PlayerChunkAt, Chunk))
+			color = Green();
+
+		DrawRect(out, Bounds.min, Sub(Bounds.max, Bounds.min), color);
+	}
+
+	for (s32 index = 0; index < Gen->PlacedRoomCount; index++)
+	{
+		room_t *room = &Gen->PlacedRooms[index];
+
+		v2s Chunk = room->ChunkAt;
+		v2s PrevChunk = room->PrevChunk;
+
+		v2 To = V2((f32)Chunk.x, (f32)Chunk.y);
+		To = Mul(To, ChunkSz);
+		To = Add(To, GlobalOffset);
+		To = Add(To, ChunkHalfSz);
+
+		v2 From = V2((f32)PrevChunk.x, (f32)PrevChunk.y);
+		From = Mul(From, ChunkSz);
+		From = Add(From, GlobalOffset);
+		From = Add(From, ChunkHalfSz);
+		
+		DrawLine(out, From, To, Red());
+	}
+}
+
 fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *out,
 	const client_input_t *input, log_t *log, assets_t *assets, const virtual_controls_t *cons)
 {
 	if ((editor->inited == false))
 	{
-		DebugLog("MakeSimpleMap()");
-		MakeSimpleMap(state);
+		DebugLog("GenerateDungeon()");
+		//MakeSimpleMap(state);
+
+		GenerateDungeon(&editor->Gen, 64, *state->memory);
+		LayoutMap(&editor->Gen, state);
+
 		editor->inited = true;
 	}
-	
+
+	entity_t *Player = DEBUGGetPlayer(state->storage);
+	RenderDebugGeneratorState(Debug.out_top, &editor->Gen, Player ? Player->p : V2S(0, 0), assets);
+
 	v2s cursor_p = ViewportToMap(state, GetCursorP(input));
 }

@@ -21,6 +21,8 @@
 #include "pathfinding.h"
 #include "pathfinding.c"
 #include "world.h"
+#include "generator.h"
+#include "generator.c"
 #include "editor.h"
 #include "editor.c"
 
@@ -50,9 +52,9 @@ fn s32 Startup(client_t *state)
 	memory->_memory = state->reserved;
 
 	command_buffer_t *buffers = state->buffers;
-	buffers[0] = PushCommandBuffer(memory, 1024 * 512);
-	buffers[2] = PushCommandBuffer(memory, 1024 * 512);
-	buffers[1] = PushCommandBuffer(memory, 1024);
+	buffers[0] = PushCommandBuffer(memory, 1024 * 1024);
+	buffers[2] = PushCommandBuffer(memory, 1024 * 1024);
+	buffers[1] = PushCommandBuffer(memory, 1024 * 1024);
 
 	state->event_log = PushStruct(log_t, memory);
 	ZeroStruct(state->event_log);
