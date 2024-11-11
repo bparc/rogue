@@ -88,6 +88,8 @@ typedef struct
     item_t DraggedItem;
     s32 DraggedItemIndex;
     v2s DraggedItemSz;
+    s32 OriginalX;
+    s32 OriginalY;
 
     s32 Interact[2];
     s32 Buttons[2];

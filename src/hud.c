@@ -198,7 +198,9 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
     }
 
     // Items
+    if (IsKeyPressed(Input, 'i')) {
 
+    }
     for (s32 index = 0; index < Eq->item_count; index++)
     {
         item_t *Item = &Eq->items[index];
@@ -236,12 +238,14 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
                 Interface->DraggedItemSz = Params->EqSize;
                 Interface->DraggedItemIndex = index;
                 Interface->DraggedItem = *Item;
+                Interface->OriginalX = Item->x;
+                Interface->OriginalY = Item->y;
             }
         }
     }
 
     if (Tooltip)
-        DrawText(Out, Font, Cursor, Tooltip, Yellow());
+        DrawText(Out, Font, Add(Cursor, V2(15,23)), Tooltip, Yellow());
 
     // Dragging
     if (Interface->Locked)
@@ -256,12 +260,22 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         if (!Interface->Buttons[0]) // Place
         {
             Interface->Locked = 0;
-            //item_t *Item = &Interface->DraggedItem;
-            //item_t *NewItem = NULL;
-            //RemoveItemFromInventory(User, Interface->DraggedItemIndex);
-            //NewItem = AddItemToInventory(User, Item->type);
-            //NewItem->x = Index.x;
-            //NewItem->y = Index.y;
+            item_t *Item = &Interface->DraggedItem;
+            item_t *NewItem = NULL;
+            const item_params_t *Params = Item->params;
+
+            s32 new_x = Index.x;
+            s32 new_y = Index.y;
+
+            if (new_x >= 0 && new_y >= 0 &&
+                new_x + Params->EqSize.x <= Eq->x &&
+                new_y + Params->EqSize.y <= Eq->y) {
+                if (RemoveItemFromInventory(User, Params->id)) {
+                    NewItem = AddItemToInventory(User, Item->type);
+                    NewItem->x = Index.x;
+                    NewItem->y = Index.y;
+                }
+            }
         }
         if (Interface->Interact[1]) // Rotate
         {

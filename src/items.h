@@ -116,6 +116,7 @@ _Global_Item_Data[item_##Type]  = (item_params_t)
 
     ITM(standard_caseless_rifle)
     {
+        .id = 1,
         .name = "MilSpec Penetrator",
         .category = ammunition,
         .ammo = "7.62x51mm_caseless",
@@ -127,12 +128,14 @@ _Global_Item_Data[item_##Type]  = (item_params_t)
 
     ITM(green_herb)
     {
+        .id = 3,
         .name = "Green Herb",
     };
 
     ITM(assault_rifle)
     {
-        .EqSize = V2S(3, 1),
+        .id = 0,
+        .EqSize = V2S(5, 2),
         .name = "T-17 Assault Rifle",
         .category = rifle,
         .range = 25,
