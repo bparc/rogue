@@ -59,7 +59,12 @@ typedef struct {
     item_type_t type;
     item_params_t *params;
     bitmap_t *icon;
-    s32 x, y;
+
+    union
+    {
+        v2s index;
+        struct { s32 x, y; };
+    };
 } item_t;
 
 static item_params_t _Global_Item_Data[item_type_count];

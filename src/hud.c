@@ -165,67 +165,6 @@ fn void RenderHP(command_buffer_t *out, v2 p, assets_t *assets, entity_t *entity
     DrawFormat(out, assets->Font, Add(bar_p, V2(4.0f,-10.0f)), White(), "%i/%i", entity->health,entity->max_health);
 }
 
-fn void PlaceItemInInventory(inventory_t *Eq, interface_t *Interface,
-                            v2s Index, v2 CellSz, v2 Offset, entity_t *User) {
-    item_t *Item = &Interface->DraggedItem;
-    item_t *NewItem = NULL;
-    const item_params_t *Params = Item->params;
-
-    v2 EqSz = {0};
-    if (Interface->DraggedItemRotation == 0) { // No rotation
-        EqSz.x = (f32)CellSz.x;
-        EqSz.y = (f32)CellSz.y;
-    } else { // 90 degrees rotation
-        EqSz.x = (f32)CellSz.y;
-        EqSz.y = (f32)CellSz.x;
-    }
-    EqSz = Mul(EqSz, CellSz);
-
-    s32 new_x = Index.x;
-    s32 new_y = Index.y;
-
-    v2 At = {0};
-    At.x = (f32)Index.x;
-    At.y = (f32)Index.y;
-    At = Mul(At, CellSz);
-    At = Add(At, Offset);
-    bb_t ItemBb = RectToBounds(At, CellSz);
-
-    b32 itemsOverlap = false;
-    for (int i = 0; i < Eq->item_count; i++) {
-        v2 EqSz1 = {0};
-        EqSz1.x = (f32)Eq->items[i].params->EqSize.x;
-        EqSz1.y = (f32)Eq->items[i].params->EqSize.y;
-        EqSz1 = Mul(EqSz1, CellSz);
-
-        v2 At1 = {0};
-        At1.x = (f32)Eq->items[i].x;
-        At1.y = (f32)Eq->items[i].y;
-        At1 = Mul(At1, CellSz);
-        At1 = Add(At1, Offset);
-        bb_t SecondItemBb = RectToBounds(At1, EqSz1);
-
-        if (DoBoundingBoxesOverlap(ItemBb, SecondItemBb) && Item->params->id != Eq->items[i].params->id) {
-            itemsOverlap = true;
-            break;
-        }
-    }
-
-    if (new_x >= 0 && new_y >= 0 &&
-        new_x + Params->EqSize.x <= Eq->x &&
-        new_y + Params->EqSize.y <= Eq->y) {
-        if (!itemsOverlap && RemoveItemFromInventory(User, Params->id)) {
-            NewItem = AddItemToInventory(User, Item->type);
-            NewItem->x = Index.x;
-            NewItem->y = Index.y;
-            // NOTE(): Update the item rotation.
-            NewItem->params->rotation = Interface->DraggedItemRotation;
-        }
-    }
-
-    Interface->DraggedItemRotation = Item->params->rotation;
-}
-
 typedef struct
 {
     v2 Min;
@@ -300,6 +239,42 @@ fn v2s InventoryCellFromOffset(const inventory_layout_t *Layout, v2 offset)
     return FloatToSigned(result);
 }
 
+fn void PlaceItemInInventory(inventory_t *Eq, interface_t *Interface,
+                            v2s Dest, v2 CellSz, const inventory_layout_t *Layout, entity_t *User) {
+    item_t *Item = &Interface->DraggedItem;    
+
+    b32 itemsOverlap = false;
+    for (int i = 0; i < Eq->item_count; i++)
+    {
+        const item_t *TestedItem = &Eq->items[i];
+        
+        if ((Item->params->id != TestedItem->params->id))
+        {
+            bb_t A = ItemBoxFromIndex(Layout, &Interface->DraggedItem, Dest, Interface->DraggedItemRotation);
+            bb_t B = ItemBoxFromIndex(Layout, Item, TestedItem->index, Item->params->rotation);
+            if (DoBoundingBoxesOverlap(A, B))
+            {
+                itemsOverlap = true;
+                break;
+            }
+        }
+    }
+
+    v2s ItemSize = Item->params->EqSize;
+    if ((Dest.x >= 0) &&
+        (Dest.y >= 0) &&
+        ((Dest.x + ItemSize.x) <= Eq->x) &&
+        ((Dest.y + ItemSize.y) <= Eq->y))
+    {
+        if (!itemsOverlap && RemoveItemFromInventory(User, Item->params->id))
+        {
+            item_t *NewItem = AddItemToInventory(User, Item->type);
+            NewItem->index = Dest;
+            NewItem->params->rotation = Interface->DraggedItemRotation;
+        }
+    }
+}
+
 fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *Input, bmfont_t *Font, interface_t *Interface, entity_t *User)
 {
     v2 Cursor = GetCursorOffset(Input);
@@ -314,7 +289,7 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
     inventory_layout_t Layout = InventoryLayout(Interface, Out, Font, EqMin, CellSz);
     Layout.At.x += (GridSz.x + 10.0f);
 
-    DrawRect(Out, EqMin, FullInventorySz, V4(0.0f, 0.0f, 0.0f, 0.7f));
+    DrawRect(Out, EqMin, FullInventorySz, V4(0.0f, 0.0f, 0.0f, 0.7f)); // Background
     InventoryText(&Layout, "i - close");
     InventoryText(&Layout, "Weight: %i/%i", Eq->carried_weight, Eq->max_carry_weight);
     InventorySeparator(&Layout);
@@ -386,7 +361,7 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         if (!Interface->Buttons[0]) // Place
         {
             Interface->DraggedItemID = 0;
-            PlaceItemInInventory(Eq, Interface, Index, Interface->DraggedItemSz, EqMin, User);
+            PlaceItemInInventory(Eq, Interface, Index, Interface->DraggedItemSz, &Layout, User);
 
         }
         if (Interface->Interact[1]) // Rotate
