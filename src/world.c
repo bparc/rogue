@@ -17,9 +17,12 @@ fn entity_t *CreatePlayer(game_world_t *state, v2s p)
 	result->inventory = PushStruct(inventory_t, state->memory);
     SetupInventory(result->inventory);
 
-    AddItemToInventory(result, item_green_herb);
-    AddItemToInventory(result, item_assault_rifle);
-    AddItemToInventory(result, item_assault_rifle);
+    inventory_t *Eq = result->inventory;
+    Eq_AddItem(Eq, item_green_herb);
+    Eq_AddItem(Eq, item_green_herb);
+    Eq_AddItem(Eq, item_assault_rifle);
+    Eq_AddItem(Eq, item_green_herb);
+    Eq_AddItem(Eq, item_assault_rifle);
     
     return result;
 }

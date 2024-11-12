@@ -282,6 +282,12 @@ fn v2 Rotate(v2 v)
 	return result;
 }
 
+fn v2s RotateSigned(v2s v)
+{
+	v2s result = {v.y, v.x};
+	return result;
+}
+
 fn v2 ClampLength(v2 v, float max)
 {
 	v2 result = v;

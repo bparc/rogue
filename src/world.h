@@ -4,12 +4,12 @@
 typedef u64 entity_id_t;
 #include "entity_actions.h"
 #include "items.h"
+#include "inventory.h"
+#include "inventory.c"
 #include "entity.h"
 #include "entity.c"
 #include "entity_actions.c"
 #include "turn_system.h"
-#include "inventory.h"
-
 #include "cursor.h"
 
 typedef enum {
@@ -87,9 +87,7 @@ typedef struct
     b32 inventory_visible;
 
     item_t DraggedItem;
-    s32 DraggedItemIndex;
-    s32 DraggedItemRotation;
-    v2 DraggedItemSz;
+    //v2s DraggedItemSz;
     s32 OriginalX;
     s32 OriginalY;
 

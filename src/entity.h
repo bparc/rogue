@@ -22,44 +22,6 @@ typedef enum
 	enemy_type_count,
 } enemy_type_t;
 
-#define MAX_INVENTORY_SIZE 10
-#define BACKPACK_GRID_X_SIZE 16
-#define BACKPACK_GRID_Y_SIZE 8
-
-typedef struct
-{
-	s32 ID;
-} layout_cell_t;
-
-typedef struct {
-	b32 is_inventory_screen_on;
-
-	s32 item_count;
-	item_t items[MAX_INVENTORY_SIZE];
-
-	s32 x;
-	s32 y;
-	layout_cell_t layout[BACKPACK_GRID_X_SIZE][BACKPACK_GRID_Y_SIZE]; // For inventory tetris
-
-	s32 carried_weight;
-	s32 max_carry_weight;
-
-	item_t equipped_weapon;
-	item_t equipped_armor;
-} inventory_t;
-
-fn void SetupInventory(inventory_t *inventory)
-{
-	ZeroStruct(inventory);
-	inventory->item_count = 0;
-	inventory->x = BACKPACK_GRID_X_SIZE;
-	inventory->y = BACKPACK_GRID_Y_SIZE;
-}
-
-#undef BACKPACK_GRID_X_SIZE
-#undef BACKPACK_GRID_Y_SIZE
-#undef MAX_INVENTORY_SIZE
-
 typedef struct
 {
 	entity_id_t id;
