@@ -218,6 +218,8 @@ fn void PlaceItemInInventory(inventory_t *Eq, interface_t *Interface,
             NewItem = AddItemToInventory(User, Item->type);
             NewItem->x = Index.x;
             NewItem->y = Index.y;
+            // NOTE(): Update the item rotation.
+            NewItem->params->rotation = Interface->DraggedItemRotation;
         }
     }
 
@@ -269,18 +271,18 @@ fn v2 GetInventoryCellPosition(const inventory_layout_t *Layout, const item_t *I
     return result;
 }
 
-fn bb_t GetItemBox(const inventory_layout_t *Layout, const item_t *Item)
+fn bb_t GetItemBox(const inventory_layout_t *Layout, const item_t *Item, b32 rotate)
 {
     v2 ItemSz = SignedToFloat(Item->params->EqSize);
-    if (Layout->GUI->DraggedItemRotation)
+    if (rotate)
         ItemSz = Rotate(ItemSz);
     ItemSz = Mul(ItemSz, Layout->CellSize);
     return RectToBounds(V2(0.0f, 0.0f), ItemSz);
 }
 
-fn bb_t ItemBoxFromIndex(const inventory_layout_t *Layout, const item_t *Item, v2s Index)
+fn bb_t ItemBoxFromIndex(const inventory_layout_t *Layout, const item_t *Item, v2s Index, b32 rotate)
 {
-    bb_t result = GetItemBox(Layout, Item);
+    bb_t result = GetItemBox(Layout, Item, rotate);
 
     v2 position = Mul(SignedToFloat(Index), Layout->CellSize);
     position = Add(position, Layout->Min);
@@ -338,7 +340,7 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
     for (s32 index = 0; index < Eq->item_count; index++)
     {
         item_t *Item = &Eq->items[index];
-        bb_t ItemBounds = ItemBoxFromIndex(&Layout, Item, V2S(Item->x, Item->y));
+        bb_t ItemBounds = ItemBoxFromIndex(&Layout, Item, V2S(Item->x, Item->y), Item->params->rotation);
 
         // Interact
         if (IsPointInBounds(ItemBounds, Cursor) && (Interface->DraggedItemID == 0))
@@ -376,7 +378,7 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
 
         // Render
         {
-            bb_t ItemBounds = ItemBoxFromIndex(&Layout, &Interface->DraggedItem, Index);
+            bb_t ItemBounds = ItemBoxFromIndex(&Layout, &Interface->DraggedItem, Index, Interface->DraggedItemRotation);
             ItemBounds = Shrink(ItemBounds, 4.0f);
             DrawBounds(Out, ItemBounds, W(Green(), 0.5f));
         }
@@ -391,8 +393,9 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         {
             // TODO(mw00): use rotation variable in item_t, instead of interface_t,
             // because it affects all items in inventory
-            Interface->DraggedItem.params->rotation = 1 - Interface->DraggedItemRotation;
+            //Interface->DraggedItem.params->rotation = 1 - Interface->DraggedItemRotation;
             Interface->DraggedItemSz = Rotate(Interface->DraggedItemSz);
+            Interface->DraggedItemRotation = (1 - Interface->DraggedItemRotation);
         }
     }
 }
