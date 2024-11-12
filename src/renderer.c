@@ -60,6 +60,11 @@ fn void DrawBounds(command_buffer_t *buffer, bb_t bounds, v4 color)
 	DrawBoundsV(buffer, bounds.min, bounds.max, color);
 }
 
+fn void DrawBoundsOutline(command_buffer_t *buffer, bb_t bounds, v4 color)
+{
+	DrawRectOutline(buffer, bounds.min, Sub(bounds.max, bounds.min), color);
+}
+
 fn void DrawRectOutline(command_buffer_t *buffer, v2 p, v2 sz, v4 color)
 {
 	v2 min = p;

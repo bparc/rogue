@@ -153,7 +153,7 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         {
             bb_t ItemBounds = ItemBoxFromIndex(&Layout, &Interface->DraggedItem, Index);
             ItemBounds = Shrink(ItemBounds, 4.0f);
-            DrawBounds(Out, ItemBounds, Green());
+            DrawBoundsOutline(Out, ItemBounds, Red());
         }
 
         if (!Interface->Buttons[0]) // Place

@@ -13,7 +13,10 @@ fn void HUD(command_buffer_t *out,game_world_t *state, turn_queue_t *queue, enti
     if (IsPlayer(ActiveEntity))
     {
         if (state->interface->inventory_visible)
+        {
             Inventory(out, ActiveEntity->inventory, input, assets->Font, state->interface, ActiveEntity);
+        }
+        
         ActionMenu(ActiveEntity, state, out, assets, input, queue);
     }
 
