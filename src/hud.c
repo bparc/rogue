@@ -10,9 +10,10 @@ fn void HUD(command_buffer_t *out,game_world_t *state, turn_queue_t *queue, enti
 
     TurnQueue(out, state, queue, assets, state->cursor);
 
-    if (IsPlayer(ActiveEntity) && (state->interface->inventory_visible))
+    if (IsPlayer(ActiveEntity))
     {
-        Inventory(out, ActiveEntity->inventory, input, assets->Font, state->interface, ActiveEntity);
+        if (state->interface->inventory_visible)
+            Inventory(out, ActiveEntity->inventory, input, assets->Font, state->interface, ActiveEntity);
         ActionMenu(ActiveEntity, state, out, assets, input, queue);
     }
 
