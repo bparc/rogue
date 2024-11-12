@@ -27,6 +27,11 @@ fn b32 Eq_IsSpaceFree_Exclude(const inventory_t *eq, v2s offset, v2s size, item_
 
 fn b32 Eq_IsSpaceFree(const inventory_t *eq, v2s offset, v2s size)
 {
+    v2s max = Add32(offset, size);
+
+    if (offset.x < 0 || offset.y < 0 || max.x > eq->x || max.y > eq->y)
+        return false;
+
     return (Eq_IsSpaceFree_Exclude(eq, offset, size, 0));
 }
 
@@ -53,10 +58,14 @@ fn b32 Eq_FindVacantSpace(const inventory_t *Eq, v2s *Index, v2s RequiredSpace)
     return (false);
 }
 
-fn void Eq_OccupySpace(inventory_t *eq, v2s offset, v2s size, item_id_t ID) 
+fn void Eq_OccupySpace(inventory_t *eq, v2s offset, v2s size, item_id_t ID)
 {
     v2s min = offset;
     v2s max = Add32(offset, size);
+
+    if (min.x < 0 || min.y < 0 || max.x > eq->x || max.y > eq->y)
+        return;
+
     for (s32 y = min.y; y < max.y; y++)
     {
         for (s32 x = min.x; x < max.x; x++)
@@ -161,6 +170,10 @@ fn b32 Eq_RemoveItem(inventory_t *inventory, item_id_t ID)
 
 fn void Eq_MoveItem(inventory_t *Eq, item_t Source, v2s Dest)
 {
+    v2s maxDest = Add32(Dest, Source.size);
+    if (Dest.x < 0 || Dest.y < 0 || maxDest.x > Eq->x || maxDest.y > Eq->y)
+        return;
+
     item_t *Item = NULL;
 
     if (Eq_IsSpaceFree_Exclude(Eq, Dest, Source.size, Source.ID))
