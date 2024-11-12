@@ -153,7 +153,12 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         {
             bb_t ItemBounds = ItemBoxFromIndex(&Layout, &Interface->DraggedItem, Index);
             ItemBounds = Shrink(ItemBounds, 4.0f);
-            DrawBoundsOutline(Out, ItemBounds, Red());
+
+            v2s max_position = Add32(Index, Interface->DraggedItem.size);
+
+            if (Index.x >= 0 && Index.y >= 0 && max_position.x <= Eq->x && max_position.y <= Eq->y && Eq_IsSpaceFree(Eq, Index, Interface->DraggedItem.size)) {
+                DrawBoundsOutline(Out, ItemBounds, Red());
+            }
         }
 
         if (!Interface->Buttons[0]) // Place
