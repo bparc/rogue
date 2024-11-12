@@ -1,6 +1,3 @@
-#include "draw.h"
-#include "draw.c"
-
 typedef u64 entity_id_t;
 #include "entity_actions.h"
 #include "items.h"
@@ -11,6 +8,9 @@ typedef u64 entity_id_t;
 #include "entity_actions.c"
 #include "turn_system.h"
 #include "cursor.h"
+
+#include "draw.h"
+#include "draw.c"
 
 typedef enum {
     combat_text_critical,
@@ -378,7 +378,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 		v2 screen_p = CameraToScreen(state->camera, Sub(entity->deferred_p, V2(60.0f, 60.0f)));
 		screen_p.x -= 25.0f;
-		RenderHP(out_top, screen_p, assets, entity);
+		RenderHPBar(out_top, screen_p, assets, entity);
 	}
 	for (s32 index = 0; index < queue->num_evicted_entities; index++)
 	{

@@ -17,3 +17,19 @@ fn void RenderTileAlignedBitmap(command_buffer_t *out, map_t *map, v2s offset, b
 	p = Sub(p, Scale(bitmap->scale, 0.5f));
 	DrawBitmap(out, p, bitmap->scale, color, bitmap);
 }
+
+fn void RenderHPBar(command_buffer_t *out, v2 p, assets_t *assets, entity_t *entity)
+{
+    // todo: Add animation when chunk of health is lost, add art asset
+    f32 health_percentage = (f32)entity->health / entity->max_health;
+
+    v2 bar_size = V2(16*4, 2*4);
+    v2 bar_p = p;
+
+    DrawRect(out, bar_p, bar_size, Black());
+    v2 health_bar_size = V2(bar_size.x * health_percentage, bar_size.y);
+            
+    DrawRect(out, bar_p, health_bar_size, Green());
+    DrawRectOutline(out, bar_p, health_bar_size, Black());
+    DrawFormat(out, assets->Font, Add(bar_p, V2(4.0f,-10.0f)), White(), "%i/%i", entity->health,entity->max_health);
+}
