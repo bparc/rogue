@@ -156,7 +156,8 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
 
             v2s max_position = Add32(Index, Interface->DraggedItem.size);
 
-            if (Index.x >= 0 && Index.y >= 0 && max_position.x <= Eq->x && max_position.y <= Eq->y && Eq_IsSpaceFree(Eq, Index, Interface->DraggedItem.size)) {
+            if (Index.x >= 0 && Index.y >= 0 && max_position.x <= Eq->x && max_position.y <= Eq->y
+                && Eq_IsSpaceFree_Exclude(Eq, Index, Interface->DraggedItem.size, Interface->DraggedItemID)) {
                 DrawBoundsOutline(Out, ItemBounds, Red());
             }
         }
