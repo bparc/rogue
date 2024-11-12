@@ -236,8 +236,8 @@ fn dda_line_t BeginDDALine(const map_t *map, v2s from, v2s to)
 	result.to = to;
 	result.map = map;
 
-	result.ray = Sub(SToF2(to), SToF2(from));
-	result.distance_to_edge = SToF2(Sign2(result.ray));
+	result.ray = Sub(SignedToFloat(to), SignedToFloat(from));
+	result.distance_to_edge = SignedToFloat(Sign2(result.ray));
 	result.delta = Sign2(result.ray);
 
 	return result;
@@ -249,9 +249,9 @@ fn b32 ContinueDDALine(dda_line_t *it)
 
 	if (result)
 	{
-		v2 ray_p = SToF2(it->from);
+		v2 ray_p = SignedToFloat(it->from);
 	
-		v2 edge = Add(SToF2(it->at), it->distance_to_edge);
+		v2 edge = Add(SignedToFloat(it->at), it->distance_to_edge);
 		v2 dt = Sub(edge, ray_p);
 		dt = Div(dt, it->ray);
 

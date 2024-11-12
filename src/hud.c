@@ -220,105 +220,117 @@ fn void PlaceItemInInventory(inventory_t *Eq, interface_t *Interface,
             NewItem->y = Index.y;
         }
     }
+
+    Interface->DraggedItemRotation = Item->params->rotation;
+}
+
+typedef struct
+{
+    v2 Min;
+    v2 CellSize;
+
+    command_buffer_t *Out;
+    v2 At;
+    bmfont_t *Font;
+    interface_t *GUI;
+} inventory_layout_t;
+
+fn inventory_layout_t InventoryLayout(interface_t *GUI, command_buffer_t *Out, bmfont_t *Font, v2 At, v2 CellSize)
+{
+    inventory_layout_t result = {0};
+    result.GUI = GUI;
+    result.Font = Font;
+    result.Out = Out;
+    result.Min = result.At = At;
+    result.CellSize = CellSize;
+
+    return result;
+}
+
+fn void InventoryText(inventory_layout_t *Layout, const char *format, ...)
+{
+    char string[256] = "";
+    va_list args = {0};
+    va_start(args, format);
+    vsnprintf(string, ArraySize(string), format, args);
+    va_end(args);
+    DrawText(Layout->Out, Layout->Font, Layout->At, string, White());
+    Layout->At.y += 20.0f;
+}
+
+fn void InventorySeparator(inventory_layout_t *Layout)
+{
+    Layout->At.y += 20.0f;
+}
+
+fn v2 GetInventoryCellPosition(const inventory_layout_t *Layout, const item_t *Item, v2s Index)
+{
+    v2 result = {Item->x * Layout->CellSize.x, Item->y * Layout->CellSize.y};
+    return result;
+}
+
+fn bb_t GetItemBox(const inventory_layout_t *Layout, const item_t *Item)
+{
+    v2 ItemSz = SignedToFloat(Item->params->EqSize);
+    if (Layout->GUI->DraggedItemRotation)
+        ItemSz = Rotate(ItemSz);
+    ItemSz = Mul(ItemSz, Layout->CellSize);
+    return RectToBounds(V2(0.0f, 0.0f), ItemSz);
+}
+
+fn bb_t ItemBoxFromIndex(const inventory_layout_t *Layout, const item_t *Item, v2s Index)
+{
+    bb_t result = GetItemBox(Layout, Item);
+
+    v2 position = Mul(SignedToFloat(Index), Layout->CellSize);
+    position = Add(position, Layout->Min);
+    
+    result.min = Add(result.min, position);
+    result.max = Add(result.max, position);
+    return result;
+}
+
+fn v2s InventoryCellFromOffset(const inventory_layout_t *Layout, v2 offset)
+{
+    v2 result = {0};
+    result = Sub(offset, Layout->Min);
+    result = Div(result, Layout->CellSize);
+    return FloatToSigned(result);
 }
 
 fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *Input, bmfont_t *Font, interface_t *Interface, entity_t *User)
 {
-    if (Interface->inventory_visible == false) {
-        return;
-    }
-
-    v2 Offset = V2(100.0f, 40.0f);
-    v2 CellSz = V2(32.0f, 32.0f);
-
-    v2 Cursor = GetCursorP(Input);
+    v2 Cursor = GetCursorOffset(Input);
     const char *Tooltip = NULL;
 
-    v2 inventory_size;
-    inventory_size.x = Eq->x * CellSz.x;
-    inventory_size.y = Eq->y * CellSz.y;
+    // NOTE(): Layout:
+    v2 EqMin = V2(100.0f, 40.0f);
+    v2 CellSz = V2(32.0f, 32.0f);
+    v2 GridSz = {Eq->x * CellSz.x, Eq->y * CellSz.y};
+    v2 FullInventorySz = {GridSz.x + 180.0f, GridSz.y};
 
-    v4 background_color = V4(0.0f, 0.0f, 0.0f, 0.7f);
-    DrawRect(Out, Offset, V2(inventory_size.x + 180, inventory_size.y), background_color);
+    inventory_layout_t Layout = InventoryLayout(Interface, Out, Font, EqMin, CellSz);
+    Layout.At.x += (GridSz.x + 10.0f);
 
-    const char *hint_text = "i - close";
-    v2 right_hint_pos;
-    right_hint_pos.x = Offset.x + inventory_size.x + 10.0f;
-    right_hint_pos.y = Offset.y;
-    DrawText(Out, Font, right_hint_pos, hint_text, White());
+    DrawRect(Out, EqMin, FullInventorySz, V4(0.0f, 0.0f, 0.0f, 0.7f));
+    InventoryText(&Layout, "i - close");
+    InventoryText(&Layout, "Weight: %i/%i", Eq->carried_weight, Eq->max_carry_weight);
+    InventorySeparator(&Layout);
 
-    // Inventory Stats
-    v2 inventory_stats_pos = right_hint_pos;
-    inventory_stats_pos.y += 20.0f; // Position it below the hint text
-
-    char inventory_stats[128];
-    snprintf(inventory_stats, sizeof(inventory_stats), "Weight: %d/%d",
-             Eq->carried_weight, Eq->max_carry_weight);
-    DrawText(Out, Font, inventory_stats_pos, inventory_stats, White());
-
-    // Separator
-    inventory_stats_pos.y += 40.0f; // Leave some space after inventory stats
-    DrawText(Out, Font, inventory_stats_pos, "PLAYER STATS", White());
-
-    // Player Stats
-    inventory_stats_pos.y += 20.0f; // Position player stats below separator
-    v2 player_stats_pos = inventory_stats_pos;
-
-    char player_stats[256];
-        char health_text[64];
-    snprintf(health_text, sizeof(health_text), "Health: %d/%d", User->health, User->max_health);
-    DrawText(Out, Font, player_stats_pos, health_text, White());
-
-    player_stats_pos.y += 20.0f;  // Move down for next line
-
-    char attack_text[64];
-    snprintf(attack_text, sizeof(attack_text), "Attack: %d", User->attack_dmg);
-    DrawText(Out, Font, player_stats_pos, attack_text, White());
-
-    player_stats_pos.y += 20.0f;
-
-    char ranged_accuracy_text[64];
-    snprintf(ranged_accuracy_text, sizeof(ranged_accuracy_text), "Ranged Accuracy: %d", User->ranged_accuracy);
-    DrawText(Out, Font, player_stats_pos, ranged_accuracy_text, White());
-
-    player_stats_pos.y += 20.0f;
-
-    char melee_accuracy_text[64];
-    snprintf(melee_accuracy_text, sizeof(melee_accuracy_text), "Melee Accuracy: %d", User->melee_accuracy);
-    DrawText(Out, Font, player_stats_pos, melee_accuracy_text, White());
-
-    player_stats_pos.y += 20.0f;
-
-    char evasion_text[64];
-    snprintf(evasion_text, sizeof(evasion_text), "Evasion: %d", User->evasion);
-    DrawText(Out, Font, player_stats_pos, evasion_text, White());
-
-    player_stats_pos.y += 20.0f;
-
-    char action_points_text[64];
-    snprintf(action_points_text, sizeof(action_points_text), "Action Points: %d", User->remaining_action_points);
-    DrawText(Out, Font, player_stats_pos, action_points_text, White());
+    InventoryText(&Layout, "Health: %i/%i", User->health, User->max_health);
+    InventoryText(&Layout, "Attack: %d", User->attack_dmg);
+    InventoryText(&Layout, "Ranged Accuracy: %d", User->ranged_accuracy);
+    InventoryText(&Layout, "Melee Accuracy: %d", User->melee_accuracy);
+    InventoryText(&Layout, "Evasion: %d", User->evasion);
+    InventoryText(&Layout, "Action Points: %d", User->remaining_action_points);
 
     // Grid
     for (s32 y = 0; y < Eq->y; y++)
     {
         for (s32 x = 0; x < Eq->x; x++)
         {   
-            v2 At = {0};
-            At.x = (f32)x;
-            At.y = (f32)y;
-            At = Mul(At, CellSz);
-            At = Add(At, Offset);
-            //DrawRect(Out, At, CellSz, Black());
-            DrawRectOutline(Out, At, CellSz, Red());
-
-            const layout_cell_t *Cell = &Eq->layout[y][x];
-            if (Cell->ID > 0)
-            {
-                bb_t CellBb = RectToBounds(At, CellSz);
-                CellBb = Shrink(CellBb, 2.0f);
-                //DrawRect(Out, CellBb.min, Sub(CellBb.max, CellBb.min), Green());
-            }
+            v2 relative = {x * CellSz.x, y * CellSz.y};
+            DrawRectOutline(Out, Add(EqMin, relative), CellSz, Red());
         }
     }
 
@@ -326,49 +338,31 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
     for (s32 index = 0; index < Eq->item_count; index++)
     {
         item_t *Item = &Eq->items[index];
-        const item_params_t *Params = Item->params;
+        bb_t ItemBounds = ItemBoxFromIndex(&Layout, Item, V2S(Item->x, Item->y));
 
-        v2s Index = {0};
-        Index.x = Item->x;
-        Index.y = Item->y;
-
-        v2 At = {0};
-        At.x = (f32)Item->x;
-        At.y = (f32)Item->y;
-        At = Mul(At, CellSz);
-        At = Add(At, Offset);
-
-        v2 EqSz = {0};
-        if (Interface->DraggedItemRotation == 0) { // No rotation
-            EqSz.x = (f32)Params->EqSize.x;
-            EqSz.y = (f32)Params->EqSize.y;
-        } else { // 90 degrees rotation
-            EqSz.x = (f32)Params->EqSize.y;
-            EqSz.y = (f32)Params->EqSize.x;
-        }
-        EqSz = Mul(EqSz, CellSz);
-
-        v4 Colors[4] = { Red(), Blue(), Yellow(), Green() };
-        v4 Color = Colors[Item->type % ArraySize(Colors)];
-
-        bb_t ItemBb = RectToBounds(At, EqSz);
-
-        bb_t BitmapBb = Shrink(ItemBb, 5.0f);
-        DrawRect(Out, BitmapBb.min, Sub(BitmapBb.max, BitmapBb.min), Color);
-
-        if (IsPointInBounds(ItemBb, Cursor) && (Interface->Locked == 0))
+        // Interact
+        if (IsPointInBounds(ItemBounds, Cursor) && (Interface->DraggedItemID == 0))
         {
-            Tooltip = Params->name;
+            Tooltip = Item->params->name;
             if (Input->mouse_buttons[0])
             {
-                Interface->Locked = (0x100 + index);
-                Interface->DraggedItemSz = V2((f32)Params->EqSize.x, (f32)Params->EqSize.y);
+                const s32 FirstID = 0x100;
+                Interface->DraggedItemID = FirstID + index;
+                Interface->DraggedItemSz = SignedToFloat(Item->params->EqSize);
                 Interface->DraggedItemIndex = index;
                 Interface->DraggedItem = *Item;
                 Interface->OriginalX = Item->x;
                 Interface->OriginalY = Item->y;
+
                 Interface->DraggedItemRotation = Item->params->rotation;
             }
+        }
+
+        // Render
+        {
+            const v4 ItemColors[4] = { Red(), Blue(), Yellow(), Green() };
+            v4 Color = ItemColors[Item->type % ArraySize(ItemColors)];
+            DrawBounds(Out, Shrink(ItemBounds, 5.0f), Color);
         }
     }
 
@@ -376,57 +370,30 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         DrawText(Out, Font, Add(Cursor, V2(15,23)), Tooltip, Yellow());
 
     // Dragging
-    if (Interface->Locked)
+    if (Interface->DraggedItemID)
     {
-        v2 Rel = Sub(Cursor, Offset);
-        Rel = Div(Rel, CellSz);
+        v2s Index = InventoryCellFromOffset(&Layout, Cursor);
 
-        v2s Index = {0};
-        Index.x = (s32)Rel.x;
-        Index.y = (s32)Rel.y;
+        // Render
+        {
+            bb_t ItemBounds = ItemBoxFromIndex(&Layout, &Interface->DraggedItem, Index);
+            ItemBounds = Shrink(ItemBounds, 4.0f);
+            DrawBounds(Out, ItemBounds, W(Green(), 0.5f));
+        }
 
         if (!Interface->Buttons[0]) // Place
         {
-            Interface->Locked = 0;
+            Interface->DraggedItemID = 0;
+            PlaceItemInInventory(Eq, Interface, Index, Interface->DraggedItemSz, EqMin, User);
 
-            PlaceItemInInventory(Eq, Interface, Index, Interface->DraggedItemSz, Offset, User);
         }
         if (Interface->Interact[1]) // Rotate
         {
-            Interface->DraggedItem.params->rotation = 1 - Interface->DraggedItemRotation; // use rotation variable in item_t, instead of interface_t, because it affects all items in inventory
-
-            v2 RotatedSz = {0};
-            RotatedSz.y = (f32)Interface->DraggedItemSz.x;
-            RotatedSz.x = (f32)Interface->DraggedItemSz.y;
-
-            Interface->DraggedItemSz = RotatedSz;
+            // TODO(mw00): use rotation variable in item_t, instead of interface_t,
+            // because it affects all items in inventory
+            Interface->DraggedItem.params->rotation = 1 - Interface->DraggedItemRotation;
+            Interface->DraggedItemSz = Rotate(Interface->DraggedItemSz);
         }
-
-        /*
-        v2 EqSz = {0};
-        EqSz.x = (f32)Interface->DraggedItemSz.x;
-        EqSz.y = (f32)Interface->DraggedItemSz.y;
-        EqSz = Mul(EqSz, CellSz); */
-
-        v2 EqSz = {0};
-        if (Interface->DraggedItemRotation == 0) { // No rotation
-            EqSz.x = (f32)Interface->DraggedItemSz.x;
-            EqSz.y = (f32)Interface->DraggedItemSz.y;
-        } else { // 90 degrees rotation
-            EqSz.x = (f32)Interface->DraggedItemSz.y;
-            EqSz.y = (f32)Interface->DraggedItemSz.x;
-        }
-        EqSz = Mul(EqSz, CellSz);
-
-        v2 At = {0};
-        At.x = (f32)Index.x;
-        At.y = (f32)Index.y;
-        At = Mul(At, CellSz);
-        At = Add(At, Offset);
-        bb_t ItemBb = RectToBounds(At, EqSz);
-        ItemBb = Shrink(ItemBb, 4.0f);
-
-        DrawRectOutline(Out, ItemBb.min, Sub(ItemBb.max, ItemBb.min), Green());
     }
 }
 
@@ -438,7 +405,7 @@ fn void HUD(command_buffer_t *out,game_world_t *state, turn_queue_t *queue, enti
 
     TurnQueue(out, state, queue, assets, state->cursor);
 
-    if (IsPlayer(ActiveEntity))
+    if (IsPlayer(ActiveEntity) && (state->interface->inventory_visible))
     {
         Inventory(out, ActiveEntity->inventory, input, assets->Font, state->interface, ActiveEntity);
         ActionMenu(ActiveEntity, state, out, assets, input, queue);

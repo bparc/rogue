@@ -224,5 +224,5 @@ fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *ou
 	entity_t *Player = DEBUGGetPlayer(state->storage);
 	RenderDebugGeneratorState(Debug.out_top, &editor->Gen, Player ? Player->p : V2S(0, 0), assets);
 
-	v2s cursor_p = ViewportToMap(state, GetCursorP(input));
+	v2s cursor_p = ViewportToMap(state, GetCursorOffset(input));
 }

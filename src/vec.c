@@ -9,9 +9,14 @@ fn v2 SV2(s32 x, s32 y)
 	return V2((f32)x, (f32)y);
 }
 
-fn v2 SToF2(v2s v)
+fn v2 SignedToFloat(v2s v)
 {
-	return SV2(v.x, v.y);
+	return (v2) {(f32)v.x, (f32)v.y};
+}
+
+fn v2s FloatToSigned(v2 v)
+{
+	return (v2s) {(s32)v.x, (s32)v.y};
 }
 
 fn v2 Scale(v2 v, f32 scalar)
@@ -268,6 +273,12 @@ fn v2s Abs2S(v2s v)
 fn v2 Perp(v2 v)
 {
 	v2 result = {v.y, -v.x};
+	return result;
+}
+
+fn v2 Rotate(v2 v)
+{
+	v2 result = {v.y, v.x};
 	return result;
 }
 

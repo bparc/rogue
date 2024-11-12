@@ -83,7 +83,7 @@ fn void CreateDamageNumber(particles_t *particles, v2 p, s32 number)
 
 typedef struct
 {
-    s32 Locked;
+    s32 DraggedItemID;
     b32 inventory_visible;
 
     item_t DraggedItem;

@@ -154,7 +154,7 @@ fn void DrawFormat(command_buffer_t *buffer, const bmfont_t *font, v2 p, v4 colo
 	char string[256] = "";
 	va_list args = {0};
 	va_start(args, format);
-	vsprintf(string, format, args);
+	vsnprintf(string, ArraySize(string), format, args);
 	va_end(args);
 	DrawText(buffer, font, p, string, color);
 }

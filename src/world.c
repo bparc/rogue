@@ -19,6 +19,7 @@ fn entity_t *CreatePlayer(game_world_t *state, v2s p)
 
     AddItemToInventory(result, item_green_herb);
     AddItemToInventory(result, item_assault_rifle);
+    AddItemToInventory(result, item_assault_rifle);
     
     return result;
 }

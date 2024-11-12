@@ -43,7 +43,7 @@ fn inline v2 GetViewport(const client_input_t *input)
 	return V2(input->viewport[0], input->viewport[1]);
 }
 
-fn inline v2 GetCursorP(const client_input_t *input)
+fn inline v2 GetCursorOffset(const client_input_t *input)
 {
 	v2 result = V2((f32)input->mouse[0], (f32)input->mouse[1]);
 	return result;
