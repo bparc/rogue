@@ -330,9 +330,6 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         }
         if (Interface->Interact[1]) // Rotate
         {
-            // TODO(mw00): use rotation variable in item_t, instead of interface_t,
-            // because it affects all items in inventory
-            //Interface->DraggedItem.params->rotation = 1 - Interface->DraggedItemRotation;
             Interface->DraggedItem.size = RotateSigned(Interface->DraggedItem.size);
         }
     }
