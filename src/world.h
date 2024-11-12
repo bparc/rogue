@@ -1,11 +1,13 @@
 typedef u64 entity_id_t;
-#include "entity_actions.h"
+#include "actions.h"
 #include "items.h"
 #include "inventory.h"
 #include "inventory.c"
+
 #include "entity.h"
 #include "entity.c"
-#include "entity_actions.c"
+#include "actions.c"
+
 #include "turn_system.h"
 #include "cursor.h"
 
