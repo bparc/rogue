@@ -241,7 +241,7 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
             Interface->DraggedItemID = 0;
             Eq_MoveItem(Eq, Interface->DraggedItem, Index);
         }
-        if (WentDown(Cons->rotate)) // Rotate
+        if (Interface->Interact[1] || WentDown(Cons->rotate)) // Rotate
         {
             Interface->DraggedItem.size = RotateSigned(Interface->DraggedItem.size);
         }
