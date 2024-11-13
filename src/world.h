@@ -100,6 +100,8 @@ typedef struct
     v2 ClickOffset;
     item_id_t ContextMenuItem;
     b32 ContextMenuOpened;
+    b32 CloseContextMenu;
+    f32 ContextMenuT;
 } interface_t;
 
 fn void BeginInterface(interface_t *Interface, const client_input_t *Input)
@@ -193,7 +195,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log, as
 	BeginGameWorld(state);
 	TurnSystem(state, state->storage, state->map, state->turns, dt, &input, cons, log, out, assets);	
 	EndGameWorld(state);
-	HUD(Debug.out, state, state->turns, state->storage, assets, &input, &cons);
+	HUD(Debug.out, state, state->turns, state->storage, assets, &input, &cons, dt);
 }
 
 fn inline void RenderEntity(command_buffer_t *out, const entity_t *entity, f32 alpha, assets_t *assets, const map_t *map)

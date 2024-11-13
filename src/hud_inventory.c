@@ -3,6 +3,8 @@ typedef struct
     v2 Min;
     v2 CellSize;
 
+    v2 ContextMenuMin;
+    s32 ContextMenuItemCount;
     f32 ContextMenuItemWidth;
     f32 LineHeight;
 
@@ -84,25 +86,34 @@ fn b32 ContextMenuItem(inventory_layout_t *Layout, const char *Text)
     bb_t Bounds = RectToBounds(Layout->At, V2(Layout->ContextMenuItemWidth, Layout->LineHeight));
 
     v4 Background = Red();
-    if (IsPointInBounds(Bounds, Layout->GUI->Cursor))
+    if (IsPointInBounds(Bounds, Layout->GUI->Cursor) && (!Layout->GUI->CloseContextMenu))
     {
         Background = Pink();
         if (Layout->GUI->Interact[0])
         {
             Result = true;
-            Layout->GUI->ContextMenuOpened = false;
+            Layout->GUI->CloseContextMenu = true;
         }
     }
 
-    DrawBounds(Layout->Out, Bounds, Background);
+    f32 T = Layout->GUI->ContextMenuT;
+    //T *= T;
+
+    DrawBounds(Layout->Out, Bounds, W(Background, T));
 
     {
+        v4 TextColor = White();
         v2 TextMin = Bounds.min;
+        TextColor.w = T;
         TextMin.x += 4.0f;
-        DrawText(Layout->Out, Layout->Font, TextMin, Text, White());
+
+        TextMin.y = Lerp(Layout->ContextMenuMin.y, TextMin.y, T * T);
+
+        DrawText(Layout->Out, Layout->Font, TextMin, Text, TextColor);
     }
 
     Layout->At.y += Layout->LineHeight;
+    Layout->ContextMenuItemCount++;
 
     return Result;
 }
@@ -111,7 +122,7 @@ fn bb_t ContextMenu(command_buffer_t *Out, interface_t *In, inventory_t *Eq, inv
 {
     //DrawBounds(Out, bounds, Black()); 
     bb_t Bounds = {0};
-    Bounds.min = In->ClickOffset;
+    Layout.ContextMenuMin = Bounds.min = In->ClickOffset;
 
     Layout.At = Bounds.min;
     if (ContextMenuItem(&Layout, "Use"))
@@ -132,7 +143,7 @@ fn bb_t ContextMenu(command_buffer_t *Out, interface_t *In, inventory_t *Eq, inv
 }
 
 fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *Input,
-    bmfont_t *Font, interface_t *Interface, entity_t *User, const virtual_controls_t *Cons)
+    bmfont_t *Font, interface_t *Interface, entity_t *User, const virtual_controls_t *Cons, f32 dt)
 {
     v2 Cursor = GetCursorOffset(Input);
     const char *Tooltip = NULL;
@@ -194,9 +205,11 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
 
             if ((Interface->DraggedItemID == 0) && Interface->Interact[1])
             {
+                Interface->ContextMenuT = 0.0f;
                 Interface->ContextMenuItem = Item->ID;
                 Interface->ContextMenuOpened = true;
                 Interface->ClickOffset = Cursor;
+                Interface->CloseContextMenu = false;
                 Interface->Interact[1] = false;
             }
         }
@@ -261,5 +274,16 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
 
         if ((Item == NULL) || ClickedOutsideBounds)
             Interface->ContextMenuOpened = false;
+
+        if (!Interface->CloseContextMenu)
+        {
+            Interface->ContextMenuT = MinF32(Interface->ContextMenuT + (dt * 4.0f), 1.0f);
+        }
+        else
+        {
+            Interface->ContextMenuT -= dt * 6.0f;
+            if (Interface->ContextMenuT <= 0.0f)
+                Interface->ContextMenuOpened = 0;
+        }
     }
 }

@@ -3,7 +3,7 @@
 #include "hud_queue.c"
 
 fn void HUD(command_buffer_t *out,game_world_t *state, turn_queue_t *queue, entity_storage_t *storage,
-    assets_t *assets, const client_input_t *input, const virtual_controls_t *Cons)
+    assets_t *assets, const client_input_t *input, const virtual_controls_t *Cons, f32 dt)
 {
     BeginInterface(state->interface, input);
 
@@ -15,7 +15,7 @@ fn void HUD(command_buffer_t *out,game_world_t *state, turn_queue_t *queue, enti
     {
         if (state->interface->inventory_visible)
         {
-            Inventory(out, ActiveEntity->inventory, input, assets->Font, state->interface, ActiveEntity, Cons);
+            Inventory(out, ActiveEntity->inventory, input, assets->Font, state->interface, ActiveEntity, Cons, dt);
         }
         
         ActionMenu(ActiveEntity, state, out, assets, input, queue);
