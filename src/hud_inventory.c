@@ -118,7 +118,7 @@ fn b32 ContextMenuItem(inventory_layout_t *Layout, const char *Text)
     return Result;
 }
 
-fn bb_t ContextMenu(command_buffer_t *Out, interface_t *In, inventory_t *Eq, inventory_layout_t Layout, item_t *Item)
+fn bb_t ContextMenu(command_buffer_t *Out, interface_t *In, inventory_t *Eq, inventory_layout_t Layout, item_id_t Item)
 {
     //DrawBounds(Out, bounds, Black()); 
     bb_t Bounds = {0};
@@ -130,7 +130,7 @@ fn bb_t ContextMenu(command_buffer_t *Out, interface_t *In, inventory_t *Eq, inv
     if (ContextMenuItem(&Layout, "Examine"))
         DebugLog("Examine...");
     if (ContextMenuItem(&Layout, "Remove"))
-        Eq_RemoveItem(Eq, Item->ID);
+        Eq_RemoveItem(Eq, Item);
 
     ContextMenuItem(&Layout, "Exit");
 
@@ -264,16 +264,15 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
     if (Interface->ContextMenuOpened)
     {
         bb_t Bounds = {0};
-
-        item_t *Item = Eq_GetItem(Eq, Interface->ContextMenuItem);
-        if (Item)
-            Bounds = ContextMenu(Out, Interface, Eq, Layout, Item);
+        Bounds = ContextMenu(Out, Interface, Eq, Layout, Interface->ContextMenuItem);
 
         b32 ClickedOutsideBounds = (Interface->Interact[0] || Interface->Interact[1]) &&
         (IsPointInBounds(Bounds, Cursor) == false);
 
-        if ((Item == NULL) || ClickedOutsideBounds)
+        if (ClickedOutsideBounds)
             Interface->ContextMenuOpened = false;
+        if (Interface->ContextMenuItem == 0)
+            Interface->CloseContextMenu = true;
 
         if (!Interface->CloseContextMenu)
         {
