@@ -23,7 +23,10 @@ fn entity_t *CreatePlayer(game_world_t *state, v2s p)
     Eq_AddItem(Eq, item_assault_rifle);
     Eq_AddItem(Eq, item_green_herb);
     Eq_AddItem(Eq, item_assault_rifle);
-    
+    Eq_AddItem(Eq, item_green_herb);
+    Eq_AddItem(Eq, item_green_herb);
+    Eq_AddItem(Eq, item_green_herb);
+    Eq_AddItem(Eq, item_green_herb);
     return result;
 }
 

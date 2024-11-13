@@ -296,6 +296,14 @@ fn v2 ClampLength(v2 v, float max)
 	return result;
 }
 
+fn v2s ClampVector32(v2s v, v2s min, v2s max)
+{
+	v2s result = v;
+	result.x = Clamp32(result.x, min.x, max.x);
+	result.y = Clamp32(result.y, min.y, max.y);
+	return result;
+}
+
 fn v2 ClampToLine(v2 a, v2 b, v2 p)
 {
 	v2 v = Sub(b, a);

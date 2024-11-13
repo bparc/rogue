@@ -159,9 +159,9 @@ fn b32 Eq_RemoveItem(inventory_t *inventory, item_id_t ID)
         item_t *item = &inventory->items[i];
         if (item->ID == ID)
         {
+            Eq_FreeSpace(inventory, item->index, item->size);
             inventory->carried_weight -= item->params->weight;
             inventory->items[i] = inventory->items[--inventory->item_count];
-            Eq_FreeSpace(inventory, item->index, item->params->size);
             return true;
         }
     }

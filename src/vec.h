@@ -82,6 +82,8 @@ fn v2s Sign2(v2 v);
 fn v2 ClampLength(v2 v, float max);
 fn v2 ClampToLine(v2 a, v2 b, v2 p);
 
+fn v2s ClampVector32(v2s v, v2s min, v2s max);
+
 fn int IsInsideCircle(v2s realPos, v2s size, v2s center, s32 radius);
 
 typedef struct

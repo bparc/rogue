@@ -13,8 +13,12 @@ typedef struct {
     s32 item_count;
     item_t items[MAX_INVENTORY_SIZE];
 
-    s32 x;
-    s32 y;
+    union
+    {
+        struct { s32 x; s32 y; };
+        v2s size;
+    };
+
     layout_cell_t layout[BACKPACK_GRID_Y_SIZE][BACKPACK_GRID_X_SIZE]; // For inventory tetris
 
     s32 carried_weight;

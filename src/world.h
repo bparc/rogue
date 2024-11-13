@@ -93,12 +93,18 @@ typedef struct
     s32 OriginalX;
     s32 OriginalY;
 
+    v2 Cursor;
     s32 Interact[2];
     s32 Buttons[2];
+
+    v2 ClickOffset;
+    item_id_t ContextMenuItem;
+    b32 ContextMenuOpened;
 } interface_t;
 
 fn void BeginInterface(interface_t *Interface, const client_input_t *Input)
 {
+	Interface->Cursor = GetCursorOffset(Input);
 	Interface->Interact[0] = (!Interface->Buttons[0] && Input->mouse_buttons[0]);
 	Interface->Interact[1] = (!Interface->Buttons[1] && Input->mouse_buttons[1]);
 
@@ -187,7 +193,7 @@ fn void Update(game_world_t *state, f32 dt, client_input_t input, log_t *log, as
 	BeginGameWorld(state);
 	TurnSystem(state, state->storage, state->map, state->turns, dt, &input, cons, log, out, assets);	
 	EndGameWorld(state);
-	HUD(Debug.out, state, state->turns, state->storage, assets, &input);
+	HUD(Debug.out, state, state->turns, state->storage, assets, &input, &cons);
 }
 
 fn inline void RenderEntity(command_buffer_t *out, const entity_t *entity, f32 alpha, assets_t *assets, const map_t *map)
