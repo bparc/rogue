@@ -184,6 +184,7 @@ fn void RenderDebugGeneratorState(command_buffer_t *out, map_layout_t *Gen, v2s 
 			color = Green();
 
 		DrawRect(out, Bounds.min, Sub(Bounds.max, Bounds.min), color);
+		DrawFormat(out, Assets->Font, Add(Bounds.min, V2(4.0f, 0.0f)), White(), "%i", room->Index);
 	}
 
 	for (s32 index = 1; index < Gen->PlacedRoomCount; index++)
@@ -215,14 +216,14 @@ fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *ou
 		DebugLog("GenerateDungeon()");
 		//MakeSimpleMap(state);
 
-		GenerateDungeon(&editor->Gen, 6, *state->memory);
-		LayoutMap(&editor->Gen, state);
+		GenerateDungeon(state->layout, 6, *state->memory);
+		LayoutMap(state->layout, state);
 
 		editor->inited = true;
 	}
 
 	entity_t *Player = DEBUGGetPlayer(state->storage);
-	RenderDebugGeneratorState(Debug.out_top, &editor->Gen, Player ? Player->p : V2S(0, 0), assets);
+	RenderDebugGeneratorState(Debug.out_top, state->layout, Player ? Player->p : V2S(0, 0), assets);
 
 	v2s cursor_p = ViewportToMap(state, GetCursorOffset(input));
 }

@@ -36,6 +36,8 @@ typedef struct
 
 typedef struct
 {
+	s32 CurrentRoomIndex;
+	b32 EncounterInited;
 	// NOTE(): Stores the turns as an list of entity ids
 // in a *reverse* order (the last turn in the queue will be executed first).
 	s32 num;
@@ -77,7 +79,6 @@ typedef struct
 	path_t path;
 } turn_queue_t;
 
-
 fn void SetupTurn(turn_queue_t *queue, s32 MovementPointCount)
 {
 	queue->movement_points = MovementPointCount;
@@ -93,6 +94,8 @@ fn void ControlPanel(turn_queue_t *queue, const virtual_controls_t *cons, entity
 
 fn void DefaultTurnOrder(turn_queue_t *queue);
 fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_id_t target, v2s target_p);
+
+fn s32 CountHostiles(turn_queue_t *Queue);
 
 fn s32 ConsumeMovementPoints(turn_queue_t *queue, s32 count);
 fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count);

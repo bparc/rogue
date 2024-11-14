@@ -4,8 +4,15 @@ fn void PushTurn(turn_queue_t *queue, entity_t *entity)
 		queue->entities[queue->num++] = entity->id;
 }
 
+fn void ClearTurnQueue(turn_queue_t *queue)
+{
+	queue->num = 0;;
+}
+
 fn void DefaultTurnOrder(turn_queue_t *queue)
 {
+	ClearTurnQueue(queue);
+
 	entity_storage_t *storage = queue->storage;
 
 	s32 player_count = 0;
@@ -91,6 +98,18 @@ fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count)
 	else
 		DebugLog("Insufficient amount of action points! (%i req.)", count);
 	return sufficient;
+}
+
+fn s32 CountHostiles(turn_queue_t *Queue)
+{
+	s32 Result = 0;
+	for (s32 Index = 0; Index < Queue->num; Index++)
+	{
+		entity_t *Entity = GetEntity(Queue->storage, Queue->entities[Index]);
+		if (IsHostile(Entity))
+			Result++;
+	}
+	return Result;
 }
 
 fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_id_t target, v2s target_p)
@@ -398,11 +417,37 @@ fn void TurnSystem(game_world_t *state, entity_storage_t *storage, map_t *map, t
 
 		if (ActiveEnt->flags & entity_flags_controllable)
 		{
+			// NOTE(): Room
+			room_t *CurrentRoom = RoomFromPosition(state->layout, ActiveEnt->p);
+			b32 ChangedRooms = CurrentRoom->Index != queue->CurrentRoomIndex;
+			queue->CurrentRoomIndex = CurrentRoom->Index;
+
+			s32 HostileCount = CountHostiles(queue);
+			if ((HostileCount == 0))
+			{
+				if (!queue->EncounterInited)
+				{
+					if (ChangedRooms)
+					{
+						v2s At = CurrentRoom->min;
+						CreateSlime(state, Add32(At, V2S(7, 8)));
+						CreateSlime(state, Add32(At, V2S(14, 5)));
+						DefaultTurnOrder(queue);
+						queue->EncounterInited = true;
+					}
+				}
+				else
+				{
+					queue->EncounterInited = false;
+					OpenEveryDoor(state->map, CurrentRoom);	
+				}
+			}
+
+			// NOTE(): Controls
 			dir_input_t DirInput = GetDirectionalInput(input);
 			b32 CursorEnabled = IsCursorEnabled(state->cursor);
 			DoCursor(state, out, cons, ActiveEnt, DirInput);
-
-			// NOTE(): Controls
+			
 			if (WentDown(cons.Inventory))
 				ToggleInventory(state->interface);
 

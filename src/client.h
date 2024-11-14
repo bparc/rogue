@@ -20,9 +20,11 @@
 #include "map.c"
 #include "pathfinding.h"
 #include "pathfinding.c"
-#include "world.h"
+
 #include "generator.h"
+#include "world.h"
 #include "generator.c"
+
 #include "editor.h"
 #include "editor.c"
 

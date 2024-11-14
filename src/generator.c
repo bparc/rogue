@@ -63,6 +63,30 @@ fn s32 FindRandomDisjointedChunk(map_layout_t *Gen, v2s *Chunk, memory_t Memory)
 	return 0;
 }
 
+fn v2s GenerateDoorPos(const map_layout_t *Layout, const room_t *Room)
+{
+	v2s chunk_size = Layout->ChunkSize;
+	v2s chunk_size_half = Layout->ChunkSizeHalf;
+	v2s min = Room->min;
+
+	v2s door_relative_offset = {0};
+	v2s door_dir = Sub32(Room->PrevChunk, Room->ChunkAt);
+	if ((door_dir.y == 0))
+	{
+		door_relative_offset.y = chunk_size_half.y;
+		if ((door_dir.x == +1))
+			door_relative_offset.x = chunk_size.x;
+	}
+	if ((door_dir.x == 0))
+	{
+		door_relative_offset.x = chunk_size_half.x;
+		if ((door_dir.y == +1))
+			door_relative_offset.y = chunk_size.y;
+	}
+	v2s Result = Add32(min, door_relative_offset);
+	return Result;
+}
+
 fn room_t *PlaceRoom(map_layout_t *Gen, v2s At, v2s PrevChunk)
 {
 	room_t *result = 0;
@@ -71,7 +95,13 @@ fn room_t *PlaceRoom(map_layout_t *Gen, v2s At, v2s PrevChunk)
 		result = &Gen->PlacedRooms[Gen->PlacedRoomCount++];
 		result->ChunkAt = At;
 		result->PrevChunk = PrevChunk;
+		result->Index = Gen->PlacedRoomCount;
+		result->min = Mul32(result->ChunkAt, Gen->ChunkSize);	
+		result->max = Add32(result->min, Gen->ChunkSize);
+		result->Doors[0] = GenerateDoorPos(Gen, result);
+
 		Gen->OccupiedChunks[At.y][At.x] = true;
+		Gen->RoomIndexes[At.y][At.x] = result->Index;
 	}
 	return result;
 }
@@ -123,7 +153,7 @@ fn void GenerateDungeon(map_layout_t *Gen, s32 RequestedRoomCount, memory_t Memo
 	DebugLog("placed %i/%i rooms, seed = %i", RequestedRoomCount - remainig_rooms, RequestedRoomCount, Seed);
 }
 
-fn void LayoutRoom(map_t *Map, room_t room, v2s chunk_size, const b32 PlaceDoors)
+fn void LayoutRoom(map_t *Map, room_t room, const b32 PlaceDoors, v2s chunk_size)
 {
 	v2s chunk_size_half = Div32(chunk_size, V2S(2, 2));
 	v2s min = Mul32(room.ChunkAt, chunk_size);
@@ -153,26 +183,11 @@ fn void LayoutRoom(map_t *Map, room_t room, v2s chunk_size, const b32 PlaceDoors
 	else
 	if (!CompareVectors(room.ChunkAt, room.PrevChunk))
 	{
-		v2s door_relative_offset = {0};
-		v2s door_dir = Sub32(room.PrevChunk, room.ChunkAt);
-		if ((door_dir.y == 0))
-		{
-			door_relative_offset.y = chunk_size_half.y;
-			if ((door_dir.x == +1))
-				door_relative_offset.x = chunk_size.x;
-		}
-		if ((door_dir.x == 0))
-		{
-			door_relative_offset.x = chunk_size_half.x;
-			if ((door_dir.y == +1))
-				door_relative_offset.y = chunk_size.y;
-		}
-
-		SetTileValue(Map, Add32(min, door_relative_offset), tile_Door);
+		SetTileValue(Map, room.Doors[0], tile_Door);
 	}
 }
 
-fn void GenerateRoomInterior(game_world_t *World, room_t room, v2s ChunkSize)
+fn void GenerateRoomInterior(game_world_t *World, room_t room, v2s chunk_size)
 {
 #define X 20
 #define Y 20
@@ -199,7 +214,7 @@ fn void GenerateRoomInterior(game_world_t *World, room_t room, v2s ChunkSize)
 	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
 	};
 
-	v2s min = Mul32(room.ChunkAt, ChunkSize);
+	v2s min = Mul32(room.ChunkAt, chunk_size);
 	for (s32 y = 1; y < Y - 1; y++)
 	{
 		for (s32 x = 1; x < X - 1; x++)
@@ -222,20 +237,19 @@ fn void GenerateRoomInterior(game_world_t *World, room_t room, v2s ChunkSize)
 }
 
 fn void LayoutMap(map_layout_t *Layout, game_world_t *World)
-{
-	v2s ChunkSize = V2S(20, 20);
+{	
 	map_t *Map = World->map;
 	ClearMap(Map);
 
 	for (s32 Index = 0; Index < Layout->PlacedRoomCount; Index++)
 	{
 		room_t *room = &Layout->PlacedRooms[Index];
-		LayoutRoom(Map, *room, ChunkSize, false);
+		LayoutRoom(Map, *room, false, Layout->ChunkSize);
 	}
 	for (s32 Index = 1; Index < Layout->PlacedRoomCount; Index++)
 	{
 		room_t *room = &Layout->PlacedRooms[Index];
-		LayoutRoom(Map, *room, ChunkSize, true);
+		LayoutRoom(Map, *room, true, Layout->ChunkSize);
 		//GenerateRoomInterior(World, *room, ChunkSize);
 	}
 
@@ -243,12 +257,44 @@ fn void LayoutMap(map_layout_t *Layout, game_world_t *World)
 	if (Layout->PlacedRoomCount)
 	{
 		const room_t *StartingRoom = &Layout->PlacedRooms[0];
-		GenerateRoomInterior(World, *StartingRoom, ChunkSize);
+		GenerateRoomInterior(World, *StartingRoom, Layout->ChunkSize);
 
-		v2s At = Mul32(StartingRoom->ChunkAt, ChunkSize);
+		v2s At = Mul32(StartingRoom->ChunkAt, Layout->ChunkSize);
 		CreatePlayer(World, Add32(At, V2S(1, 1)));
-	
-		CreateSlime(World, Add32(At, V2S(9, 8)));
-		CreateSlime(World, Add32(At, V2S(14, 5)));
 	}
+}
+
+fn s32 IsMapLayoutIndexValid(map_layout_t *Layout, v2s Index)
+{
+	s32 result = (Index.x >= 0 && Index.y >= 0) &&
+		(Index.x < Layout->ChunkCountX && Index.y < Layout->ChunkCountX);
+	return result;
+}
+
+fn room_t *RoomFromIndex(map_layout_t *Layout, s32 Index)
+{
+	room_t *Result = 0;
+	if (Index > 0)
+		Result = &Layout->PlacedRooms[Index - 1];
+	return Result;
+}
+
+fn room_t *RoomFromPosition(map_layout_t *Layout, v2s Pos)
+{
+	room_t *Result = 0;
+
+	v2s Index = Div32(Pos, Layout->ChunkSize);
+	if (IsMapLayoutIndexValid(Layout, Index))
+	{
+		s32 RoomIndex = Layout->RoomIndexes[Index.y][Index.x];	
+		Result = RoomFromIndex(Layout, RoomIndex);
+	}
+
+	return Result;
+}
+
+fn void OpenEveryDoor(map_t *Map, const room_t *Room)
+{
+	if (Room)
+		SetTileValue(Map, Room->Doors[0], tile_Floor);
 }

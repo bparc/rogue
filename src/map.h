@@ -14,6 +14,7 @@ typedef enum
 
 typedef enum
 {
+	tile_Floor = 1,
 	tile_Door = 16,
 } tile_type_t;
 

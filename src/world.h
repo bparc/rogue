@@ -153,20 +153,18 @@ fn void OpenContextMenu(interface_t *In, item_id_t Item)
 
 typedef struct
 {
-	assets_t *assets;
-	log_t *log;
-	cursor_t *cursor;
-	entity_storage_t *storage;
-	particles_t *particles;
-	interface_t *interface;
-	
-	slot_bar_t slot_bar;
-	turn_queue_t *turns;
-
-	map_t *map;
-	camera_t *camera;
-	
-	memory_t *memory;
+	assets_t 			*assets;
+	log_t 				*log;
+	cursor_t 			*cursor;
+	entity_storage_t 	*storage;
+	particles_t 		*particles;
+	interface_t 		*interface;
+	slot_bar_t 			slot_bar;
+	turn_queue_t 		*turns;
+	map_t 				*map;
+	camera_t 			*camera;
+	memory_t 			*memory;
+	map_layout_t 		*layout;
 } game_world_t;
 typedef game_world_t video_game_t;
 
@@ -199,7 +197,7 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *asset
 	state->storage 		= PushStruct(entity_storage_t, memory);
 	state->particles 	= PushStruct(particles_t, memory);
 	state->interface 	= PushStruct(interface_t, memory);
-
+	state->layout       = PushStruct(map_layout_t, memory);
 	state->map = CreateMap(1024, 1024, memory, TILE_PIXEL_SIZE);
 	
 	SetupItemDataTable(memory, assets);
