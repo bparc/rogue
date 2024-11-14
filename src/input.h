@@ -79,7 +79,7 @@ typedef struct
 	union { pad_button_t x, SnapCursor; };
 	union { pad_button_t y, EndTurn; };
 
-	pad_button_t menu, select;
+	pad_button_t Inventory, select;
 	pad_button_t rb;
 	pad_button_t rotate;
 
@@ -121,7 +121,7 @@ fn virtual_controls_t MapKeyboardToVirtualCons(const client_input_t *input, u8 k
 	result.dpad_left 	= MapVirtualButton('A', input, keys_prev);
 	result.confirm		= MapVirtualButton('E', input, keys_prev);
 	result.cancel		= MapVirtualButton('Q', input, keys_prev);
-	result.menu			= MapVirtualButton(key_code_tab, input, keys_prev);
+	result.Inventory	= MapVirtualButton(key_code_tab, input, keys_prev);
 	result.rotate		= MapVirtualButton('R', input, keys_prev);
 	result.debug[0]		= MapVirtualButton(key_code_f1, input, keys_prev);
 	result.debug[1]		= MapVirtualButton(key_code_f2, input, keys_prev);

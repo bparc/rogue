@@ -77,6 +77,7 @@ typedef struct
 	path_t path;
 } turn_queue_t;
 
+
 fn void SetupTurn(turn_queue_t *queue, s32 MovementPointCount)
 {
 	queue->movement_points = MovementPointCount;
@@ -88,9 +89,12 @@ fn void SetupTurn(turn_queue_t *queue, s32 MovementPointCount)
 	queue->turn_inited = true;
 }
 
+fn void ControlPanel(turn_queue_t *queue, const virtual_controls_t *cons, entity_storage_t *storage);
+
 fn void DefaultTurnOrder(turn_queue_t *queue);
 fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_id_t target, v2s target_p);
 
+fn s32 ConsumeMovementPoints(turn_queue_t *queue, s32 count);
 fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count);
 fn entity_t *GetActiveUnit(const turn_queue_t *queue);
 

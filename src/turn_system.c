@@ -77,6 +77,12 @@ fn void AcceptTurn(turn_queue_t *queue, entity_t *entity)
 	queue->seconds_elapsed = 0.0f;
 }
 
+fn s32 ConsumeMovementPoints(turn_queue_t *queue, s32 count)
+{
+	queue->movement_points -= count;
+	return true;
+}
+
 fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count)
 {
 	s32 sufficient = queue->action_points - count >= 0;
@@ -397,18 +403,19 @@ fn void TurnSystem(game_world_t *state, entity_storage_t *storage, map_t *map, t
 			DoCursor(state, out, cons, ActiveEnt, DirInput);
 
 			// NOTE(): Controls
-			if (WentDown(cons.menu))
+			if (WentDown(cons.Inventory))
 				ToggleInventory(state->interface);
 
 			// NOTE(): Move
-			b32 BlockUserInput = (ActionQueueCompleted(queue) == false) || CursorEnabled;
+			b32 BlockUserInput = (ActionQueueCompleted(queue) == false) || CursorEnabled ||
+				(queue->movement_points <= 0);
 			if (DirInput.Inputed && (BlockUserInput == false))
 			{
 				b32 Moved = Move(state, ActiveEnt, DirInput.Direction);
 				if (Moved && (queue->god_mode_enabled == false))
 				{
+					ConsumeMovementPoints(queue, 1);
 					ApplyTileEffects(state->map, ActiveEnt);
-					queue->movement_points--;
 				}
 			}
 
