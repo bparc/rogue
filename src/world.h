@@ -119,6 +119,11 @@ fn void EndInterface(interface_t *In)
 
 }
 
+fn void ToggleInventory(interface_t *In)
+{
+	In->inventory_visible = !In->inventory_visible;
+}
+
 fn void BeginItemDrag(interface_t *In, const item_t *Item)
 {
     In->DraggedItemID = Item->ID;
@@ -175,9 +180,11 @@ fn b32 Move(game_world_t *world, entity_t *entity, v2s offset);
 
 #include "game.h"
 #include "game.c"
+
 #include "cursor.c"
 #include "enemy.c"
 #include "turn_system.c"
+
 #include "hud.c"
 
 fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *assets)
@@ -296,7 +303,7 @@ fn inline void RenderTile(command_buffer_t *out, map_t *map, s32 x, s32 y, asset
 		}
 		if (IsWall(map, at))
 			RenderIsoTile(out, map, at, White(), true, 15);
-		if (GetTileValue(map, at.x, at.y) == 5)
+		if (GetTileValue(map, at.x, at.y) == tile_Door)
 			RenderIsoTile(out, map, at, Red(), true, 25);
 
 		if ((Tile->trap_type != trap_type_none))
@@ -304,7 +311,7 @@ fn inline void RenderTile(command_buffer_t *out, map_t *map, s32 x, s32 y, asset
 	}
 }
 
-fn inline void ClipToViewport(game_world_t *World, map_t *map, bb_t clipplane, command_buffer_t *out)
+fn inline void RenderMap_ClipToViewport(game_world_t *World, map_t *map, bb_t clipplane, command_buffer_t *out)
 {
 	v2 viewport = Sub(clipplane.max, clipplane.min);
 	assets_t *assets = World->assets;
@@ -394,7 +401,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	view.max = Add(view.min, viewport);
 	view = Shrink(view, 64.0f * 3.0f);
 
-	ClipToViewport(state, map, view, out);
+	RenderMap_ClipToViewport(state, map, view, out);
 
 	// NOTE(): Entities
 	for (s32 index = 0; index < storage->num; index++)

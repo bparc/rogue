@@ -42,14 +42,11 @@ typedef struct
 	entity_id_t entities[64];
 	entity_storage_t *storage;
 
-	// TODO(): All this stuff
-	// should be cleared to zero
-	// at the start of the turn.
-	// Maybe we could move this out into
-	// some kind of "turn state" to make this a little bit easier.
+	// NOTE(): Turn State
 	v2s starting_p;
 	interpolator_state_t interp_state;
 	f32 time; // NOTE(): A variable within 0.0 to 1.0 range for interpolating values.
+
 	s32 max_action_points;
 	s32 action_points;
 	s32 movement_points;

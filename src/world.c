@@ -71,14 +71,12 @@ fn b32 IsWorldPointEmpty(game_world_t *state, v2s p)
 {
 	entity_t *collidingEntity = GetEntityByPosition(state->storage, p);
 
-	if (collidingEntity == NULL) {
-
-		u8 tileValue = GetTileValue(state->map, p.x, p.y);
-		b32 result = !(tileValue == 0 || tileValue == 2);
-		return !(tileValue == 0 || tileValue == 2); // Wall or out of bounds
+	if (collidingEntity == NULL)
+    {
+		return IsTraversable(state->map, p);
 	}
 
-	return false; // Entity collision
+	return false;
 }
 
 fn b32 Move(game_world_t *world, entity_t *entity, v2s offset)

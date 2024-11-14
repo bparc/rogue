@@ -10,4 +10,9 @@ fn void CloseCursor(cursor_t *Cursor)
 {
 	Cursor->active = false;
 }
+
+fn s32 IsCursorEnabled(const cursor_t *Cursor)
+{
+	return (Cursor->active);
+}
 // fn void DoCursor();

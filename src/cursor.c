@@ -39,10 +39,8 @@ fn inline s32 DoAction(cursor_t *cursor, map_t *map, entity_t *user, entity_t *t
 	return Query;
 }
 
-fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
-	command_buffer_t *out, virtual_controls_t cons,
-	entity_t *user, // the entity that currently uses the cursor
-	b32 move_requested, s32 direction, const v2s dirs[4]) // the player wants to move)
+fn void DoCursor(game_world_t *Game, command_buffer_t *out, virtual_controls_t cons,
+	entity_t *user, dir_input_t DirInput)
 {
 	cursor_t *cursor = Game->cursor;
 	slot_bar_t *bar = &Game->slot_bar;
@@ -57,6 +55,13 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 	const v2s area  = settings->area;
 	cursor->Target = 0;
 	
+	// NOTE(): Render
+	{
+		v2s CursorPos = IsCursorEnabled(cursor) ? cursor->p : user->p;
+		for (s32 Index = 0; Index < ArraySize(DirInput.Dirs); Index++)	
+		RenderIsoTile(out, map, Add32(CursorPos, DirInput.Dirs[Index]), Orange(), true, 0);
+	}
+
 	// NOTE(): Open the cursor.
 	if (WentDown(cons.confirm) && (cursor->active == false) && (equipped.type != action_none))
 	{
@@ -93,12 +98,17 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 		RenderIsoTile(out, map, cursor->p, A(Pink(), 0.8f), true, 0);
 
 		// NOTE(): Move the cursor.
-		v2s requested_p = Add32(cursor->p, move_requested ? dirs[direction] : V2S(0, 0));
-		if (move_requested && IsInsideCircle(requested_p, V2S(1,1), user->p, range) && IsLineOfSight(map, user->p, requested_p))
-				cursor->p = requested_p;
+		if (DirInput.Inputed)
+		{
+			v2s NewPosition = Add32(cursor->p, DirInput.Direction);
+			if (IsInsideCircle(NewPosition, V2S(1,1), user->p, range) &&
+				IsLineOfSight(map, user->p, NewPosition))
+			{
+				cursor->p = NewPosition;
+			}
+		}
 
-		// NOTE(): If the cursor somehow ended up out of its range -
-		// move it back to the user.
+		// NOTE(): Move the cursor back to the user if it somehow ended up out of its range.
 		if ((IsInsideCircle(cursor->p, V2S(1,1), user->p, range) == false))
 			cursor->p = user->p;
 

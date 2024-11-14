@@ -49,27 +49,6 @@ fn inline v2 GetCursorOffset(const client_input_t *input)
 	return result;
 }
 
-fn s32 GetDirectionalInput(const client_input_t *input)
-{
-	s32 num_keys = input->char_count;
-	while (num_keys--)
-	{
-		u8 key = input->char_queue[num_keys];
-		if (ToUpper(key) == 'W')
-			return (0);
-		else
-		if (ToUpper(key) == 'D')
-			return (1);
-		else
-		if (ToUpper(key) == 'S')
-			return (2);
-		else
-		if (ToUpper(key) == 'A')
-			return (3);
-	}
-	return -1;
-}
-
 fn b32 IsKeyPressed(const client_input_t *input, u8 key)
 {
 	return input->keys[key];
@@ -153,4 +132,65 @@ fn virtual_controls_t MapKeyboardToVirtualCons(const client_input_t *input, u8 k
 	result.y			= MapVirtualButton(key_code_space, input, keys_prev);
 	result.select		= MapVirtualButton('B', input, keys_prev);
 	return result;
+}
+
+enum
+{
+	Dir_Invalid = -1,
+};
+
+// NOTE(): Directions
+static const v2s cardinal_directions[4] = { {0, -1}, {+1, 0}, {0, +1}, {-1, 0} };
+static const v2s diagonal_directions[4] = { {-1, -1}, {1, -1}, {1, +1}, {-1, +1}};
+
+fn s32 IsDirValid(s32 Dir)
+{
+	s32 result = (Dir >= 0 && Dir < 4);
+	return result;
+}
+
+typedef struct
+{
+	v2s Dirs[4];
+	s32 DirIndex;
+	v2s Direction;
+	s32 Inputed;
+} dir_input_t;
+
+fn dir_input_t GetDirectionalInput(const client_input_t *In)
+{
+	dir_input_t Result = {0};
+	Result.DirIndex = -1;
+
+	const v2s *Dirs = cardinal_directions;
+	if (IsKeyPressed(In, key_code_shift))
+		Dirs = diagonal_directions;
+	Result.Dirs[0] = Dirs[0];
+	Result.Dirs[1] = Dirs[1];
+	Result.Dirs[2] = Dirs[2];
+	Result.Dirs[3] = Dirs[3];
+
+	s32 Keys = In->char_count;
+	while (Keys--)
+	{
+		u8 key = In->char_queue[Keys];
+		if (ToUpper(key) == 'W')
+			Result.DirIndex = 0;
+		else
+		if (ToUpper(key) == 'D')
+			Result.DirIndex = 1;
+		else
+		if (ToUpper(key) == 'S')
+			Result.DirIndex = 2;
+		else
+		if (ToUpper(key) == 'A')
+			Result.DirIndex = 3;
+	}
+
+	if (Result.DirIndex >= 0)
+	{
+		Result.Inputed = true;
+		Result.Direction = Dirs[Result.DirIndex];
+	}
+	return Result;
 }

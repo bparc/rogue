@@ -119,11 +119,7 @@ fn void ControlPanel(turn_queue_t *queue, const virtual_controls_t *cons, entity
 		(queue->interp_state == interp_wait_for_input) ? " | STEP (F2) -> " : "",
 		(queue->interp_state == interp_wait_for_input) ? interpolator_state_t_names[queue->requested_state] : "",
 		(queue->god_mode_enabled ? "ON" : "OFF"),
-		(queue->free_camera_mode_enabled ? "ON" : "OFF"))
-	;
-
-	if ((queue->interp_state == interp_wait_for_input) && WentDown(cons->debug[1]))
-		queue->request_step = true;
+		(queue->free_camera_mode_enabled ? "ON" : "OFF"));
 }
 
 fn inline s32 ChangeQueueState(turn_queue_t *queue, interpolator_state_t state)
@@ -192,61 +188,19 @@ fn void GarbageCollect(game_world_t *Game, turn_queue_t *queue, f32 dt)
 	}
 }
 
-fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
-	entity_storage_t *storage, map_t *map, turn_queue_t *queue,
-	f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
+fn void Brace(turn_queue_t *queue, entity_t *entity)
 {
-		// NOTE(): Listen for the player input.
-		const v2s *directions = cardinal_directions;
-		#if ENABLE_DIAGONAL_MOVEMENT
-		if (IsKeyPressed(input, key_code_shift))
-			directions = diagonal_directions;
-		#endif
-
-		if (WentDown(cons.menu))
-			state->interface->inventory_visible = !state->interface->inventory_visible;
-
-		if (WentDown(cons.select) && queue->movement_points >= 2 && entity->hitchance_boost_multiplier + 0.1f <= 2.0f)
-		{
-			entity->has_hitchance_boost = true;
-
-			queue->movement_points -= 2;
-			entity->hitchance_boost_multiplier += 0.1f;
-
-			DebugLog("Used 2 movement points to brace for a hit chance bonus. Hit chance multiplied by %g for next attack.", entity->hitchance_boost_multiplier);
-		}
-		else if (WentDown(cons.select) && queue->movement_points >= 2 && entity->hitchance_boost_multiplier + 0.1f > 2.0f)
-		{
-		    DebugLog("Brace invalid. Your hit chance multiplier for next attack is %g which is maximum.", entity->hitchance_boost_multiplier);
-		}
-
-		if (WentDown(cons.y)) {
-			DebugLog("Skipping turn with %d movement points left.", queue->movement_points);
-
-			queue->movement_points = 0;
-			queue->action_points = 0;
-		}
-		
-		s32 direction = GetDirectionalInput(input);
-		b32 input_valid = (direction >= 0) && (direction < 4);
-		b32 cursor_mode_active = state->cursor->active; // NOTE(): The cursor_active flag needs to be stored *before* calling DoCursor. This is actually the correct order. For reasons.
-		DoCursor(state, assets, log, out, cons, entity, input_valid, direction, directions);
-		
-		#if _DEBUG // NOTE(): Render the input directions on the map.
-		v2s base_p = cursor_mode_active ? state->cursor->p : entity->p;
-		for (s32 index = 0; index < 4; index++)
-			RenderIsoTile(out, map, Add32(base_p, directions[index]), A(Orange(), 0.5f), true, 0);
-		#endif
-		
-		if (input_valid && (cursor_mode_active == false))
-		{
-	        if (queue->movement_points > 0 && Move(state, entity, directions[direction]) && (queue->god_mode_enabled == false))
-	        {
-	        	ApplyTileEffects(entity->p, state, entity);
-				// NOTE(): Consume moves
-				queue->movement_points--;
-			}
-		}
+	if (queue->movement_points >= 2 && ((entity->hitchance_boost_multiplier + 0.1f) <= 2.0f))
+	{
+		entity->has_hitchance_boost = true;
+		queue->movement_points -= 2;
+		entity->hitchance_boost_multiplier += 0.1f;
+		DebugLog("Used 2 movement points to brace for a hit chance bonus. Hit chance multiplied by %g for next attack.", entity->hitchance_boost_multiplier);
+	}
+	else if (queue->movement_points >= 2 && entity->hitchance_boost_multiplier + 0.1f > 2.0f)
+	{
+		DebugLog("Brace invalid. Your hit chance multiplier for next attack is %g which is maximum.", entity->hitchance_boost_multiplier);
+	}
 }
 
 const f32 ScaleTByDistance(v2 a, v2 b, f32 t)
@@ -311,16 +265,13 @@ fn v2 CameraTracking(v2 p, v2 player_world_pos, v2 viewport, f32 dt)
 
 fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets, entity_t *entity)
 {
-	s32 range = ENEMY_DEBUG_RANGE;
-	RenderRange(out, map, entity->p, range, Green()); // Range
-	f32 speed_mul = TURN_SPEED_NORMAL;
-	queue->time += dt * speed_mul;
+	RenderRange(out, map, entity->p, ENEMY_DEBUG_RANGE, Green());
 
 	switch(queue->interp_state)
 	{
 	case interp_wait_for_input:
 		{
-			if (queue->request_step)
+			if (WentDown(cons.debug[1]))
 			{
 				queue->interp_state = queue->requested_state;
 				queue->time = 0.0f;
@@ -339,9 +290,10 @@ fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queu
 		}; // NOTE(): Intentional fall-through. We want to start handling transit immediatly, instead of waiting an addidional frame.
 	case interp_transit:
 		{
-			v2 a = GetTileCenter(map, queue->starting_p);
-			v2 b = GetTileCenter(map, entity->p);
-			entity->deferred_p = Lerp2(a, b, queue->time);
+			v2 From = GetTileCenter(map, queue->starting_p);
+			v2 To = GetTileCenter(map, entity->p);
+			entity->deferred_p = Lerp2(From, To, queue->time);
+
 			if ((queue->time >= 1.0f))
 			{
 			 	if (queue->action_points > 0)
@@ -351,7 +303,8 @@ fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queu
 			 	}
 			 	else
 			 	{
-			 		b32 success = ScheduleEnemyAction(state, entity, range);
+			 		ScheduleEnemyAction(state, entity, ENEMY_DEBUG_RANGE);
+
 			 		if ((ActionQueueCompleted(queue) == false))
 						ChangeQueueState(queue, interp_action);
 					else
@@ -361,8 +314,10 @@ fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queu
 		} break;
 	case interp_action:
 		{
-			if (!ActionQueueCompleted(queue))
+			// NOTE(): Stall until all action are completed.
+			if ((ActionQueueCompleted(queue) == false))
 				queue->time = 0.0f;
+
 			if (queue->time >= 3.0f)
 				ChangeQueueState(queue, interp_accept);
 		} break;
@@ -407,57 +362,75 @@ fn void TurnQueueBeginFrame(turn_queue_t *Queue, game_world_t *Game, f32 dt)
 {
 	Queue->storage = Game->storage;
 	Queue->seconds_elapsed += dt;
+	Queue->time += (dt * 4.0f);
 }
 
 fn void TurnSystem(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
-	entity_t *Ent = NULL;
+	entity_t *ActiveEnt = NULL;
 
 	TurnQueueBeginFrame(queue, state, dt);
-	Ent = NextInOrder(queue, storage);
+	ActiveEnt = NextInOrder(queue, storage);
 
-	b32 TurnHasEnded = (Ent == NULL);
+	b32 TurnHasEnded = (ActiveEnt == NULL);
 	if (TurnHasEnded)
 		EstablishTurnOrder(state, queue);
 
-	if (Ent)
+	if (ActiveEnt)
 	{
 		if ((queue->turn_inited == false))
 		{
 			CloseCursor(state->cursor);
-			
-			s32 MovementPointCount = BeginTurn(state, Ent);
+
+			s32 MovementPointCount = BeginTurn(state, ActiveEnt);
 			SetupTurn(queue, MovementPointCount);
 			
-
 			Assert(queue->turn_inited);
 		}
 
-		Camera(state, Ent, input, dt);
+		Camera(state, ActiveEnt, input, dt);
 
-		if (Ent->flags & entity_flags_controllable) // NOTE(): The "player" code.
+		if (ActiveEnt->flags & entity_flags_controllable)
 		{
-			b32 PlayingAnimation = (queue->action_count > 0);
-			b32 BlockUserInput = (PlayingAnimation == true);
-			if ((BlockUserInput == false))
+			dir_input_t DirInput = GetDirectionalInput(input);
+			b32 CursorEnabled = IsCursorEnabled(state->cursor);
+			DoCursor(state, out, cons, ActiveEnt, DirInput);
+
+			// NOTE(): Controls
+			if (WentDown(cons.menu))
+				ToggleInventory(state->interface);
+
+			// NOTE(): Move
+			b32 BlockUserInput = (ActionQueueCompleted(queue) == false) || CursorEnabled;
+			if (DirInput.Inputed && (BlockUserInput == false))
 			{
-				ListenForUserInput(Ent, state, storage, map, queue, dt, input, cons, log, out, assets);
+				b32 Moved = Move(state, ActiveEnt, DirInput.Direction);
+				if (Moved && (queue->god_mode_enabled == false))
+				{
+					ApplyTileEffects(state->map, ActiveEnt);
+					queue->movement_points--;
+				}
 			}
 
+			// NOTE(): Finish
 			b32 CantDoAnyAction = (queue->movement_points <= 0 && queue->action_points == 0);
-			b32 EndTurn = WentDown(cons.EndTurn) || CantDoAnyAction;
+			b32 TurnForcefullySkipped = WentDown(cons.EndTurn);
+			b32 EndTurn = TurnForcefullySkipped || CantDoAnyAction;
 			if (EndTurn)
 			{
-				AcceptTurn(queue, Ent);
+				if (TurnForcefullySkipped)
+					Brace(queue, ActiveEnt);
+
+				AcceptTurn(queue, ActiveEnt);
 			}
 		}
-		else // NOTE(): AI
+		else
 		{
-			AI(state, storage, map, queue, dt, input, cons, log, out, assets, Ent);
+			AI(state, storage, map, queue, dt, input, cons, log, out, assets, ActiveEnt);
 		}
 	}
 
-	ResolveAsynchronousActionQueue(queue, Ent, out, dt, assets, state);
+	ResolveAsynchronousActionQueue(queue, ActiveEnt, out, dt, assets, state);
 	GarbageCollect(state, queue, dt);
 	ControlPanel(state->turns, &cons, state->storage);
 }

@@ -1,7 +1,3 @@
-// NOTE(): Directions
-static const v2s cardinal_directions[4] = { {0, -1}, {+1, 0}, {0, +1}, {-1, 0} };
-static const v2s diagonal_directions[4] = { {-1, -1}, {1, -1}, {1, +1}, {-1, +1}};
-
 typedef enum
 {
 	trap_type_none = 0,
@@ -9,11 +5,17 @@ typedef enum
 	trap_type_poison,
 } trap_type_t;
 
-typedef enum {
+typedef enum
+{
     blood_none = 0,
     blood_red,
     blood_green
 } blood_type_t;
+
+typedef enum
+{
+	tile_Door = 16,
+} tile_type_t;
 
 typedef struct
 {
@@ -26,15 +28,8 @@ typedef struct
 {
 	union
 	{
-		struct
-		{
-			s32 x;
-			s32 y;
-		};
-		struct
-		{
-			v2s size;
-		};
+		struct { s32 x, y; };
+		v2s size;
 	};
 	tile_t *tiles;
 	v2 tile_sz;

@@ -29,14 +29,14 @@ fn void ApplyTrapEffects(tile_t *tile, entity_t *entity) {
     }
 }
 
-fn void ApplyTileEffects(v2s peekPos, game_world_t *state, entity_t *entity) {
-    tile_t *tile = GetTile(state->map, peekPos.x, peekPos.y);
+fn void ApplyTileEffects(map_t *map, entity_t *entity)
+{
+    tile_t *tile = GetTile(map, entity->p.x, entity->p.y);
 
-    if (tile->trap_type != trap_type_none) {
+    if (tile->trap_type != trap_type_none)
+    {
         ApplyTrapEffects(tile, entity);
     }
-
-
     // todo: cover mechanics stuff
     //if (tile->cover_type != cover_type_none) {
     //	ApplyCoverBonus(entity);
@@ -83,8 +83,7 @@ fn void PushEntity(game_world_t *state, v2s source, entity_t *target, u8 push_di
             break;
         } else {
             target->p = next_pos;
-            ApplyTileEffects(next_pos, state, target);
-
+            ApplyTileEffects(state->map, target);
         }
     }
 }
