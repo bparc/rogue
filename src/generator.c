@@ -79,7 +79,8 @@ fn room_t *PlaceRoom(map_layout_t *Gen, v2s At, v2s PrevChunk)
 fn void GenerateDungeon(map_layout_t *Gen, s32 RequestedRoomCount, memory_t Memory)
 {
 	SetupGenerator(Gen);
-	srand((uint32_t)time(0));
+	u32 Seed = (u32)time(0);
+	srand(Seed);
 
 	s32 remainig_rooms = RequestedRoomCount;
 	s32 max_sequence_lengt = 3;
@@ -96,9 +97,12 @@ fn void GenerateDungeon(map_layout_t *Gen, s32 RequestedRoomCount, memory_t Memo
 			if (!RoomFound || (current_room_sequence_length >= max_sequence_lengt))
 			{
 				RoomFound = FindRandomDisjointedChunk(Gen, &chunk_at, Memory);
-				current_room_sequence_length = 0;
-				max_sequence_lengt = 3 + (rand() % 6);
-				RoomFound = FindRandomAdjacentChunk(Gen, chunk_at, &NextChunk);
+				if (RoomFound)
+				{
+					current_room_sequence_length = 0;
+					max_sequence_lengt = 3;
+					RoomFound = FindRandomAdjacentChunk(Gen, chunk_at, &NextChunk);
+				}
 			}
 
 			if (RoomFound)
@@ -116,7 +120,7 @@ fn void GenerateDungeon(map_layout_t *Gen, s32 RequestedRoomCount, memory_t Memo
 		break;
 	}
 
-	DebugLog("placed %i/%i rooms", RequestedRoomCount - remainig_rooms, RequestedRoomCount);
+	DebugLog("placed %i/%i rooms, seed = %i", RequestedRoomCount - remainig_rooms, RequestedRoomCount, Seed);
 }
 
 fn void LayoutRoom(map_t *Map, room_t room, v2s chunk_size, const b32 PlaceDoors)
@@ -173,31 +177,29 @@ fn void GenerateRoomInterior(game_world_t *World, room_t room, v2s ChunkSize)
 #define X 20
 #define Y 20
 	char Data[Y][X] = {
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', 'W', 'W', 'W', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', 'W', '#', '#', '#', 'W', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', 'W', '#', '#', '#', 'W', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', 'W', '#', '#', '#', 'W', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', 'W', 'W', 'W', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
+	'#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
+	'#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
+	'#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
+	'#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
+	'#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
+	'#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
+	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
+	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
+	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
+	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
+	'#', '#', '#', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
+	'#', '#', '#', ' ', ' ', ' ', ' ', ' ', 'W', 'W', 'W', 'W', '#', '#', '#', 'W', 'W', 'W', '#', '#',
+	'#', '#', '#', ' ', ' ', ' ', ' ', ' ', 'W', '#', '#', '#', '#', '#', '#', 'W', 'W', 'W', '#', '#',
+	'#', '#', '#', ' ', '#', '#', '#', ' ', 'W', '#', '#', '#', '#', '#', '#', 'W', 'W', 'W', '#', '#',
+	'#', '#', '#', ' ', '#', '#', '#', ' ', 'W', '#', '#', '#', '#', '#', '#', 'W', 'W', 'W', '#', '#',
+	'#', '#', '#', ' ', '#', '#', '#', ' ', 'W', '#', '#', '#', '#', '#', '#', 'W', 'W', 'W', '#', '#',
+	'#', '#', '#', ' ', '#', '#', '#', ' ', 'W', '#', '#', '#', '#', '#', '#', 'W', 'W', 'W', '#', '#',
+	'#', '#', '#', ' ', ' ', ' ', ' ', ' ', 'W', '#', '#', '#', '#', '#', '#', 'W', 'W', 'W', '#', '#',
+	'#', '#', '#', ' ', ' ', ' ', ' ', ' ', 'W', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
 	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
 	};
 
 	v2s min = Mul32(room.ChunkAt, ChunkSize);
-	min.x++;
-	min.y++;
 	for (s32 y = 1; y < Y - 1; y++)
 	{
 		for (s32 x = 1; x < X - 1; x++)
@@ -230,19 +232,23 @@ fn void LayoutMap(map_layout_t *Layout, game_world_t *World)
 		room_t *room = &Layout->PlacedRooms[Index];
 		LayoutRoom(Map, *room, ChunkSize, false);
 	}
-	for (s32 Index = 0; Index < Layout->PlacedRoomCount; Index++)
+	for (s32 Index = 1; Index < Layout->PlacedRoomCount; Index++)
 	{
 		room_t *room = &Layout->PlacedRooms[Index];
 		LayoutRoom(Map, *room, ChunkSize, true);
-		GenerateRoomInterior(World, *room, ChunkSize);
+		//GenerateRoomInterior(World, *room, ChunkSize);
 	}
 
 	// 
-	const room_t *StartingRoom = &Layout->PlacedRooms[rand() % Layout->PlacedRoomCount];
-	v2s min = Mul32(StartingRoom->ChunkAt, ChunkSize);
-	CreatePlayer(World, Add32(min, V2S(5, 5)));
+	if (Layout->PlacedRoomCount)
+	{
+		const room_t *StartingRoom = &Layout->PlacedRooms[0];
+		GenerateRoomInterior(World, *StartingRoom, ChunkSize);
 
-	CreateSlime(World, Add32(min, V2S(9, 8)));
-	CreateSlime(World, Add32(min, V2S(14, 5)));
-
+		v2s At = Mul32(StartingRoom->ChunkAt, ChunkSize);
+		CreatePlayer(World, Add32(At, V2S(1, 1)));
+	
+		CreateSlime(World, Add32(At, V2S(9, 8)));
+		CreateSlime(World, Add32(At, V2S(14, 5)));
+	}
 }

@@ -6,4 +6,8 @@ typedef struct
 	entity_id_t Target;
 } cursor_t;
 
+fn void CloseCursor(cursor_t *Cursor)
+{
+	Cursor->active = false;
+}
 // fn void DoCursor();

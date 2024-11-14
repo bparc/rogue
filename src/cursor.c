@@ -109,7 +109,7 @@ fn void DoCursor(game_world_t *Game, assets_t *assets, log_t *log,
 			IsLineOfSight(map, user->p, Enemy->p)))
 		{
 			RenderIsoTileArea(out, map, Enemy->p, Add32(Enemy->p, Enemy->size), A(Red(), 0.8f)); //render target for all size enemies
-			if (WentDown(cons.snap_cursor))
+			if (WentDown(cons.SnapCursor))
 				cursor->p = Enemy->p;
 		}
 

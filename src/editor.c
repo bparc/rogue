@@ -145,7 +145,7 @@ fn void RenderDebugGeneratorState(command_buffer_t *out, map_layout_t *Gen, v2s 
 
 	v2s PlayerChunkAt = Div32(PlayerP, V2S(20, 20));
 
-	#if 1
+#if 1
 	for (s32 y = 0; y < Gen->ChunkCountY; y++)
 	{
 		for (s32 x = 0; x < Gen->ChunkCountX; x++)
@@ -186,7 +186,7 @@ fn void RenderDebugGeneratorState(command_buffer_t *out, map_layout_t *Gen, v2s 
 		DrawRect(out, Bounds.min, Sub(Bounds.max, Bounds.min), color);
 	}
 
-	for (s32 index = 0; index < Gen->PlacedRoomCount; index++)
+	for (s32 index = 1; index < Gen->PlacedRoomCount; index++)
 	{
 		room_t *room = &Gen->PlacedRooms[index];
 
@@ -215,7 +215,7 @@ fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *ou
 		DebugLog("GenerateDungeon()");
 		//MakeSimpleMap(state);
 
-		GenerateDungeon(&editor->Gen, 64, *state->memory);
+		GenerateDungeon(&editor->Gen, 6, *state->memory);
 		LayoutMap(&editor->Gen, state);
 
 		editor->inited = true;

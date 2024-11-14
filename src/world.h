@@ -176,7 +176,7 @@ fn b32 Move(game_world_t *world, entity_t *entity, v2s offset);
 #include "game.h"
 #include "game.c"
 #include "cursor.c"
-#include "turn_user.c"
+#include "enemy.c"
 #include "turn_system.c"
 #include "hud.c"
 

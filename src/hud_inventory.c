@@ -97,8 +97,6 @@ fn b32 ContextMenuItem(inventory_layout_t *Layout, const char *Text)
     }
 
     f32 T = Layout->GUI->ContextMenuT;
-    //T *= T;
-
     DrawBounds(Layout->Out, Bounds, W(Background, T));
 
     {
@@ -118,47 +116,35 @@ fn b32 ContextMenuItem(inventory_layout_t *Layout, const char *Text)
     return Result;
 }
 
-fn bb_t ContextMenu(command_buffer_t *Out, interface_t *In, inventory_t *Eq, inventory_layout_t Layout, item_id_t Item)
+fn void ContextMenu(command_buffer_t *Out, interface_t *In, inventory_t *Eq, inventory_layout_t Layout, item_id_t Item)
 {
-    //DrawBounds(Out, bounds, Black()); 
-    bb_t Bounds = {0};
-    Layout.ContextMenuMin = Bounds.min = In->ClickOffset;
-
-    Layout.At = Bounds.min;
     if (ContextMenuItem(&Layout, "Use"))
         DebugLog("Use...");
     if (ContextMenuItem(&Layout, "Examine"))
         DebugLog("Examine...");
     if (ContextMenuItem(&Layout, "Remove"))
         Eq_RemoveItem(Eq, Item);
-
+    ContextMenuItem(&Layout, "Drop");
     ContextMenuItem(&Layout, "Exit");
-
-    Bounds.max.x = (Bounds.min.x + Layout.ContextMenuItemWidth);
-    Bounds.max.y = Layout.At.y;
-
-    DrawBoundsOutline(Out, Bounds, Black());
-
-    return Bounds;
 }
 
 fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *Input,
-    bmfont_t *Font, interface_t *Interface, entity_t *User, const virtual_controls_t *Cons, f32 dt)
+    bmfont_t *Font, interface_t *In, entity_t *User, const virtual_controls_t *Cons, f32 dt)
 {
     v2 Cursor = GetCursorOffset(Input);
     const char *Tooltip = NULL;
 
     // NOTE(): Layout:
     v2 EqMin = V2(100.0f, 40.0f);
-    v2 CellSz = V2(32.0f, 32.0f);
+    v2 CellSz = {32.0f, 32.0f};
     v2 GridSz = {Eq->x * CellSz.x, Eq->y * CellSz.y};
     v2 FullInventorySz = {GridSz.x + 180.0f, GridSz.y};
 
-    inventory_layout_t Layout = InventoryLayout(Eq, Interface, Out, Font, EqMin, CellSz);
+    inventory_layout_t Layout = InventoryLayout(Eq, In, Out, Font, EqMin, CellSz);
     Layout.At.x += (GridSz.x + 10.0f);
 
     DrawRect(Out, EqMin, FullInventorySz, V4(0.0f, 0.0f, 0.0f, 0.7f)); // Background
-    InventoryText(&Layout, "i - close");
+    InventoryText(&Layout, "TAB - close");
     InventoryText(&Layout, "Weight: %i/%i", Eq->carried_weight, Eq->max_carry_weight);
     InventorySeparator(&Layout);
 
@@ -190,15 +176,15 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         bb_t ItemBounds = ItemBoxFromIndex(&Layout, Item, V2S(Item->x, Item->y));
 
         // Interact
-        if ((Interface->DraggedItemID == 0) && (!Interface->ContextMenuOpened) &&
+        if ((In->DraggedItemID == 0) && (!In->ContextMenuOpened) &&
             (IsPointInBounds(ItemBounds, Cursor)))
         {
             Tooltip = Item->params->name;
-            if (Interface->Interact[0])
-                BeginItemDrag(Interface, Item);
+            if (In->Interact[0])
+                BeginItemDrag(In, Item);
 
-            if ((Interface->DraggedItemID == 0) && Interface->Interact[1])
-                OpenContextMenu(Interface, Item->ID);
+            if ((In->DraggedItemID == 0) && In->Interact[1])
+                OpenContextMenu(In, Item->ID);
         }
 
         // Render
@@ -214,62 +200,65 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         DrawText(Out, Font, Add(Cursor, V2(15,23)), Tooltip, Yellow());
 
     // Dragging
-    if (Interface->DraggedItemID)
+    if (In->DraggedItemID)
     {
         v2s Index = InventoryCellFromOffset(&Layout, Cursor);
 
         {
-            v2s MaxIndex = Sub32(Eq->size, Interface->DraggedItem.size);
+            v2s MaxIndex = Sub32(Eq->size, In->DraggedItem.size);
             Index = ClampVector32(Index, V2S(0, 0), MaxIndex);
         }
 
         // Render
         {
-            item_t *DraggedItem = &Interface->DraggedItem;
+            item_t *DraggedItem = &In->DraggedItem;
             bb_t ItemBounds = ItemBoxFromIndex(&Layout, DraggedItem, Index);
-            ItemBounds = Shrink(ItemBounds, 4.0f);
-            //v2s max_position = Add32(Index, Interface->DraggedItem.size);
-            
-            v4 color = Blue();
-            if (!Eq_IsSpaceFree_Exclude(Eq, Index, DraggedItem->size, DraggedItem->ID))
-                color = Red();
-            DrawBoundsOutline(Out, ItemBounds, color);
+            b32 CanBePlaced = !Eq_IsSpaceFree_Exclude(Eq, Index, DraggedItem->size, DraggedItem->ID);
+            DrawBoundsOutline(Out, Shrink(ItemBounds, 4.0f), CanBePlaced ? Blue() : Red());
         }
 
-        if (!Interface->Buttons[0]) // Place
+        if (!In->Buttons[0]) // Place
         {
-            Interface->DraggedItemID = 0;
-            Eq_MoveItem(Eq, Interface->DraggedItem, Index);
+            In->DraggedItemID = 0;
+            Eq_MoveItem(Eq, In->DraggedItem, Index);
         }
-        if (Interface->Interact[1] || WentDown(Cons->rotate)) // Rotate
+        if (In->Interact[1] || WentDown(Cons->rotate)) // Rotate
         {
-            Interface->DraggedItem.size = RotateSigned(Interface->DraggedItem.size);
+            In->DraggedItem.size = RotateSigned(In->DraggedItem.size);
         }
     }
 
     // Context Menu
-    if (Interface->ContextMenuOpened)
+    if (In->ContextMenuOpened)
     {
         bb_t Bounds = {0};
-        Bounds = ContextMenu(Out, Interface, Eq, Layout, Interface->ContextMenuItem);
 
-        b32 ClickedOutsideBounds = (Interface->Interact[0] || Interface->Interact[1]) &&
+        // NOTE(): Begin Context Menu
+        Layout.ContextMenuMin = Bounds.min = In->ClickOffset;
+        Layout.At = Bounds.min;
+        ContextMenu(Out, In, Eq, Layout, In->ContextMenuItem);
+        // NOTE(): End Context Menu
+        Bounds.max.x = (Bounds.min.x + Layout.ContextMenuItemWidth);
+        Bounds.max.y = Layout.At.y;
+        DrawBoundsOutline(Out, Bounds, Black());
+
+        b32 ClickedOutsideBounds = (In->Interact[0] || In->Interact[1]) &&
         (IsPointInBounds(Bounds, Cursor) == false);
 
         if (ClickedOutsideBounds)
-            Interface->ContextMenuOpened = false;
-        if (Interface->ContextMenuItem == 0)
-            Interface->CloseContextMenu = true;
+            In->ContextMenuOpened = false;
+        if (In->ContextMenuItem == 0)
+            In->CloseContextMenu = true;
 
-        if (!Interface->CloseContextMenu)
+        if (!In->CloseContextMenu)
         {
-            Interface->ContextMenuT = MinF32(Interface->ContextMenuT + (dt * 4.0f), 1.0f);
+            In->ContextMenuT = MinF32(In->ContextMenuT + (dt * 4.0f), 1.0f);
         }
         else
         {
-            Interface->ContextMenuT -= dt * 6.0f;
-            if (Interface->ContextMenuT <= 0.0f)
-                Interface->ContextMenuOpened = 0;
+            In->ContextMenuT -= dt * 6.0f;
+            if (In->ContextMenuT <= 0.0f)
+                In->ContextMenuOpened = 0;
         }
     }
 }

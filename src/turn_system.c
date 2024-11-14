@@ -32,7 +32,7 @@ fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)
 	{
 		result = GetEntity(storage, queue->entities[queue->num - 1]);
 		if (!result)
-			queue->num--; // NOTE(): The ID is invalid, pull it from the queue.
+			queue->num--; // NOTE(): The ID is invalid - pull it from the queue.
 	}
 	return result;
 }
@@ -203,18 +203,20 @@ fn void inline ListenForUserInput(entity_t *entity, game_world_t *state,
 			directions = diagonal_directions;
 		#endif
 
-		if (WentDown(cons.menu)) {
+		if (WentDown(cons.menu))
 			state->interface->inventory_visible = !state->interface->inventory_visible;
-		}
 
-		if (WentDown(cons.select) && queue->movement_points >= 2 && entity->hitchance_boost_multiplier + 0.1f <= 2.0f) {
+		if (WentDown(cons.select) && queue->movement_points >= 2 && entity->hitchance_boost_multiplier + 0.1f <= 2.0f)
+		{
 			entity->has_hitchance_boost = true;
 
 			queue->movement_points -= 2;
 			entity->hitchance_boost_multiplier += 0.1f;
 
 			DebugLog("Used 2 movement points to brace for a hit chance bonus. Hit chance multiplied by %g for next attack.", entity->hitchance_boost_multiplier);
-		} else if (WentDown(cons.select) && queue->movement_points >= 2 && entity->hitchance_boost_multiplier + 0.1f > 2.0f) {
+		}
+		else if (WentDown(cons.select) && queue->movement_points >= 2 && entity->hitchance_boost_multiplier + 0.1f > 2.0f)
+		{
 		    DebugLog("Brace invalid. Your hit chance multiplier for next attack is %g which is maximum.", entity->hitchance_boost_multiplier);
 		}
 
@@ -307,20 +309,6 @@ fn v2 CameraTracking(v2 p, v2 player_world_pos, v2 viewport, f32 dt)
 	return p;
 }
 
-fn void DebugDrawPathSystem(turn_queue_t *queue, map_t *map, command_buffer_t *out)
-{
-	if (queue->break_mode_enabled)
-	{
-		path_t *path = &queue->path;
-		for (s32 index = 0; index < path->length; index++)
-		{
-			path_tile_t *Tile = &path->tiles[index];
-			v4 color = Orange();
-			RenderIsoTile(out, map, Tile->p, color, true, 0);
-		}
-	}
-}
-
 fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets, entity_t *entity)
 {
 	s32 range = ENEMY_DEBUG_RANGE;
@@ -391,87 +379,85 @@ fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queu
 	}	
 }
 
+fn void Camera(game_world_t *Game, entity_t *TrackedEntity, const client_input_t *Input, f32 dt)
+{
+	camera_t *Camera = Game->camera;
+	turn_queue_t *queue = Game->turns;
+	map_t *map = Game->map;
+
+	// NOTE(): We're focusing the camera either on a cursor or on a player position,
+	// depending on the current mode.
+	v2 focus_p = Game->cursor->active ? GetTileCenter(map, Game->cursor->p) : TrackedEntity->deferred_p;
+	if (!queue->free_camera_mode_enabled)
+	{
+		Game->camera->p = CameraTracking(Game->camera->p, focus_p, GetViewport(Input), dt);
+
+		f32 delta = 0.0f;
+		if (Input->wheel)
+			delta = Input->wheel > 0 ? 1.0f : -1.0f;
+		delta *= 0.2f;
+
+		Game->camera->zoom += delta;
+		if (Game->camera->zoom <= 0.0f)
+			Game->camera->zoom = 0.0f;
+	}
+}
+
+fn void TurnQueueBeginFrame(turn_queue_t *Queue, game_world_t *Game, f32 dt)
+{
+	Queue->storage = Game->storage;
+	Queue->seconds_elapsed += dt;
+}
+
 fn void TurnSystem(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
-	// NOTE(): Setup
-	queue->storage = storage;
-	// NOTE(): Process the current turn
+	entity_t *Ent = NULL;
 
-	entity_t *entity = NextInOrder(queue, storage);
-	if (entity == 0)
-	{
-		// NOTE(): We run out of the queue, time to schedule new ones.
+	TurnQueueBeginFrame(queue, state, dt);
+	Ent = NextInOrder(queue, storage);
+
+	b32 TurnHasEnded = (Ent == NULL);
+	if (TurnHasEnded)
 		EstablishTurnOrder(state, queue);
-	}
-	if (entity)
+
+	if (Ent)
 	{
-		// NOTE(): Setup
 		if ((queue->turn_inited == false))
 		{
-			queue->movement_points = BeginTurn(state, entity);
-			queue->action_points = 3;
-			queue->turn_inited = true;
+			CloseCursor(state->cursor);
+			
+			s32 MovementPointCount = BeginTurn(state, Ent);
+			SetupTurn(queue, MovementPointCount);
+			
 
-			queue->interp_state = interp_request;
-			queue->time = 0.0f;
-			queue->seconds_elapsed = 0.0f;
-
-			state->cursor->active = false;
-
-			#if ENABLE_TURN_SYSTEM_DEBUG_LOGS
-			DebugLog("initiating turn for entity#%i", entity->id);
-			#endif
-			// NOTE(): Begin the turn.
+			Assert(queue->turn_inited);
 		}
 
-		Assert(queue->turn_inited);
-		queue->seconds_elapsed += dt;
-		// NOTE(): The turn will "stall" until AcceptTurn() is called.
+		Camera(state, Ent, input, dt);
 
-		// NOTE(): DEBUG Draw the "discrete" position.
-		#if _DEBUG
-		RenderIsoTile(out, map, entity->p, Red(), (queue->interp_state == interp_wait_for_input), 0);
-		#endif
-
-		// NOTE(): Camera controls.
-
-		// NOTE(): We're focusing the camera either on a cursor or on a player position,
-		// depending on the current mode.
-		v2 focus_p = state->cursor->active ? GetTileCenter(map, state->cursor->p) : entity->deferred_p;
-		if (!queue->free_camera_mode_enabled)
+		if (Ent->flags & entity_flags_controllable) // NOTE(): The "player" code.
 		{
-			state->camera->p = CameraTracking(state->camera->p, focus_p, GetViewport(input), dt);
+			b32 PlayingAnimation = (queue->action_count > 0);
+			b32 BlockUserInput = (PlayingAnimation == true);
+			if ((BlockUserInput == false))
+			{
+				ListenForUserInput(Ent, state, storage, map, queue, dt, input, cons, log, out, assets);
+			}
 
-			f32 delta = 0.0f;
-			if (input->wheel)
-				delta = input->wheel > 0 ? 1.0f : -1.0f;
-			delta *= 0.2f;
-
-			state->camera->zoom += delta;
-			if (state->camera->zoom <= 0.0f)
-				state->camera->zoom = 0.0f;
-		}
-
-		if (entity->flags & entity_flags_controllable) // NOTE(): The "player" code.
-		{
-			// TODO(): We should buffer inputs here in case
-			// the player pressed a button while the
-			// animation is still being played.
-			if (queue->action_count == 0)
-				ListenForUserInput(entity, state, storage, map, queue, dt, input, cons, log, out, assets);
-
-			// NOTE(): End the turn if we run out of all action points.
-			if (WentDown(cons.y) || queue->movement_points <= 0 && queue->action_points == 0)
-				AcceptTurn(queue, entity);
+			b32 CantDoAnyAction = (queue->movement_points <= 0 && queue->action_points == 0);
+			b32 EndTurn = WentDown(cons.EndTurn) || CantDoAnyAction;
+			if (EndTurn)
+			{
+				AcceptTurn(queue, Ent);
+			}
 		}
 		else // NOTE(): AI
 		{
-			AI(state, storage, map, queue, dt, input, cons, log, out, assets, entity);
+			AI(state, storage, map, queue, dt, input, cons, log, out, assets, Ent);
 		}
 	}
 
-	ResolveAsynchronousActionQueue(queue, entity, out, dt, assets, state);
+	ResolveAsynchronousActionQueue(queue, Ent, out, dt, assets, state);
 	GarbageCollect(state, queue, dt);
-	DebugDrawPathSystem(queue, map, out);
 	ControlPanel(state->turns, &cons, state->storage);
 }

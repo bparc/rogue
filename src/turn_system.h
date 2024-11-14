@@ -80,6 +80,17 @@ typedef struct
 	path_t path;
 } turn_queue_t;
 
+fn void SetupTurn(turn_queue_t *queue, s32 MovementPointCount)
+{
+	queue->movement_points = MovementPointCount;
+	queue->action_points = 3;
+	queue->interp_state = interp_request;
+	queue->time = 0.0f;
+	queue->seconds_elapsed = 0.0f;
+
+	queue->turn_inited = true;
+}
+
 fn void DefaultTurnOrder(turn_queue_t *queue);
 fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_id_t target, v2s target_p);
 

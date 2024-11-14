@@ -8,8 +8,6 @@ typedef struct
 } layout_cell_t;
 
 typedef struct {
-    b32 is_inventory_screen_on;
-
     s32 item_count;
     item_t items[MAX_INVENTORY_SIZE];
 
