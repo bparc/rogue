@@ -45,7 +45,7 @@ fn entity_t *GetActiveUnit(const turn_queue_t *queue)
 	return result;
 }
 
-fn b32 ActionQueueCompleted(const turn_queue_t *queue)
+fn b32 IsActionQueueCompleted(const turn_queue_t *queue)
 {
 	return (queue->action_count == 0);
 }
@@ -311,7 +311,7 @@ fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queu
 			 	{
 			 		ScheduleEnemyAction(state, entity, ENEMY_DEBUG_RANGE);
 
-			 		if ((ActionQueueCompleted(queue) == false))
+			 		if ((IsActionQueueCompleted(queue) == false))
 						ChangeQueueState(queue, interp_action);
 					else
 						ChangeQueueState(queue, interp_accept);
@@ -321,7 +321,7 @@ fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queu
 	case interp_action:
 		{
 			// NOTE(): Stall until all action are completed.
-			if ((ActionQueueCompleted(queue) == false))
+			if ((IsActionQueueCompleted(queue) == false))
 				queue->time = 0.0f;
 
 			if (queue->time >= 3.0f)
@@ -407,9 +407,9 @@ fn void TurnSystem(game_world_t *state, entity_storage_t *storage, map_t *map, t
 				ToggleInventory(state->interface);
 
 			// NOTE(): Move
-			b32 BlockUserInput = (ActionQueueCompleted(queue) == false) || CursorEnabled ||
-				(queue->movement_points <= 0);
-			if (DirInput.Inputed && (BlockUserInput == false))
+			b32 AllowedToMove = IsActionQueueCompleted(queue) /* Can't move when skill animations are playing! */ &&
+				(CursorEnabled == false) && (queue->movement_points > 0);
+			if (DirInput.Inputed && AllowedToMove)
 			{
 				b32 Moved = Move(state, ActiveEnt, DirInput.Direction);
 				if (Moved && (queue->god_mode_enabled == false))

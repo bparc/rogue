@@ -98,4 +98,4 @@ fn s32 ConsumeMovementPoints(turn_queue_t *queue, s32 count);
 fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count);
 fn entity_t *GetActiveUnit(const turn_queue_t *queue);
 
-fn b32 ActionQueueCompleted(const turn_queue_t *queue);
+fn b32 IsActionQueueCompleted(const turn_queue_t *queue);
