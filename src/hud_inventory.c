@@ -195,23 +195,10 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         {
             Tooltip = Item->params->name;
             if (Interface->Interact[0])
-            {
-                const s32 FirstID = 0x100;
-                Interface->DraggedItemID = FirstID + index;
-                Interface->DraggedItem = *Item;
-                Interface->OriginalX = Item->x;
-                Interface->OriginalY = Item->y;
-            }
+                BeginItemDrag(Interface, Item);
 
             if ((Interface->DraggedItemID == 0) && Interface->Interact[1])
-            {
-                Interface->ContextMenuT = 0.0f;
-                Interface->ContextMenuItem = Item->ID;
-                Interface->ContextMenuOpened = true;
-                Interface->ClickOffset = Cursor;
-                Interface->CloseContextMenu = false;
-                Interface->Interact[1] = false;
-            }
+                OpenContextMenu(Interface, Item->ID);
         }
 
         // Render

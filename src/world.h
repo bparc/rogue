@@ -104,19 +104,46 @@ typedef struct
     f32 ContextMenuT;
 } interface_t;
 
-fn void BeginInterface(interface_t *Interface, const client_input_t *Input)
+fn void BeginInterface(interface_t *In, const client_input_t *Input)
 {
-	Interface->Cursor = GetCursorOffset(Input);
-	Interface->Interact[0] = (!Interface->Buttons[0] && Input->mouse_buttons[0]);
-	Interface->Interact[1] = (!Interface->Buttons[1] && Input->mouse_buttons[1]);
+	In->Cursor = GetCursorOffset(Input);
+	In->Interact[0] = (!In->Buttons[0] && Input->mouse_buttons[0]);
+	In->Interact[1] = (!In->Buttons[1] && Input->mouse_buttons[1]);
 
-	Interface->Buttons[0] = Input->mouse_buttons[0];
-	Interface->Buttons[1] = Input->mouse_buttons[1];
+	In->Buttons[0] = Input->mouse_buttons[0];
+	In->Buttons[1] = Input->mouse_buttons[1];
 }
 
-fn void EndInterface(interface_t *Interface)
+fn void EndInterface(interface_t *In)
 {
 
+}
+
+fn void BeginItemDrag(interface_t *In, const item_t *Item)
+{
+    In->DraggedItemID = Item->ID;
+    In->DraggedItem = *Item;
+    In->OriginalX = Item->x;
+    In->OriginalY = Item->y;
+}
+
+fn void DiscardInput(interface_t *In)
+{
+	In->Interact[1] = false;
+    In->Interact[0] = false;
+}
+
+fn void OpenContextMenu(interface_t *In, item_id_t Item)
+{
+	if (!In->ContextMenuOpened)
+	{
+		In->ContextMenuT = 0.0f;
+    	In->ContextMenuItem = Item;
+    	In->ContextMenuOpened = true;
+    	In->ClickOffset = In->Cursor;
+    	In->CloseContextMenu = false;
+    	DiscardInput(In);
+	}
 }
 
 typedef struct
