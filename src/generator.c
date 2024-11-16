@@ -236,37 +236,6 @@ fn void GenerateRoomInterior(game_world_t *World, room_t room, v2s chunk_size)
 #undef Y
 }
 
-fn void LayoutMap(map_layout_t *Layout, game_world_t *World)
-{	
-	map_t *Map = World->map;
-	ClearMap(Map);
-
-	for (s32 Index = 0; Index < Layout->PlacedRoomCount; Index++)
-	{
-		room_t *room = &Layout->PlacedRooms[Index];
-		LayoutRoom(Map, *room, false, Layout->ChunkSize);
-	}
-	for (s32 Index = 1; Index < Layout->PlacedRoomCount; Index++)
-	{
-		room_t *room = &Layout->PlacedRooms[Index];
-		LayoutRoom(Map, *room, true, Layout->ChunkSize);
-
-		v2s At = Mul32(room->ChunkAt, Layout->ChunkSize);
-		CreateSlime(World, Add32(At, V2S(7, 8)));
-		CreateSlime(World, Add32(At, V2S(14, 5)));
-	}
-
-	// 
-	if (Layout->PlacedRoomCount)
-	{
-		const room_t *StartingRoom = &Layout->PlacedRooms[0];
-		GenerateRoomInterior(World, *StartingRoom, Layout->ChunkSize);
-
-		v2s At = Mul32(StartingRoom->ChunkAt, Layout->ChunkSize);
-		CreatePlayer(World, Add32(At, V2S(1, 1)));
-	}
-}
-
 fn s32 IsMapLayoutIndexValid(map_layout_t *Layout, v2s Index)
 {
 	s32 result = (Index.x >= 0 && Index.y >= 0) &&
@@ -300,4 +269,36 @@ fn void OpenEveryDoor(map_t *Map, const room_t *Room)
 {
 	if (Room)
 		SetTileValue(Map, Room->Doors[0], tile_Floor);
+}
+
+fn void LayoutMap(map_layout_t *Layout, game_world_t *World)
+{	
+	map_t *Map = World->map;
+	ClearMap(Map);
+
+	for (s32 Index = 0; Index < Layout->PlacedRoomCount; Index++)
+	{
+		room_t *room = &Layout->PlacedRooms[Index];
+		LayoutRoom(Map, *room, false, Layout->ChunkSize);
+	}
+	for (s32 Index = 1; Index < Layout->PlacedRoomCount; Index++)
+	{
+		room_t *room = &Layout->PlacedRooms[Index];
+		LayoutRoom(Map, *room, true, Layout->ChunkSize);
+
+		v2s At = Mul32(room->ChunkAt, Layout->ChunkSize);
+		CreateSlime(World, Add32(At, V2S(7, 8)));
+		CreateSlime(World, Add32(At, V2S(14, 5)));
+	}
+
+	// 
+	if (Layout->PlacedRoomCount)
+	{
+		const room_t *StartingRoom = &Layout->PlacedRooms[0];
+		GenerateRoomInterior(World, *StartingRoom, Layout->ChunkSize);
+
+		v2s At = Mul32(StartingRoom->ChunkAt, Layout->ChunkSize);
+		CreatePlayer(World, Add32(At, V2S(1, 1)));
+		CreateContainer(World, Add32(At, V2S(2, 2)));
+	}
 }

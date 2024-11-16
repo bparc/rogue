@@ -18,7 +18,7 @@ fn entity_t *CreatePlayer(game_world_t *state, v2s p)
             MAX_PLAYER_ACTION_POINTS, MAX_PLAYER_MOVEMENT_POINTS, 1);
         
 	    result->inventory = PushStruct(inventory_t, state->memory);
-            SetupInventory(result->inventory);
+        SetupInventory(result->inventory);
     
         inventory_t *Eq = result->inventory;
         Eq_AddItem(Eq, item_green_herb);

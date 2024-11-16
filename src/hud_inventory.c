@@ -128,32 +128,49 @@ fn void ContextMenu(command_buffer_t *Out, interface_t *In, inventory_t *Eq, inv
     ContextMenuItem(&Layout, "Exit");
 }
 
-fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *Input,
-    bmfont_t *Font, interface_t *In, entity_t *User, const virtual_controls_t *Cons, f32 dt)
+fn void OpenContainer(interface_t *In, container_t *Container)
+{
+    OpenInventory(In);
+    In->OpenedContainer = Container;
+}
+
+fn void CloseContainer(interface_t *In)
+{
+    In->OpenedContainer = NULL;
+}
+
+fn void Inventory(v2 EqMin, command_buffer_t *Out, inventory_t *Eq, const client_input_t *Input,
+    bmfont_t *Font, interface_t *In, entity_t *User, const virtual_controls_t *Cons, f32 dt, b32 DrawUserInfo, container_t *Container)
 {
     v2 Cursor = GetCursorOffset(Input);
     const char *Tooltip = NULL;
 
     // NOTE(): Layout:
-    v2 EqMin = V2(100.0f, 40.0f);
     v2 CellSz = {32.0f, 32.0f};
     v2 GridSz = {Eq->x * CellSz.x, Eq->y * CellSz.y};
-    v2 FullInventorySz = {GridSz.x + 180.0f, GridSz.y};
+    v2 FullInventorySz = {GridSz.x, GridSz.y};
+    bb_t GridBounds = RectToBounds(EqMin, GridSz);
+    if (DrawUserInfo)
+        FullInventorySz.x += 180.0f;
 
     inventory_layout_t Layout = InventoryLayout(Eq, In, Out, Font, EqMin, CellSz);
     Layout.At.x += (GridSz.x + 10.0f);
 
     DrawRect(Out, EqMin, FullInventorySz, V4(0.0f, 0.0f, 0.0f, 0.7f)); // Background
-    InventoryText(&Layout, "TAB - close");
-    InventoryText(&Layout, "Weight: %i/%i", Eq->carried_weight, Eq->max_carry_weight);
-    InventorySeparator(&Layout);
 
-    InventoryText(&Layout, "Health: %i/%i", User->health, User->max_health);
-    InventoryText(&Layout, "Attack: %d", User->attack_dmg);
-    InventoryText(&Layout, "Ranged Accuracy: %d", User->ranged_accuracy);
-    InventoryText(&Layout, "Melee Accuracy: %d", User->melee_accuracy);
-    InventoryText(&Layout, "Evasion: %d", User->evasion);
-    InventoryText(&Layout, "Action Points: %d", User->remaining_action_points);
+    if (DrawUserInfo)
+    {
+        InventoryText(&Layout, "TAB - close");
+        InventoryText(&Layout, "Weight: %i/%i", Eq->carried_weight, Eq->max_carry_weight);
+        InventorySeparator(&Layout);
+    
+        InventoryText(&Layout, "Health: %i/%i", User->health, User->max_health);
+        InventoryText(&Layout, "Attack: %d", User->attack_dmg);
+        InventoryText(&Layout, "Ranged Accuracy: %d", User->ranged_accuracy);
+        InventoryText(&Layout, "Melee Accuracy: %d", User->melee_accuracy);
+        InventoryText(&Layout, "Evasion: %d", User->evasion);
+        InventoryText(&Layout, "Action Points: %d", User->remaining_action_points);
+    }
 
     // Grid
     for (s32 y = 0; y < Eq->y; y++)
@@ -176,12 +193,14 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         bb_t ItemBounds = ItemBoxFromIndex(&Layout, Item, V2S(Item->x, Item->y));
 
         // Interact
-        if ((In->DraggedItemID == 0) && (!In->ContextMenuOpened) &&
-            (IsPointInBounds(ItemBounds, Cursor)))
+        b32 NoWidgetActive = (In->DraggedItemID == 0) && (!In->ContextMenuOpened);
+        if (NoWidgetActive &&
+            (IsPointInBounds(ItemBounds, Cursor)) &&
+            (IsPointInBounds(GridBounds, Cursor)))
         {
             Tooltip = Item->params->name;
             if (In->Interact[0])
-                BeginItemDrag(In, Item);
+                BeginItemDrag(In, Item, Eq);
 
             if ((In->DraggedItemID == 0) && In->Interact[1])
                 OpenContextMenu(In, Item->ID);
@@ -200,7 +219,7 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         DrawText(Out, Font, Add(Cursor, V2(15,23)), Tooltip, Yellow());
 
     // Dragging
-    if (In->DraggedItemID)
+    if (In->DraggedItemID && (IsPointInBounds(GridBounds, Cursor)))
     {
         v2s Index = InventoryCellFromOffset(&Layout, Cursor);
 
@@ -219,6 +238,14 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
 
         if (!In->Buttons[0]) // Place
         {
+            inventory_t *Dest = Eq;
+            inventory_t *Source = Dest;
+            if (In->DraggedContainer)
+                Source = In->DraggedContainer;
+
+            if (Dest != Source)
+                DebugLog("transfering the item between containers...");
+
             In->DraggedItemID = 0;
             Eq_MoveItem(Eq, In->DraggedItem, Index);
         }

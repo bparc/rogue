@@ -87,7 +87,11 @@ fn map_t *CreateMap(s32 x, s32 y, memory_t *memory, f32 tile_height)
 	result->tile_sz = V2(tile_height, tile_height);
 	result->x = x;
 	result->y = y;
-	result->tiles = PushArray(tile_t, memory, x * y);
+
+	s32 TileCount = x * y;
+	result->container_ids = PushArray(s32, memory, TileCount);
+	result->tiles 		  = PushArray(tile_t, memory, TileCount);
+
 	Assert(result->tiles);
 	return result;
 }

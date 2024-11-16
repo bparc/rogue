@@ -11,13 +11,18 @@ fn void HUD(command_buffer_t *out,game_world_t *state, turn_queue_t *queue, enti
 
     TurnQueue(out, state, queue, assets, state->cursor);
 
-    if (IsPlayer(ActiveEntity))
+    interface_t *In = state->interface;
+    if (In->inventory_visible)
     {
-        if (state->interface->inventory_visible)
+        Inventory(V2(100.0f, 25.0f), out, ActiveEntity->inventory, input, assets->Font, state->interface, ActiveEntity, Cons, dt, true, NULL);
+        if (In->OpenedContainer)
         {
-            Inventory(out, ActiveEntity->inventory, input, assets->Font, state->interface, ActiveEntity, Cons, dt);
+            Inventory(V2(800.0f, 25.0f), out, &In->OpenedContainer->inventory, input, assets->Font, state->interface, ActiveEntity, Cons, dt, false, In->OpenedContainer);
         }
-        
+    }
+
+    if (IsPlayer(ActiveEntity))
+    {        
         ActionMenu(ActiveEntity, state, out, assets, input, queue);
     }
 

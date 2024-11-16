@@ -416,6 +416,31 @@ fn inline void Player(entity_t *Entity, game_world_t *state, const client_input_
 	if (WentDown(cons->Inventory))
 		ToggleInventory(state->interface);
 
+	// NOTE(): Check Containers
+	container_t *AdjacentContainer = NULL;
+	for (s32 DirIndex = 0;
+		DirIndex < 4;
+		DirIndex++)
+	{
+		v2s Dir = cardinal_directions[DirIndex];
+		v2s Adjacent = Add32(Entity->p, Dir);
+		container_t *Container = GetContainer(state, Adjacent);
+		if (Container)
+		{
+			AdjacentContainer = Container;
+			DrawDiegeticText(state, Entity->deferred_p, V2(-10.0f, -50.0f), White(), "Press R to open.");
+			if (IsKeyPressed(input, 'R'))
+			{
+				OpenContainer(state->interface, Container);
+			}
+			break;
+		}
+	}
+
+	b32 ContainerOutOfRange = state->interface->OpenedContainer && !AdjacentContainer;
+	if (ContainerOutOfRange)
+		CloseContainer(state->interface);
+
 	// NOTE(): Move
 	b32 AllowedToMove = IsActionQueueCompleted(queue) /* Can't move when skill animations are playing! */ &&
 		(CursorEnabled == false) && (queue->movement_points > 0);

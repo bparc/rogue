@@ -66,12 +66,12 @@ typedef struct
 
 typedef struct
 {
+	u64 IDPool;
 	s32 EntityCount;
 	entity_t entities[1024];
 
 	s32 StaticEntityCount;
 	static_entity_t static_entities[1024];
-	u64 IDPool;
 } entity_storage_t;
 
 // NOTE(): Lifetime Management

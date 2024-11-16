@@ -24,7 +24,7 @@ typedef struct {
 
     item_t equipped_weapon;
     item_t equipped_armor;
-
+    
     item_id_t next_item_ID;
 } inventory_t;
 

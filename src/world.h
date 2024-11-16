@@ -84,13 +84,27 @@ fn void CreateDamageNumber(particles_t *particles, v2 p, s32 number)
 	result->p = Add(result->p, random_offset);
 }
 
+typedef enum
+{
+	container_Ground = 1,
+	container_Chest = 2
+} container_type_t;
+
+typedef struct
+{
+	v2s size;
+	inventory_t inventory;
+	container_type_t type;
+} container_t;
+
 typedef struct
 {
     s32 DraggedItemID;
     b32 inventory_visible;
 
+
+    inventory_t *DraggedContainer;
     item_t DraggedItem;
-    //v2s DraggedItemSz;
     s32 OriginalX;
     s32 OriginalY;
 
@@ -103,6 +117,8 @@ typedef struct
     b32 ContextMenuOpened;
     b32 CloseContextMenu;
     f32 ContextMenuT;
+
+	container_t *OpenedContainer;  
 } interface_t;
 
 fn void BeginInterface(interface_t *In, const client_input_t *Input)
@@ -120,6 +136,11 @@ fn void EndInterface(interface_t *In)
 
 }
 
+fn void OpenInventory(interface_t *In)
+{
+	In->inventory_visible = true;
+}
+
 fn void CloseInventory(interface_t *In)
 {
 	In->inventory_visible = false;
@@ -130,8 +151,9 @@ fn void ToggleInventory(interface_t *In)
 	In->inventory_visible = !In->inventory_visible;
 }
 
-fn void BeginItemDrag(interface_t *In, const item_t *Item)
+fn void BeginItemDrag(interface_t *In, const item_t *Item, inventory_t *SourceContainer)
 {
+	In->DraggedContainer = SourceContainer;
     In->DraggedItemID = Item->ID;
     In->DraggedItem = *Item;
     In->OriginalX = Item->x;
@@ -157,18 +179,6 @@ fn void OpenContextMenu(interface_t *In, item_id_t Item)
 	}
 }
 
-typedef enum
-{
-	container_Ground = 1,
-	container_Chest = 2
-} container_type_t;
-
-typedef struct
-{
-	v2s size;
-	inventory_t inventory;
-	container_type_t type;
-} container_t;
 
 typedef struct
 {
@@ -186,10 +196,18 @@ typedef struct
 	memory_t 			*memory;
 	map_layout_t 		*layout;
 
-    container_t         **containers;
+    container_t         containers[64];
     s32                 container_count;
-    s32                 container_capacity;
 } game_world_t;
+
+fn void CloseContainer(interface_t *In);
+fn void OpenContainer(interface_t *In, container_t *Container);
+
+fn void DrawDiegeticText(game_world_t *game, v2 p, v2 offset, v4 color, const char *format, ...);
+fn v2s ViewportToMap(const game_world_t *World, v2 p);
+
+fn b32 CreateContainer(game_world_t *state, v2s position);
+fn container_t *GetContainer(game_world_t *state, v2s position);
 
 fn entity_t *CreateSlime(game_world_t *state, v2s p);
 fn void CreateBigSlime(game_world_t *state, v2s p);
@@ -302,7 +320,7 @@ fn v2s ViewportToMap(const game_world_t *World, v2 p)
 	return result;
 }
 
-fn inline void RenderTile(command_buffer_t *out, map_t *map, s32 x, s32 y, assets_t *assets)
+fn inline void RenderTile(command_buffer_t *out, map_t *map, s32 x, s32 y, assets_t *assets, game_world_t *World)
 {
 	v2s at = {x, y};
 	if (!IsEmpty(map, at))
@@ -326,6 +344,9 @@ fn inline void RenderTile(command_buffer_t *out, map_t *map, s32 x, s32 y, asset
 			RenderIsoTile(out, map, at, White(), true, 15);
 		if (GetTileValue(map, at.x, at.y) == tile_Door)
 			RenderIsoTile(out, map, at, Red(), true, 25);
+
+		if ((GetContainer(World, at) != NULL))
+			RenderIsoTile(out, map, at, Green(), true, 20);
 
 		if ((Tile->trap_type != trap_type_none))
 			RenderTileAlignedBitmap(out, map, at, &assets->Traps[(Tile->trap_type - 1)], PureWhite());	
@@ -383,19 +404,19 @@ fn inline void RenderMap_ClipToViewport(game_world_t *World, map_t *map, bb_t cl
     v2s corner = top_corner;
     for(s32 y = 0; y < min.y - corner.y; y++)
     for(s32 x = -y; x <= y; x++)
-            RenderTile(out,map,corner.x+x,corner.y+y,assets);
+            RenderTile(out,map,corner.x+x,corner.y+y,assets,World);
     // NOTE(): Parallelogram
     if(min1.y<min2.y)
     {
         for(s32 y = 0; y <= min2.y - min.y; y++)
         for(s32 x = 0; x <= max.x-min.x;x++)
-        	RenderTile(out, map,min.x+x+y,min.y+y,assets);
+        	RenderTile(out, map,min.x+x+y,min.y+y,assets,World);
     }
     else
     {
         for(s32 y = 0; y <= min1.y - min.y; y++)
         for(s32 x = 0; x <= max.x-min.x;x++)
-           RenderTile(out,map,(min.x+x)-y,min.y+y,assets);
+           RenderTile(out,map,(min.x+x)-y,min.y+y,assets,World);
     }
     // NOTE(): Bot triangle
     min = bot_min;
@@ -403,7 +424,7 @@ fn inline void RenderMap_ClipToViewport(game_world_t *World, map_t *map, bb_t cl
     corner = bot_corner;
     for(s32 y = 1; y < (corner.y - max.y); y++)
     for(s32 x = y; x < (max.x - min.x)-y; x++)
-    	RenderTile(out,map,min.x+x,min.y+y,assets);
+    	RenderTile(out,map,min.x+x,min.y+y,assets,World);
 }
 
 fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets, v2 viewport)
@@ -493,22 +514,52 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	}
 }
 
-fn void AddContainer(game_world_t *state, container_t *container) {
-	if (state->container_count >= state->container_capacity) {
-		//todo
+fn container_t *PushContainer(game_world_t *state)
+{
+	container_t *result = 0;
+	if (state->container_count < ArraySize(state->containers))
+	{
+		result = &state->containers[state->container_count++];
+	}
+	else
+	{
 		DebugLog("Map's container capacity exceeded");
 	}
-	state->containers[state->container_count++] = container;
+	return result;
 }
 
-fn b32 PlaceContainerAt(game_world_t *state, v2s position, container_t *container) {
-	AddContainer(state, container);
-	state->map->container_ids[GetTileIndex(state->map, position)] = state->container_count - 1;
+fn b32 CreateContainer(game_world_t *state, v2s position)
+{
+	b32 Result = false;
+	if (InMapBounds(state->map, position))
+	{
+		s32 Index = GetTileIndex(state->map, position);
+		container_t *Container = PushContainer(state);
+		if (Container)
+		{
+			state->map->container_ids[Index] = state->container_count;
+			SetupInventory(&Container->inventory);
+			Eq_AddItem(&Container->inventory, item_green_herb);
+			Eq_AddItem(&Container->inventory, item_green_herb);
+			Eq_AddItem(&Container->inventory, item_green_herb);
+			Eq_AddItem(&Container->inventory, item_green_herb);
+			Eq_AddItem(&Container->inventory, item_assault_rifle);
+
+			Result = true;
+		}
+	}
+	return Result;
 }
 
-fn container_t *GetContainerAt(game_world_t *state, v2s position) {
-	s32 index = state->map->container_ids[GetTileIndex(state->map, position)];
-
-	if (index >= 0 && index < state->container_count)
-		return state->containers[index];
+fn container_t *GetContainer(game_world_t *state, v2s position)
+{
+	container_t *Result = 0;
+	if (InMapBounds(state->map, position))
+	{
+		s32 TileIndex = GetTileIndex(state->map, position);
+		s32 ContainerIndex = (state->map->container_ids[TileIndex] - 1);
+		if ((ContainerIndex >= 0) && (ContainerIndex < state->container_count))
+			Result = &state->containers[ContainerIndex];
+	}
+	return Result;
 }
