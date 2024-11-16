@@ -226,6 +226,7 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         {
             In->DraggedItem.size = RotateSigned(In->DraggedItem.size);
         }
+
     }
 
     // Context Menu

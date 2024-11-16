@@ -34,6 +34,8 @@ typedef struct
 	};
 	tile_t *tiles;
 	v2 tile_sz;
+
+	s32 *container_ids;
 } map_t;
 
 fn map_t *CreateMap(s32 x, s32 y, memory_t *memory, f32 tile_height);

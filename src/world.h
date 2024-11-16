@@ -157,6 +157,19 @@ fn void OpenContextMenu(interface_t *In, item_id_t Item)
 	}
 }
 
+typedef enum
+{
+	container_Ground = 1,
+	container_Chest = 2
+} container_type_t;
+
+typedef struct
+{
+	v2s size;
+	inventory_t inventory;
+	container_type_t type;
+} container_t;
+
 typedef struct
 {
 	entity_id_t			Player;
@@ -172,6 +185,10 @@ typedef struct
 	camera_t 			*camera;
 	memory_t 			*memory;
 	map_layout_t 		*layout;
+
+    container_t         **containers;
+    s32                 container_count;
+    s32                 container_capacity;
 } game_world_t;
 
 fn entity_t *CreateSlime(game_world_t *state, v2s p);
@@ -474,4 +491,24 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 
 		particles->parts[index--] = particles->parts[--particles->num];
 	}
+}
+
+fn void AddContainer(game_world_t *state, container_t *container) {
+	if (state->container_count >= state->container_capacity) {
+		//todo
+		DebugLog("Map's container capacity exceeded");
+	}
+	state->containers[state->container_count++] = container;
+}
+
+fn b32 PlaceContainerAt(game_world_t *state, v2s position, container_t *container) {
+	AddContainer(state, container);
+	state->map->container_ids[GetTileIndex(state->map, position)] = state->container_count - 1;
+}
+
+fn container_t *GetContainerAt(game_world_t *state, v2s position) {
+	s32 index = state->map->container_ids[GetTileIndex(state->map, position)];
+
+	if (index >= 0 && index < state->container_count)
+		return state->containers[index];
 }
