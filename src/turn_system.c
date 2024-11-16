@@ -9,29 +9,6 @@ fn void ClearTurnQueue(turn_queue_t *queue)
 	queue->num = 0;;
 }
 
-fn void DefaultTurnOrder(turn_queue_t *queue)
-{
-	ClearTurnQueue(queue);
-
-	entity_storage_t *storage = queue->storage;
-
-	s32 player_count = 0;
-	entity_t *players[16] = {0};
-
-	for (s32 index = 0; index < storage->num; index++)
-	{
-		entity_t *entity = &storage->entities[index];
-		if (IsHostile(entity))
-			PushTurn(queue, entity);
-		else
-			players[player_count++] = entity;
-	}
-
-	Assert(player_count < ArraySize(players));
-	for (s32 index = 0; index < player_count; index++)
-		PushTurn(queue, players[index]);
-}
-
 fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)
 {
 	entity_t *result = 0;
@@ -186,7 +163,7 @@ fn void GarbageCollect(game_world_t *Game, turn_queue_t *queue, f32 dt)
 {
 	// TODO(): This will mess up the turn oder...
 	entity_storage_t *storage = queue->storage;
-	for (s32 index = 0; index < storage->num; index++)
+	for (s32 index = 0; index < storage->EntityCount; index++)
 	{
 		entity_t *entity = &storage->entities[index];
 		if (entity->flags & entity_flags_deleted)
@@ -200,7 +177,7 @@ fn void GarbageCollect(game_world_t *Game, turn_queue_t *queue, f32 dt)
 				evicted->time_remaining = 1.0f;
 			}
 
-			storage->entities[index--] = storage->entities[--storage->num];
+			storage->entities[index--] = storage->entities[--storage->EntityCount];
 		}
 	}
 
@@ -390,99 +367,121 @@ fn void TurnQueueBeginFrame(turn_queue_t *Queue, game_world_t *Game, f32 dt)
 	Queue->time += (dt * 4.0f);
 }
 
+fn void TurnQueueEndFrame(turn_queue_t *Queue, game_world_t *Game)
+{
+
+}
+
+fn void InteruptTurn(turn_queue_t *Queue, entity_t *Entity)
+{
+	// NOTE(): Alert/Interupt Player Turn
+	PushTurn(Queue, Entity);
+	Queue->turn_inited = false;
+}
+
+fn inline s32 CheckTurnInterupts(game_world_t *state, entity_t *ActiveEntity)
+{
+	turn_queue_t *queue = state->turns;
+	s32 Interupted = false;
+
+	entity_storage_t *storage = queue->storage;
+	for (s32 Index = 0; Index < storage->EntityCount; Index++)
+	{
+		entity_t *Entity = &storage->entities[Index];
+		if (IsHostile(Entity) && (!Entity->Alerted))
+		{
+			if (IsLineOfSight(state->map, Entity->p, ActiveEntity->p))
+			{
+				CreateCombatText(state->particles, Entity->deferred_p, combat_text_alerted);
+				Entity->Alerted = true;
+
+				InteruptTurn(queue, Entity);
+				Interupted = true;
+				break;
+			}
+		}
+	}
+
+	return (Interupted);
+}
+
+fn inline void Player(entity_t *Entity, game_world_t *state, const client_input_t *input, command_buffer_t *out, const virtual_controls_t *cons)
+{
+	turn_queue_t *queue = state->turns;
+	// NOTE(): Controls
+	dir_input_t DirInput = GetDirectionalInput(input);
+	b32 CursorEnabled = IsCursorEnabled(state->cursor);
+	DoCursor(state, out, *cons, Entity, DirInput);
+			
+	if (WentDown(cons->Inventory))
+		ToggleInventory(state->interface);
+
+	// NOTE(): Move
+	b32 AllowedToMove = IsActionQueueCompleted(queue) /* Can't move when skill animations are playing! */ &&
+		(CursorEnabled == false) && (queue->movement_points > 0);
+	if (DirInput.Inputed && AllowedToMove)
+	{
+		b32 Moved = Move(state, Entity, DirInput.Direction);
+		if (Moved && (queue->god_mode_enabled == false))
+		{
+			ConsumeMovementPoints(queue, 1);
+			ApplyTileEffects(state->map, Entity);
+		}
+	}
+
+	// NOTE(): Finish
+	b32 CantDoAnyAction = (queue->movement_points <= 0 && queue->action_points == 0);
+	b32 TurnForcefullySkipped = WentDown(cons->EndTurn);
+	b32 EndTurn = TurnForcefullySkipped || CantDoAnyAction;
+	if (EndTurn)
+	{
+		if (TurnForcefullySkipped)
+			Brace(queue, Entity);
+		AcceptTurn(queue, Entity);
+	}
+}
+
 fn void TurnSystem(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
-	entity_t *ActiveEnt = NULL;
+	entity_t *ActiveEntity = NULL;
 
 	TurnQueueBeginFrame(queue, state, dt);
-	ActiveEnt = NextInOrder(queue, storage);
+	ActiveEntity = NextInOrder(queue, storage);
 
-	b32 TurnHasEnded = (ActiveEnt == NULL);
+	b32 TurnHasEnded = (ActiveEntity == NULL);
 	if (TurnHasEnded)
 		EstablishTurnOrder(state, queue);
 
-	if (ActiveEnt)
+	if (ActiveEntity)
 	{
 		if ((queue->turn_inited == false))
 		{
 			CloseCursor(state->cursor);
-
-			s32 MovementPointCount = BeginTurn(state, ActiveEnt);
+			CloseInventory(state->interface);
+			
+			s32 MovementPointCount = BeginTurn(state, ActiveEntity);
 			SetupTurn(queue, MovementPointCount);
 			
 			Assert(queue->turn_inited);
 		}
 
-		Camera(state, ActiveEnt, input, dt);
+		Camera(state, ActiveEntity, input, dt);
 
-		if (ActiveEnt->flags & entity_flags_controllable)
+		if (ActiveEntity->flags & entity_flags_controllable)
 		{
-			// NOTE(): Room
-			room_t *CurrentRoom = RoomFromPosition(state->layout, ActiveEnt->p);
-			b32 ChangedRooms = CurrentRoom->Index != queue->CurrentRoomIndex;
-			queue->CurrentRoomIndex = CurrentRoom->Index;
-
-			s32 HostileCount = CountHostiles(queue);
-			if ((HostileCount == 0))
-			{
-				if (!queue->EncounterInited)
-				{
-					if (ChangedRooms)
-					{
-						v2s At = CurrentRoom->min;
-						CreateSlime(state, Add32(At, V2S(7, 8)));
-						CreateSlime(state, Add32(At, V2S(14, 5)));
-						DefaultTurnOrder(queue);
-						queue->EncounterInited = true;
-					}
-				}
-				else
-				{
-					queue->EncounterInited = false;
-					OpenEveryDoor(state->map, CurrentRoom);	
-				}
-			}
-
-			// NOTE(): Controls
-			dir_input_t DirInput = GetDirectionalInput(input);
-			b32 CursorEnabled = IsCursorEnabled(state->cursor);
-			DoCursor(state, out, cons, ActiveEnt, DirInput);
-			
-			if (WentDown(cons.Inventory))
-				ToggleInventory(state->interface);
-
-			// NOTE(): Move
-			b32 AllowedToMove = IsActionQueueCompleted(queue) /* Can't move when skill animations are playing! */ &&
-				(CursorEnabled == false) && (queue->movement_points > 0);
-			if (DirInput.Inputed && AllowedToMove)
-			{
-				b32 Moved = Move(state, ActiveEnt, DirInput.Direction);
-				if (Moved && (queue->god_mode_enabled == false))
-				{
-					ConsumeMovementPoints(queue, 1);
-					ApplyTileEffects(state->map, ActiveEnt);
-				}
-			}
-
-			// NOTE(): Finish
-			b32 CantDoAnyAction = (queue->movement_points <= 0 && queue->action_points == 0);
-			b32 TurnForcefullySkipped = WentDown(cons.EndTurn);
-			b32 EndTurn = TurnForcefullySkipped || CantDoAnyAction;
-			if (EndTurn)
-			{
-				if (TurnForcefullySkipped)
-					Brace(queue, ActiveEnt);
-
-				AcceptTurn(queue, ActiveEnt);
-			}
+			s32 Interupted = CheckTurnInterupts(state, ActiveEntity);
+			if (!Interupted)
+				Player(ActiveEntity, state, input, out, &cons);
 		}
 		else
 		{
-			AI(state, storage, map, queue, dt, input, cons, log, out, assets, ActiveEnt);
+			AI(state, storage, map, queue, dt, input, cons, log, out, assets, ActiveEntity);
 		}
 	}
 
-	ResolveAsynchronousActionQueue(queue, ActiveEnt, out, dt, assets, state);
+	ResolveAsynchronousActionQueue(queue, ActiveEntity, out, dt, assets, state);
 	GarbageCollect(state, queue, dt);
 	ControlPanel(state->turns, &cons, state->storage);
+
+	TurnQueueEndFrame(queue, state);
 }

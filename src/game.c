@@ -197,7 +197,7 @@ fn inline void AOE(game_world_t *state, entity_t *user, entity_t *target, const 
     s32 radius_inner = area.x;
     s32 radius_outer = area.x * (s32)2;
     v2s explosion_center = state->cursor->p;
-    for (s32 i = 0; i < storage->num; i++)
+    for (s32 i = 0; i < storage->EntityCount; i++)
     {
         entity_t *entity = &storage->entities[i];
         f32 distance = DistanceV2S(explosion_center, entity->p);

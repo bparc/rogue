@@ -50,6 +50,7 @@ typedef struct
 	status_effect_t status_effects[MAX_STATUS_EFFECTS];
 
 	// NOTE(): AI stuff
+	b32 Alerted;
 	s32 DEBUG_step_count;
 } entity_t;
 
@@ -65,11 +66,12 @@ typedef struct
 
 typedef struct
 {
-	s32 num;
-	s32 statics_num;
+	s32 EntityCount;
 	entity_t entities[1024];
+
+	s32 StaticEntityCount;
 	static_entity_t static_entities[1024];
-	u64 next_id;
+	u64 IDPool;
 } entity_storage_t;
 
 // NOTE(): Lifetime Management

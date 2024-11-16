@@ -213,7 +213,7 @@ fn void Inventory(command_buffer_t *Out, inventory_t *Eq, const client_input_t *
         {
             item_t *DraggedItem = &In->DraggedItem;
             bb_t ItemBounds = ItemBoxFromIndex(&Layout, DraggedItem, Index);
-            b32 CanBePlaced = !Eq_IsSpaceFree_Exclude(Eq, Index, DraggedItem->size, DraggedItem->ID);
+            b32 CanBePlaced = Eq_IsSpaceFree_Exclude(Eq, Index, DraggedItem->size, DraggedItem->ID);
             DrawBoundsOutline(Out, Shrink(ItemBounds, 4.0f), CanBePlaced ? Blue() : Red());
         }
 

@@ -1,6 +1,21 @@
 fn void EstablishTurnOrder(game_world_t *game, turn_queue_t *queue)
 {
-	DefaultTurnOrder(queue);
+	entity_storage_t *Storage = queue->storage;
+	ClearTurnQueue(queue);
+
+	for (s32 index = 0; index < Storage->EntityCount; index++)
+	{
+		entity_t *entity = &Storage->entities[index];
+		if (IsHostile(entity) == false)
+			PushTurn(queue, entity);
+	}
+
+	for (s32 index = 0; index < Storage->EntityCount; index++)
+	{
+		entity_t *entity = &Storage->entities[index];
+		if (IsHostile(entity) && entity->Alerted)
+			PushTurn(queue, entity);
+	}
 }
 
 fn s32 BeginTurn(game_world_t *game, entity_t *entity)

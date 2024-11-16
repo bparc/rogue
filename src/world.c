@@ -5,28 +5,38 @@
 
 fn entity_t *CreatePlayer(game_world_t *state, v2s p)
 {
-    u16 player_health = 62;
-    u16 player_max_health = 62;
-    u16 attack_dmg = 8;
-    s32 player_accuracy = 75; // Applying this value for both melee and ranged accuracy
-    s32 player_evasion = 20;
-    entity_t *result = CreateEntity(state->storage, p, V2S(1, 1), entity_flags_controllable,
-        player_health, attack_dmg, state->map, player_max_health, player_accuracy, player_evasion,
-        MAX_PLAYER_ACTION_POINTS, MAX_PLAYER_MOVEMENT_POINTS, 1);
+    entity_t *result = 0;
+    if (state->Player == 0)
+    {
+        u16 player_health = 62;
+        u16 player_max_health = 62;
+        u16 attack_dmg = 8;
+        s32 player_accuracy = 75; // Applying this value for both melee and ranged accuracy
+        s32 player_evasion = 20;
+        result = CreateEntity(state->storage, p, V2S(1, 1), entity_flags_controllable,
+            player_health, attack_dmg, state->map, player_max_health, player_accuracy, player_evasion,
+            MAX_PLAYER_ACTION_POINTS, MAX_PLAYER_MOVEMENT_POINTS, 1);
+        
+	    result->inventory = PushStruct(inventory_t, state->memory);
+            SetupInventory(result->inventory);
     
-	result->inventory = PushStruct(inventory_t, state->memory);
-    SetupInventory(result->inventory);
+        inventory_t *Eq = result->inventory;
+        Eq_AddItem(Eq, item_green_herb);
+        Eq_AddItem(Eq, item_green_herb);
+        Eq_AddItem(Eq, item_assault_rifle);
+        Eq_AddItem(Eq, item_green_herb);
+        Eq_AddItem(Eq, item_assault_rifle);
+        Eq_AddItem(Eq, item_green_herb);
+        Eq_AddItem(Eq, item_green_herb);
+        Eq_AddItem(Eq, item_green_herb);
+        Eq_AddItem(Eq, item_green_herb);
 
-    inventory_t *Eq = result->inventory;
-    Eq_AddItem(Eq, item_green_herb);
-    Eq_AddItem(Eq, item_green_herb);
-    Eq_AddItem(Eq, item_assault_rifle);
-    Eq_AddItem(Eq, item_green_herb);
-    Eq_AddItem(Eq, item_assault_rifle);
-    Eq_AddItem(Eq, item_green_herb);
-    Eq_AddItem(Eq, item_green_herb);
-    Eq_AddItem(Eq, item_green_herb);
-    Eq_AddItem(Eq, item_green_herb);
+        state->Player = result->id;
+    }
+    else
+    {
+        DebugLog("player already created!");
+    }
     return result;
 }
 

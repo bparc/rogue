@@ -18,7 +18,8 @@ typedef enum {
     combat_text_critical,
     combat_text_hit,
     combat_text_miss,
-    combat_text_graze
+    combat_text_graze,
+    combat_text_alerted,
 } combat_text_type_t;
 
 typedef enum
@@ -119,6 +120,11 @@ fn void EndInterface(interface_t *In)
 
 }
 
+fn void CloseInventory(interface_t *In)
+{
+	In->inventory_visible = false;
+}
+
 fn void ToggleInventory(interface_t *In)
 {
 	In->inventory_visible = !In->inventory_visible;
@@ -153,6 +159,7 @@ fn void OpenContextMenu(interface_t *In, item_id_t Item)
 
 typedef struct
 {
+	entity_id_t			Player;
 	assets_t 			*assets;
 	log_t 				*log;
 	cursor_t 			*cursor;
@@ -166,7 +173,6 @@ typedef struct
 	memory_t 			*memory;
 	map_layout_t 		*layout;
 } game_world_t;
-typedef game_world_t video_game_t;
 
 fn entity_t *CreateSlime(game_world_t *state, v2s p);
 fn void CreateBigSlime(game_world_t *state, v2s p);
@@ -402,7 +408,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	RenderMap_ClipToViewport(state, map, view, out);
 
 	// NOTE(): Entities
-	for (s32 index = 0; index < storage->num; index++)
+	for (s32 index = 0; index < storage->EntityCount; index++)
 	{
 		entity_t *entity = &storage->entities[index];
 
@@ -435,30 +441,21 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 		particle->t += dt;
 		if (particle->t < 1.0f)
 		{
+			f32 t = particle->t;
+			v4 color = White();
+			color.w = (1.0f - Smoothstep(t, 0.5f));
+			v2 p = CameraToScreen(state->camera, particle->p);
+			p.y -= ((50.0f * t) + (t * t * t) * 20.0f);
+			p.x += (Sine(t) * 2.0f - 1.0f) * 2.0f;
+
 			switch (particle->type)
 			{
 			case particle_type_number:
 				{	
-					f32 t = particle->t;
-					v4 color = White();
-					color.w = (1.0f - Smoothstep(t, 0.5f));
-
-					v2 p = CameraToScreen(state->camera, particle->p);
-					p.y -= ((50.0f * t) + (t * t * t) * 20.0f);
-					p.x += (Sine(t) * 2.0f - 1.0f) * 2.0f;
-
 					DrawFormat(out_top, assets->Font, p, color, "%i", particle->number);
 				} break;
 			case particle_type_combat_text:
 				{
-					f32 t = particle->t;
-					v4 color = White();
-					color.w = (1.0f - Smoothstep(t, 0.5f));
-
-					v2 p = CameraToScreen(state->camera, particle->p);
-					p.y -= ((50.0f * t) + (t * t * t) * 20.0f);
-					p.x += (Sine(t) * 2.0f - 1.0f) * 2.0f;
-
 	                const char *text = "";
 	                switch (particle->combat_text)
 	                {
@@ -466,6 +463,7 @@ fn void DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *
 	                    case combat_text_hit:      text = "HIT";      break;
 	                    case combat_text_miss:     color = LightGrey(); text = "MISS";     break;
 	                    case combat_text_graze:    text = "GRAZE";    break;
+	                    case combat_text_alerted:  text = "!"; color = Red(); break;
 	                }
 
 	                DrawFormat(out_top, assets->Font, p, color, "%s", text);

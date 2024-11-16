@@ -183,7 +183,7 @@ fn void LayoutRoom(map_t *Map, room_t room, const b32 PlaceDoors, v2s chunk_size
 	else
 	if (!CompareVectors(room.ChunkAt, room.PrevChunk))
 	{
-		SetTileValue(Map, room.Doors[0], tile_Door);
+		SetTileValue(Map, room.Doors[0], tile_Floor);
 	}
 }
 
@@ -250,7 +250,10 @@ fn void LayoutMap(map_layout_t *Layout, game_world_t *World)
 	{
 		room_t *room = &Layout->PlacedRooms[Index];
 		LayoutRoom(Map, *room, true, Layout->ChunkSize);
-		//GenerateRoomInterior(World, *room, ChunkSize);
+
+		v2s At = Mul32(room->ChunkAt, Layout->ChunkSize);
+		CreateSlime(World, Add32(At, V2S(7, 8)));
+		CreateSlime(World, Add32(At, V2S(14, 5)));
 	}
 
 	// 
