@@ -239,9 +239,7 @@ fn void Inventory(v2 EqMin, command_buffer_t *Out, inventory_t *Eq, const client
         if (!In->Buttons[0]) // Place
         {
             inventory_t *Dest = Eq;
-            inventory_t *Source = Dest;
-            if (In->DraggedContainer)
-                Source = In->DraggedContainer;
+            inventory_t *Source = In->DraggedContainer;
 
             if (Dest != Source)
                 DebugLog("transfering the item between containers...");
