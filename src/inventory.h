@@ -46,7 +46,7 @@ fn item_id_t Eq_AllocateID(inventory_t *inventory);
 fn item_t *Eq_GetItem(inventory_t *inventory, item_id_t ID);
 fn item_t *Eq_AddItem(inventory_t *inventory, item_type_t type);
 fn b32 Eq_RemoveItem(inventory_t *inventory, s32 item_id);
-fn void Eq_MoveItem(inventory_t *Eq, item_t Source, v2s Dest);
+fn void Eq_MoveItem(inventory_t *Dest, item_t Source, v2s DestPos, inventory_t *SourceContainer);
 
 fn b32 Eq_FindVacantSpace(const inventory_t *Eq, v2s *Index, v2s RequiredSpace);
 fn b32 Eq_IsSpaceFree(const inventory_t *eq, v2s offset, v2s size);

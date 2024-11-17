@@ -168,22 +168,23 @@ fn b32 Eq_RemoveItem(inventory_t *inventory, item_id_t ID)
     return false;
 }
 
-fn void Eq_MoveItem(inventory_t *Eq, item_t Source, v2s Dest)
+fn void Eq_MoveItem(inventory_t *Dest, item_t Source, v2s DestPos, inventory_t *SourceContainer)
 {
-    v2s maxDest = Add32(Dest, Source.size);
-    if (Dest.x < 0 || Dest.y < 0 || maxDest.x > Eq->x || maxDest.y > Eq->y)
+    v2s maxDest = Add32(DestPos, Source.size);
+    if (DestPos.x < 0 || DestPos.y < 0 || maxDest.x > Dest->x || maxDest.y > Dest->y)
         return;
 
     item_t *Item = NULL;
 
-    if (Eq_IsSpaceFree_Exclude(Eq, Dest, Source.size, Source.ID))
-        Item = Eq_GetItem(Eq, Source.ID);    
+    if (SourceContainer) {
+        Item = Eq_GetItem(SourceContainer, Source.ID);
+    }
 
     if (Item)
     {
-        Eq_FreeSpace(Eq, Item->index, Item->size);
-        Eq_OccupySpace(Eq, Dest, Source.size, Item->ID);
-        Item->index = Dest;
+        Eq_FreeSpace(SourceContainer, Item->index, Item->size);
+        Eq_OccupySpace(Dest, DestPos, Source.size, Item->ID);
+        Item->index = DestPos;
         Item->size = Source.size;
     }
 }
