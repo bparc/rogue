@@ -241,24 +241,31 @@ fn void Inventory(v2 EqMin, command_buffer_t *Out, inventory_t *Eq, const client
             inventory_t *Dest = Eq;
             inventory_t *Source = In->DraggedContainer;
 
-            item_t *DraggedItem = Eq_GetItem(Source, In->DraggedItemID);
+            item_id_t ItemID = In->DraggedItemID;
+            item_t *DraggedItem = Eq_GetItem(Source, ItemID);
 
-            if (Dest != Source) {
-                item_t *MovedItem = Eq_AddItem(Dest, DraggedItem->params->type);
-                Eq_RemoveItem(Source, In->DraggedItemID);
-                In->DraggedItem = *MovedItem;
+            if (DraggedItem) {
+                v2s DestPos = InventoryCellFromOffset(&Layout, Cursor);
 
-                if (MovedItem) {
-                    v2s cursor_p = V2S((s32)In->Cursor.x, (s32)In->Cursor.y);
-                    //Eq_MoveItem(Eq, In->DraggedItem, Index, Source);
-                    Eq_RemoveItem(Source, In->DraggedItemID);
+                if (Dest != Source) { // Different inventories
+
+                    if (Eq_RemoveItem(Source, ItemID)) {
+                        item_t *NewItem = Eq_AddItemAt(Dest, DraggedItem->params->type, DestPos);
+                        if (NewItem) {
+                            //NewItem->index = DestPos;
+                        } else {
+                            Eq_AddItem(Source, DraggedItem->params->type);
+                        }
+                    }
+                } else if (Eq_IsSpaceFree_Exclude(Dest, DestPos, DraggedItem->size, DraggedItem->ID)) {
+                    Eq_FreeSpace(Source, DraggedItem->index, DraggedItem->size);
+                    Eq_OccupySpace(Dest, DestPos, DraggedItem->size, DraggedItem->ID);
+                    DraggedItem->index = DestPos;
                 }
-
-            } else if(Eq_IsSpaceFree_Exclude(Dest, Index, In->DraggedItem.size, In->DraggedItem.params->id)) {
-                Eq_MoveItem(Eq, In->DraggedItem, Index, Source);
             }
 
             In->DraggedItemID = 0;
+
         }
         if (In->Interact[1] || WentDown(Cons->rotate)) // Rotate
         {

@@ -25,7 +25,6 @@ typedef struct
     item_type_t type;
     item_categories_t category;
     const char *name;
-    s32 id; // Needs to be unique for each weapon
     s32 range;
     s32 pellet_spread;
     s32 pushback;
@@ -127,7 +126,6 @@ _Global_Item_Data[item_##Type]  = (item_params_t)
 
     ITM(standard_caseless_rifle)
     {
-        .id = 1,
         .name = "MilSpec Penetrator",
         .category = ammunition,
         .ammo = "7.62x51mm_caseless",
@@ -140,14 +138,12 @@ _Global_Item_Data[item_##Type]  = (item_params_t)
 
     ITM(green_herb)
     {
-        .id = 3,
         .name = "Green Herb",
         .size = V2S(1, 1),
     };
 
     ITM(assault_rifle)
     {
-        .id = 0,
         .size = V2S(5, 2),
         .name = "T-17 Assault Rifle",
         .category = rifle,
