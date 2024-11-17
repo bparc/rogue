@@ -241,28 +241,10 @@ fn void Inventory(v2 EqMin, command_buffer_t *Out, inventory_t *Eq, const client
             inventory_t *Dest = Eq;
             inventory_t *Source = In->DraggedContainer;
 
-            item_id_t ItemID = In->DraggedItemID;
-            item_t *DraggedItem = Eq_GetItem(Source, ItemID);
-
-            if (DraggedItem) {
-                v2s DestPos = InventoryCellFromOffset(&Layout, Cursor);
-
-                if (Dest != Source) { // Different inventories
-
-                    if (Eq_RemoveItem(Source, ItemID)) {
-                        item_t *NewItem = Eq_AddItemAt(Dest, DraggedItem->params->type, DestPos);
-                        if (NewItem) {
-                            //NewItem->index = DestPos;
-                        } else {
-                            Eq_AddItem(Source, DraggedItem->params->type);
-                        }
-                    }
-                } else if (Eq_IsSpaceFree_Exclude(Dest, DestPos, DraggedItem->size, DraggedItem->ID)) {
-                    Eq_FreeSpace(Source, DraggedItem->index, DraggedItem->size);
-                    Eq_OccupySpace(Dest, DestPos, DraggedItem->size, DraggedItem->ID);
-                    DraggedItem->index = DestPos;
-                }
-            }
+            if (Dest == Source)
+                Eq_MoveItem(Source, In->DraggedItem, Index);
+            else
+                Eq_TransferItem(Source, Dest, In->DraggedItem, Index);
 
             In->DraggedItemID = 0;
 

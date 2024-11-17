@@ -123,59 +123,32 @@ fn item_t *Eq_PushItem(inventory_t *inventory)
     return result;
 }
 
+fn void Eq_OccupyItemSpace(inventory_t *Eq, item_t Item)
+{
+    Eq_OccupySpace(Eq, Item.index, Item.size, Item.ID);
+}
+
+fn item_t *Eq_StoreItemUnchecked(inventory_t *Eq, item_t Item, v2s At)
+{
+    item_t *Result = Eq_PushItem(Eq);
+    if (Result)
+    {
+        *Result = Item;
+        Result->index = At;
+        Result->ID = Eq_AllocateID(Eq);
+        Eq_OccupyItemSpace(Eq, *Result);
+    }
+    return Result;
+}
+
 fn item_t *Eq_AddItem(inventory_t *inventory, item_type_t type)
 {
     item_t *result = NULL;
 
-    const item_params_t *requested_type = GetItemParams(type);
-    s32 new_carried_weight = (inventory->carried_weight + requested_type->weight);
-    v2s vacant_space = {0};
-
-    if ((new_carried_weight <= inventory->max_carry_weight) &&
-        (Eq_FindVacantSpace(inventory, &vacant_space, requested_type->size)))
-    {
-        result = Eq_PushItem(inventory);
-    }
-
-    if (result)
-    {
-        inventory->carried_weight = new_carried_weight;
-
-        result->params  = requested_type;
-        result->size    = requested_type->size;
-        result->ID      = Eq_AllocateID(inventory);
-        result->index   = vacant_space;
-
-        Eq_OccupySpace(inventory, result->index, result->params->size, result->ID);
-    }
-
-    return (result);
-}
-
-fn item_t *Eq_AddItemAt(inventory_t *inventory, item_type_t type, v2s destPos)
-{
-    item_t *result = NULL;
-
-    const item_params_t *requested_type = GetItemParams(type);
-    s32 new_carried_weight = (inventory->carried_weight + requested_type->weight);
-
-    if ((new_carried_weight <= inventory->max_carry_weight) &&
-        (Eq_IsSpaceFree(inventory, destPos, requested_type->size)))
-    {
-        result = Eq_PushItem(inventory);
-    }
-
-    if (result)
-    {
-        inventory->carried_weight = new_carried_weight;
-
-        result->params  = requested_type;
-        result->size    = requested_type->size;
-        result->ID      = Eq_AllocateID(inventory);
-        result->index   = destPos;
-
-        Eq_OccupySpace(inventory, result->index, result->params->size, result->ID);
-    }
+    item_t Item = MakeItemFromType(type);
+    v2s VacantSpace = {0};
+    if (Eq_FindVacantSpace(inventory, &VacantSpace, Item.size))
+        result = Eq_StoreItemUnchecked(inventory, Item, VacantSpace);
 
     return (result);
 }
@@ -196,51 +169,29 @@ fn b32 Eq_RemoveItem(inventory_t *inventory, item_id_t ID)
     return false;
 }
 
-/*fn void Eq_MoveItem(inventory_t *Dest, item_t SelectedItem, v2s DestPos, inventory_t *SourceContainer)
+fn void Eq_TransferItem(inventory_t *From, inventory_t *To, item_t Source, v2s Dest)
 {
+    item_t *Item = NULL;
+    if (Eq_IsSpaceFree(To, Dest, Source.size))
+        Item = Eq_StoreItemUnchecked(To, Source, Dest);
+    if (Item)
+        Eq_RemoveItem(From, Source.ID);   
+}
 
-    v2s maxDest = Add32(DestPos, SelectedItem.size);
-    if (DestPos.x < 0 || DestPos.y < 0 || maxDest.x > Dest->x || maxDest.y > Dest->y)
-        return;
-
+fn void Eq_MoveItem(inventory_t *Eq, item_t Source, v2s Dest)
+{
     item_t *Item = NULL;
 
-    if (SourceContainer) {
-        Item = Eq_GetItem(SourceContainer, SelectedItem.ID);
-    }
+    if (Eq_IsSpaceFree_Exclude(Eq, Dest, Source.size, Source.ID))
+        Item = Eq_GetItem(Eq, Source.ID);    
 
     if (Item)
     {
-        Eq_FreeSpace(SourceContainer, Item->index, Item->size);
-        Eq_OccupySpace(Dest, DestPos, SelectedItem.size, Item->ID);
-        Item->index = DestPos;
-        Item->size = SelectedItem.size;
+        Eq_FreeSpace(Eq, Item->index, Item->size);
+        Eq_OccupySpace(Eq, Dest, Source.size, Item->ID);
+        Item->index = Dest;
+        Item->size = Source.size;
     }
-}*/
-
-fn b32 Eq_MoveItem(inventory_t *Dest, inventory_t *Source, item_id_t ItemID, v2s DestPos)
-{
-    item_t *Item = Eq_GetItem(Source, ItemID);
-    if (!Item)
-        return false;
-
-    v2s maxDest = Add32(DestPos, Item->size);
-    if (DestPos.x < 0 || DestPos.y < 0 || maxDest.x > Dest->x || maxDest.y > Dest->y)
-        return false;
-
-    if (!Eq_IsSpaceFree(Dest, DestPos, Item->size)) {
-        return false;
-    }
-
-    Eq_FreeSpace(Source, Item->index, Item->size);
-    Source->carried_weight += Item->params->weight;
-
-    Eq_OccupySpace(Dest, DestPos, Item->size, Item->ID);
-    Item->index = DestPos;
-
-    Dest->carried_weight += Item->params->weight;
-
-    return true;
 }
 
 // Use an item from a menu inside inventory. todo: For consumables it will consume the item;

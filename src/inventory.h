@@ -9,7 +9,7 @@ typedef struct
 
 typedef struct {
     s32 item_count;
-    item_t items[MAX_INVENTORY_SIZE];
+    item_t items[BACKPACK_GRID_X_SIZE * BACKPACK_GRID_Y_SIZE];
 
     union
     {
@@ -43,10 +43,10 @@ fn void SetupInventory(inventory_t *inventory)
 
 fn item_id_t Eq_AllocateID(inventory_t *inventory);
 
+fn void Eq_MoveItem(inventory_t *Eq, item_t Source, v2s Dest);
 fn item_t *Eq_GetItem(inventory_t *inventory, item_id_t ID);
 fn item_t *Eq_AddItem(inventory_t *inventory, item_type_t type);
 fn b32 Eq_RemoveItem(inventory_t *inventory, s32 item_id);
-fn b32 Eq_MoveItem(inventory_t *Dest, inventory_t *Source, item_id_t ItemID, v2s DestPos);
 
 fn b32 Eq_FindVacantSpace(const inventory_t *Eq, v2s *Index, v2s RequiredSpace);
 fn b32 Eq_IsSpaceFree(const inventory_t *eq, v2s offset, v2s size);

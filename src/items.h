@@ -81,6 +81,14 @@ fn const item_params_t *GetItemParams(item_type_t type)
     return &_Global_Item_Data[type];
 }
 
+fn item_t MakeItemFromType(item_type_t Type)
+{
+    item_t Result = {};
+    Result.params = GetItemParams(Type);
+    Result.size   = Result.params->size;
+    return Result;  
+}
+
 fn const char *NameFromItemType(const char *name, memory_t *memory)
 {
     s32 length = StringLength(name);
