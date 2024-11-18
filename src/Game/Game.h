@@ -71,6 +71,51 @@ fn void EndGameWorld(game_state_t *state)
 
 }
 
+fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
+{
+	entity_t *ActiveEntity = NULL;
+
+	TurnQueueBeginFrame(queue, state, dt);
+	ActiveEntity = NextInOrder(queue, storage);
+
+	b32 TurnHasEnded = (ActiveEntity == NULL);
+	if (TurnHasEnded)
+		EstablishTurnOrder(state, queue);
+
+	if (ActiveEntity)
+	{
+		if ((queue->turn_inited == false))
+		{
+			CloseCursor(state->cursor);
+			CloseInventory(state->interface);
+			
+			s32 MovementPointCount = BeginTurn(state, ActiveEntity);
+			SetupTurn(queue, MovementPointCount);
+			
+			Assert(queue->turn_inited);
+		}
+
+		Camera(state, ActiveEntity, input, dt);
+
+		if (ActiveEntity->flags & entity_flags_controllable)
+		{
+			s32 Interupted = CheckTurnInterupts(state, ActiveEntity);
+			if (!Interupted)
+				Player(ActiveEntity, state, input, out, &cons);
+		}
+		else
+		{
+			AI(state, storage, map, queue, dt, input, cons, log, out, assets, ActiveEntity);
+		}
+	}
+
+	ResolveAsynchronousActionQueue(queue, ActiveEntity, out, dt, assets, state);
+	GarbageCollect(state, queue, dt);
+	ControlPanel(state->turns, &cons, state->storage);
+
+	TurnQueueEndFrame(queue, state);
+}
+
 fn void Tick(game_state_t *state, f32 dt, client_input_t input, virtual_controls_t cons, command_buffer_t *Layer0, command_buffer_t *Layer1)
 {
 	BeginGameWorld(state);

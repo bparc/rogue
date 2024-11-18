@@ -190,3 +190,70 @@ fn void Heal(entity_t *entity, s16 amount) {
     if (entity)
         entity->health = Min16U(entity->max_health, entity->health + amount);
 }
+
+fn void AddStatusEffect(entity_t *entity, status_effect_type_t status_effect, s32 duration) {
+    for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
+
+        s32 status_effect_type_value = entity->status_effects[i].type;
+
+        if (entity->status_effects[i].type == status_effect_none) {
+            switch (status_effect) {
+                case status_effect_poison:
+                    entity->status_effects[i].type = status_effect_poison;
+                    entity->status_effects[i].remaining_turns = duration;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+fn void ApplyTrapEffects(tile_t *tile, entity_t *entity) {
+    switch(tile->trap_type) {
+        case trap_type_physical:
+            TakeHP(entity, 25);
+            break;
+        case trap_type_poison:
+            AddStatusEffect(entity, status_effect_poison, 3);
+            break;
+        default:
+            break;
+    }
+}
+
+fn void ApplyTileEffects(map_t *map, entity_t *entity)
+{
+    tile_t *tile = GetTile(map, entity->p.x, entity->p.y);
+
+    if (tile->trap_type != trap_type_none)
+    {
+        ApplyTrapEffects(tile, entity);
+    }
+    // todo: cover mechanics stuff
+    //if (tile->cover_type != cover_type_none) {
+    //  ApplyCoverBonus(entity);
+    //}
+}
+
+fn void ProcessStatusEffects(entity_t *entity)
+{
+    for (int i = 0; i < MAX_STATUS_EFFECTS; ++i) {
+        if (entity->status_effects[i].type != status_effect_none) {
+            switch (entity->status_effects[i].type) {
+                case status_effect_poison:
+                    TakeHP(entity, 10);
+                    break;
+                default:
+                    break;
+            }
+
+            entity->status_effects[i].remaining_turns--;
+
+            if (entity->status_effects[i].remaining_turns == 0) {
+                DebugLog("Changing status effect to none, applying value: %d", status_effect_none);
+                entity->status_effects[i].type = status_effect_none;
+            }
+        }
+    }
+}
