@@ -110,26 +110,6 @@ fn void EndFrame(client_t *state, const client_input_t *input)
 	EndDebugFrame();
 }
 
-fn void BeginGameWorld(game_world_t *state)
-{
-
-}
-
-fn void EndGameWorld(game_world_t *state)
-{
-
-}
-
-fn void Tick(game_world_t *state, f32 dt, client_input_t input, virtual_controls_t cons, command_buffer_t *Layer0, command_buffer_t *Layer1)
-{
-	BeginGameWorld(state);
-	TurnSystem(state, state->storage, state->map, state->turns, dt, &input, cons, state->log, Layer1, state->assets);	
-	EndGameWorld(state);
-
-	HUD(Debug.out, state, state->turns, state->storage, state->assets, &input, &cons, dt);
-	Render_DrawFrame(state, Layer0, dt, state->assets, V2(input.viewport[0], input.viewport[1]));
-}
-
 fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 {
 	f32 dt = 1.0f / 60.0f;

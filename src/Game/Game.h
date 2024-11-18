@@ -18,8 +18,6 @@ typedef struct
     s32                 container_count;
 } game_world_t;
 
-fn void Tick(game_world_t *state, f32 dt, client_input_t input, virtual_controls_t cons, command_buffer_t *Layer0, command_buffer_t *Layer1);
-
 #include "Game/Scene.h"
 #include "Game/Scene.c"
 #include "Game/Game.c"
@@ -62,4 +60,24 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *asset
 
 	GenerateDungeon(state->layout, 6, *state->memory);
 	CreateScene(state, state->layout);
+}
+
+fn void BeginGameWorld(game_world_t *state)
+{
+
+}
+
+fn void EndGameWorld(game_world_t *state)
+{
+
+}
+
+fn void Tick(game_world_t *state, f32 dt, client_input_t input, virtual_controls_t cons, command_buffer_t *Layer0, command_buffer_t *Layer1)
+{
+	BeginGameWorld(state);
+	TurnSystem(state, state->storage, state->map, state->turns, dt, &input, cons, state->log, Layer1, state->assets);	
+	EndGameWorld(state);
+
+	HUD(Debug.out, state, state->turns, state->storage, state->assets, &input, &cons, dt);
+	Render_DrawFrame(state, Layer0, dt, state->assets, V2(input.viewport[0], input.viewport[1]));
 }
