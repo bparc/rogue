@@ -80,19 +80,6 @@ fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *asset
 	CreateScene(state, state->layout);
 }
 
-fn void EstablishTurnOrder(turn_system_t *System)
-{
-	entity_storage_t *Storage = System->storage;
-	PushTurn(System, GetEntity(System->storage, System->Player));
-	
-	for (s32 index = 0; index < Storage->EntityCount; index++)
-	{
-		entity_t *entity = &Storage->entities[index];
-		if (IsHostile(entity) && entity->Alerted)
-			PushTurn(System, entity);
-	}
-}
-
 fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, turn_system_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
 	entity_t *ActiveEntity = NULL;

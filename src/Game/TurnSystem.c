@@ -587,3 +587,16 @@ fn b32 Launch(turn_system_t *System, v2s source, entity_t *target, u8 push_dista
 
     return false;
 }
+
+fn void EstablishTurnOrder(turn_system_t *System)
+{
+	entity_storage_t *Storage = System->storage;
+	PushTurn(System, GetEntity(System->storage, System->Player));
+	
+	for (s32 index = 0; index < Storage->EntityCount; index++)
+	{
+		entity_t *entity = &Storage->entities[index];
+		if (IsHostile(entity) && entity->Alerted)
+			PushTurn(System, entity);
+	}
+}
