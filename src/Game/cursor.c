@@ -27,6 +27,9 @@ fn void DrawDiegeticText(game_world_t *game, v2 p, v2 offset, v4 color, const ch
 
 fn inline s32 DoAction(cursor_t *cursor, map_t *map, entity_t *user, entity_t *target, turn_queue_t *queue, const action_params_t *settings)
 {
+	if (!target)
+		return 0;
+
 	entity_id_t id = target ? target->id : 0;
 	v2s p = target ? target->p : cursor->p;
 
@@ -125,6 +128,7 @@ fn void DoCursor(game_world_t *Game, command_buffer_t *out, virtual_controls_t c
 
 		// NOTE(): Pick a target.
 		entity_t *target = GetEntityByPosition(storage, cursor->p);
+
 		if (IsHostile(target))
 		{
 			s32 chance = CalculateHitChance(user, target, equipped.type);
@@ -138,10 +142,10 @@ fn void DoCursor(game_world_t *Game, command_buffer_t *out, virtual_controls_t c
 			b32 target_valid = IsHostile(target);
 			if (IsTargetAny(equipped.type))
 				target_valid |= IsTraversable(map, cursor->p); 
-
 			b32 positioned_on_user = CompareVectors(cursor->p, user->p);
-			if (target_valid && (positioned_on_user == false))
+			if (target_valid && (positioned_on_user == false)) {
 				DoAction(cursor, map, user, target, queue, settings);
+			}
 		}
 	}
 }

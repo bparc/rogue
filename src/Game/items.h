@@ -83,7 +83,7 @@ fn const item_params_t *GetItemParams(item_type_t type)
 
 fn item_t MakeItemFromType(item_type_t Type)
 {
-    item_t Result = {};
+    item_t Result = {0};
     Result.params = GetItemParams(Type);
     Result.size   = Result.params->size;
     return Result;  
