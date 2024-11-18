@@ -1,6 +1,6 @@
 fn void PushTurn(turn_system_t *System, entity_t *entity)
 {
-	if (System->QueueSize < ArraySize(System->Queue))
+	if ((System->QueueSize < ArraySize(System->Queue)) && entity)
 		System->Queue[System->QueueSize++] = entity->id;
 }
 
@@ -419,15 +419,16 @@ fn void AI(game_state_t *state, entity_storage_t *storage, map_t *map, turn_syst
 	}	
 }
 
-fn void TurnQueueBeginFrame(turn_system_t *Queue, game_state_t *Game, f32 dt)
+fn void BeginTurnSystem(turn_system_t *Queue, game_state_t *Game, f32 dt)
 {
+	Queue->Player = Game->Player;
 	Queue->map = Game->map;
 	Queue->storage = Game->storage;
 	Queue->seconds_elapsed += dt;
 	Queue->time += (dt * 4.0f);
 }
 
-fn void TurnQueueEndFrame(turn_system_t *Queue, game_state_t *Game)
+fn void EndTurnSystem(turn_system_t *Queue, game_state_t *Game)
 {
 
 }

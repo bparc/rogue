@@ -57,26 +57,31 @@ fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *asset
 	CreateScene(state, state->layout);
 }
 
-fn void BeginGameWorld(game_state_t *state)
+fn void EstablishTurnOrder(turn_system_t *System)
 {
+	entity_storage_t *Storage = System->storage;
+	ClearTurnQueue(System);
 
-}
-
-fn void EndGameWorld(game_state_t *state)
-{
-
+	PushTurn(System, GetEntity(System->storage, System->Player));
+	
+	for (s32 index = 0; index < Storage->EntityCount; index++)
+	{
+		entity_t *entity = &Storage->entities[index];
+		if (IsHostile(entity) && entity->Alerted)
+			PushTurn(System, entity);
+	}
 }
 
 fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, turn_system_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
 	entity_t *ActiveEntity = NULL;
 
-	TurnQueueBeginFrame(queue, state, dt);
+	BeginTurnSystem(queue, state, dt);
 	ActiveEntity = NextInOrder(queue, storage);
 
 	b32 TurnHasEnded = (ActiveEntity == NULL);
 	if (TurnHasEnded)
-		EstablishTurnOrder(state, queue);
+		EstablishTurnOrder(queue);
 
 	if (ActiveEntity)
 	{
@@ -109,15 +114,12 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 	GarbageCollect(state, queue, dt);
 	ControlPanel(state->turns, &cons, state->storage);
 
-	TurnQueueEndFrame(queue, state);
+	EndTurnSystem(queue, state);
 }
 
 fn void Tick(game_state_t *state, f32 dt, client_input_t input, virtual_controls_t cons, command_buffer_t *Layer0, command_buffer_t *Layer1)
 {
-	BeginGameWorld(state);
 	TurnSystem(state, state->storage, state->map, state->turns, dt, &input, cons, state->log, Layer1, state->assets);	
-	EndGameWorld(state);
-
 	HUD(Debug.out, state, state->turns, state->storage, state->assets, &input, &cons, dt);
 	Render_DrawFrame(state, Layer0, dt, state->assets, V2(input.viewport[0], input.viewport[1]));
 }

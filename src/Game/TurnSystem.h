@@ -36,6 +36,7 @@ typedef struct
 
 typedef struct
 {
+
 	entity_storage_t *storage;
 	map_t *map;
 
@@ -43,7 +44,7 @@ typedef struct
 	// in a *reverse* order (the last turn in the queue will be executed first).
 	s32 QueueSize;
 	entity_id_t Queue[64];
-
+	entity_id_t Player;
 
 	// NOTE(): Turn State
 	v2s starting_p;
