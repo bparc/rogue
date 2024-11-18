@@ -50,16 +50,16 @@ typedef struct
 	interpolator_state_t interp_state;
 	f32 time; // NOTE(): A variable within 0.0 to 1.0 range for interpolating values.
 
+	s32 turn_inited;
 	s32 max_action_points;
 	s32 action_points;
 	s32 movement_points;
-	s32 turn_inited;
 	f32 seconds_elapsed; // NOTE(): Seconds elapsed from the start of the turn.
 
 	s32 action_count;
 	async_action_t actions[1];
 
-	// NOTE(): Some additional book-keeping
+	// Some additional book-keeping
 	// for the animation system to use.
 	entity_id_t prev_turn_entity;
 	// NOTE(): A small buffer that stores
@@ -69,6 +69,7 @@ typedef struct
 	s32 num_evicted_entities;
 	evicted_entity_t evicted_entities[8];
 
+	// modes
 	s32 free_camera_mode_enabled;
 	s32 god_mode_enabled;
 
@@ -106,7 +107,7 @@ fn s32 ConsumeMovementPoints(turn_system_t *queue, s32 count);
 fn s32 ConsumeActionPoints(turn_system_t *queue, s32 count);
 fn entity_t *GetActiveUnit(const turn_system_t *queue);
 
-// movement
+// grid-based movement
 fn b32 IsWorldPointEmpty(turn_system_t *System, v2s p);
 fn b32 Move(turn_system_t *System, entity_t *entity, v2s offset);
 fn b32 Launch(turn_system_t *System, v2s source, entity_t *target, u8 push_distance, s32 strength);
