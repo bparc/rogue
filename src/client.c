@@ -1,5 +1,5 @@
 // NOTE(): Low/
-#include "Game/settings.h"
+#include "Game/GlobalSettings.h"
 #include "low/common.h"
 #include "low/common.c"
 #include "low/memory.h"
