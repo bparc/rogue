@@ -13,3 +13,5 @@ typedef uint8_t  u8;
 typedef int32_t b32;
 typedef float f32;
 typedef double f64;
+
+typedef u64 entity_id_t;

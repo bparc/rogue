@@ -187,7 +187,23 @@ fn void LayoutRoom(map_t *Map, room_t room, const b32 PlaceDoors, v2s chunk_size
 	}
 }
 
-fn void GenerateRoomInterior(game_world_t *World, room_t room, v2s chunk_size)
+fn void CreateMapFromLayout(map_t *Map, map_layout_t *Layout)
+{
+	ClearMap(Map);
+	
+	for (s32 Index = 0; Index < Layout->PlacedRoomCount; Index++)
+    {
+        room_t *room = &Layout->PlacedRooms[Index];
+        LayoutRoom(Map, *room, false, Layout->ChunkSize);
+    }
+    for (s32 Index = 1; Index < Layout->PlacedRoomCount; Index++)
+    {
+        room_t *room = &Layout->PlacedRooms[Index];
+        LayoutRoom(Map, *room, true, Layout->ChunkSize);
+    }
+}
+
+fn void GenerateRoomInterior(map_t *Map, room_t room, v2s chunk_size)
 {
 #define X 20
 #define Y 20
@@ -229,7 +245,7 @@ fn void GenerateRoomInterior(game_world_t *World, room_t room, v2s chunk_size)
 			case 'W': value = 2; break;
 			case '#': value = 1; break;
 			}
-			SetTileValue(World->map, at, value);
+			SetTileValue(Map, at, value);
 		}
 	}
 #undef X
@@ -271,34 +287,8 @@ fn void OpenEveryDoor(map_t *Map, const room_t *Room)
 		SetTileValue(Map, Room->Doors[0], tile_Floor);
 }
 
-fn void LayoutMap(map_layout_t *Layout, game_world_t *World)
-{	
-	map_t *Map = World->map;
-	ClearMap(Map);
-
-	for (s32 Index = 0; Index < Layout->PlacedRoomCount; Index++)
-	{
-		room_t *room = &Layout->PlacedRooms[Index];
-		LayoutRoom(Map, *room, false, Layout->ChunkSize);
-	}
-	for (s32 Index = 1; Index < Layout->PlacedRoomCount; Index++)
-	{
-		room_t *room = &Layout->PlacedRooms[Index];
-		LayoutRoom(Map, *room, true, Layout->ChunkSize);
-
-		v2s At = Mul32(room->ChunkAt, Layout->ChunkSize);
-		CreateSlime(World, Add32(At, V2S(7, 8)));
-		CreateSlime(World, Add32(At, V2S(14, 5)));
-	}
-
-	// 
-	if (Layout->PlacedRoomCount)
-	{
-		const room_t *StartingRoom = &Layout->PlacedRooms[0];
-		GenerateRoomInterior(World, *StartingRoom, Layout->ChunkSize);
-
-		v2s At = Mul32(StartingRoom->ChunkAt, Layout->ChunkSize);
-		CreatePlayer(World, Add32(At, V2S(1, 1)));
-		CreateContainer(World, Add32(At, V2S(2, 2)));
-	}
+fn v2s GetRoomPosition(const map_layout_t *Layout, const room_t *Room)
+{
+	v2s result = Mul32(Room->ChunkAt, Layout->ChunkSize);
+	return result;
 }

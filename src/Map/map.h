@@ -38,7 +38,7 @@ typedef struct
 	v2 tile_sz;
 } map_t;
 
-fn map_t *CreateMap(s32 x, s32 y, memory_t *memory, f32 tile_height);
+fn map_t *AllocateMap(s32 x, s32 y, memory_t *memory, f32 tile_height);
 fn void ClearMap(map_t *map);
 
 // NOTE(): Accessors

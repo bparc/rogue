@@ -5,6 +5,13 @@ typedef struct
 	v2 viewport;
 } camera_t;
 
+fn void SetupCamera(camera_t *Camera, v2 Viewport)
+{
+	ZeroStruct(Camera);
+	Camera->zoom = 2.0f;
+	Camera->viewport = Viewport;
+}
+
 fn v2 ScreenToIso(v2 p)
 {
 	v2 result = {0};

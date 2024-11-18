@@ -211,17 +211,6 @@ fn void RenderDebugGeneratorState(command_buffer_t *out, map_layout_t *Gen, v2s 
 fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *out,
 	const client_input_t *input, log_t *log, assets_t *assets, const virtual_controls_t *cons)
 {
-	if ((editor->inited == false))
-	{
-		DebugLog("GenerateDungeon()");
-		//MakeSimpleMap(state);
-
-		GenerateDungeon(state->layout, 6, *state->memory);
-		LayoutMap(state->layout, state);
-
-		editor->inited = true;
-	}
-
 	entity_t *Player = DEBUGGetPlayer(state->storage);
 	RenderDebugGeneratorState(Debug.out_top, state->layout, Player ? Player->p : V2S(0, 0), assets);
 

@@ -1,3 +1,100 @@
+fn b32 IsWorldPointEmpty(game_world_t *state, v2s p)
+{
+	entity_t *collidingEntity = GetEntityByPosition(state->storage, p);
+
+	if (collidingEntity == NULL)
+    {
+		return IsTraversable(state->map, p);
+	}
+
+	return false;
+}
+
+fn b32 Move(game_world_t *world, entity_t *entity, v2s offset)
+{
+	v2s requested_p = Add32(entity->p, offset);
+	b32 valid = IsWorldPointEmpty(world, requested_p);
+	if (valid)
+		entity->p = requested_p;
+	return (valid);
+}
+
+int MoveFitsWithSize(game_world_t* world, entity_t *requestee, v2s requestedPos)
+{
+    int currentX = requestee->p.x;
+    int currentY = requestee->p.y;
+
+    int deltaX = requestedPos.x - currentX; // For example: if requestee is at 8,8 and requestedPos is at 9,9
+    int deltaY = requestedPos.y - currentY; //				then delta x will be 9-8=1
+
+    v2s moveCoords[3]; // For diagonal movement there's three coords
+    int numCoords = 0;
+
+    // Moving up
+    if (deltaX == 0 && deltaY == -1) {
+        moveCoords[0] = (v2s){currentX, currentY - 1};     // Tile above (1,1)
+        moveCoords[1] = (v2s){currentX + 1, currentY - 1}; // Tile above (2,1)
+        numCoords = 2;
+    }
+    // Moving down
+    else if (deltaX == 0 && deltaY == 1) {
+        moveCoords[0] = (v2s){currentX, currentY + 2};     // Tile below (1,2)
+        moveCoords[1] = (v2s){currentX + 1, currentY + 2}; // Tile below (2,2)
+        numCoords = 2;
+    }
+    // Moving left
+    else if (deltaX == -1 && deltaY == 0) {
+        moveCoords[0] = (v2s){currentX - 1, currentY};     // Tile to the left (1,1)
+        moveCoords[1] = (v2s){currentX - 1, currentY + 1}; // Tile to the left (1,2)
+        numCoords = 2;
+    }
+    // Moving right
+    else if (deltaX == 1 && deltaY == 0) {
+        moveCoords[0] = (v2s){currentX + 2, currentY};     // Tile to the right (2,1)
+        moveCoords[1] = (v2s){currentX + 2, currentY + 1}; // Tile to the right (2,2)
+        numCoords = 2;
+    }
+    // Moving up-left (diagonal)
+    else if (deltaX == -1 && deltaY == -1) {
+        moveCoords[0] = (v2s){currentX - 1, currentY - 1}; // Top-left
+        moveCoords[1] = (v2s){currentX, currentY - 1};     // Top center
+        moveCoords[2] = (v2s){currentX - 1, currentY};     // Left center
+        numCoords = 3;
+    }
+    // Moving up-right (diagonal)
+    else if (deltaX == 1 && deltaY == -1) {
+        moveCoords[0] = (v2s){currentX + 2, currentY - 1}; // Top-right
+        moveCoords[1] = (v2s){currentX + 1, currentY - 1}; // Top center
+        moveCoords[2] = (v2s){currentX + 2, currentY};     // Right center
+        numCoords = 3;
+    }
+    // Moving down-left (diagonal)
+    else if (deltaX == -1 && deltaY == 1) {
+        moveCoords[0] = (v2s){currentX - 1, currentY + 2}; // Bottom-left
+        moveCoords[1] = (v2s){currentX, currentY + 2};     // Bottom center
+        moveCoords[2] = (v2s){currentX - 1, currentY + 1}; // Left center
+        numCoords = 3;
+    }
+    // Moving down-right (diagonal)
+    else if (deltaX == 1 && deltaY == 1) {
+        moveCoords[0] = (v2s){currentX + 2, currentY + 2}; // Bottom-right
+        moveCoords[1] = (v2s){currentX + 1, currentY + 2}; // Bottom center
+        moveCoords[2] = (v2s){currentX + 2, currentY + 1}; // Right center
+        numCoords = 3;
+    } else {
+        //DebugLog("Invalid movement of entity id: %d");
+        return false;
+    }
+
+    for (int i = 0; i < numCoords; i++) {
+        if (!IsWorldPointEmpty(world, moveCoords[i])) {
+			return false;
+        }
+    }
+
+    return true;
+}
+
 fn void AddStatusEffect(entity_t *entity, status_effect_type_t status_effect, s32 duration) {
     for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
 
@@ -39,7 +136,7 @@ fn void ApplyTileEffects(map_t *map, entity_t *entity)
     }
     // todo: cover mechanics stuff
     //if (tile->cover_type != cover_type_none) {
-    //	ApplyCoverBonus(entity);
+    //  ApplyCoverBonus(entity);
     //}
 }
 
@@ -276,11 +373,4 @@ fn void CommitAction(game_world_t *state, entity_t *user, entity_t *target, acti
     case action_mode_heal: Heal(target, (s16) params->value); break;
     case action_mode_dash: user->p = target_p; break;
     }
-}
-
-fn void SubdivideLargeSlime(game_world_t *game, entity_t *entity, s32 x, s32 y)
-{
-    entity_t *result = CreateSlime(game, Add32(entity->p, V2S(x, y)));
-    if (result)
-        result->deferred_p = entity->deferred_p;
 }

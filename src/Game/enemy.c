@@ -69,6 +69,13 @@ fn s32 Decide(game_world_t *game, entity_t *entity)
 	return 1;
 }
 
+fn inline void SubdivideLargeSlime(game_world_t *game, entity_t *entity, s32 x, s32 y)
+{
+    entity_t *result = CreateSlime(game, Add32(entity->p, V2S(x, y)));
+    if (result)
+        result->deferred_p = entity->deferred_p;
+}
+
 fn void Perish(game_world_t *game, entity_t *entity)
 {
 	switch (entity->enemy_type)

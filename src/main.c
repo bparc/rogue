@@ -1,9 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include "client.h"
+#include "client.c"
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <GL/gl.h>
-#include "OpenGL.c"
+#include "Renderer/OpenGL.c"
 #include "Win32.c"
 
 static const char *Title = "Project 1.exe";

@@ -81,7 +81,7 @@ fn v2 GetTileCenter(const map_t *map, v2s p)
 	return result;
 }
 
-fn map_t *CreateMap(s32 x, s32 y, memory_t *memory, f32 tile_height)
+fn map_t *AllocateMap(s32 x, s32 y, memory_t *memory, f32 tile_height)
 {
 	map_t *result = PushStruct(map_t, memory);
 	result->tile_sz = V2(tile_height, tile_height);

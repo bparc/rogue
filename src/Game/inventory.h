@@ -54,3 +54,16 @@ fn b32 Eq_IsSpaceOccupied(const inventory_t *eq, v2s offset, v2s size);
 
 fn void Eq_OccupySpace(inventory_t *eq, v2s offset, v2s size, item_id_t ID);
 fn void Eq_FreeSpace(inventory_t *eq, v2s min, v2s size);
+
+typedef enum
+{
+    container_Ground = 1,
+    container_Chest = 2
+} container_type_t;
+
+typedef struct
+{
+    v2s size;
+    inventory_t inventory;
+    container_type_t type;
+} container_t;

@@ -1,6 +1,5 @@
 
 typedef struct
 {
-	s32 delete_me;
-	s32 inited;
+	s32 Reserved[1];
 } editor_state_t;
