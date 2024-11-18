@@ -47,6 +47,7 @@ fn void OpenInventory(interface_t *In)
 fn void CloseInventory(interface_t *In)
 {
 	In->InventoryOpened = false;
+	CloseContainer(In);
 }
 
 fn void ToggleInventory(interface_t *In)

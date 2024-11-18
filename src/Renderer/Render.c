@@ -180,8 +180,7 @@ fn void Render_DrawFrame(game_state_t *state, command_buffer_t *out, f32 dt, ass
 		// NOTE(): The "deferred_p"s of the 'active' no-player entities are
 		// animated directly in TurnKernel() to allow for
 		// more explicit controls over the entity animation in that section of the code-base.
-		if ((entity->flags & entity_flags_controllable) ||
-			(IsEntityActive(state->turns, storage, entity->id) == false))
+		if ((entity->flags & entity_flags_controllable) || (IsActive(state->turns, entity->id) == false))
 		{
 			entity->deferred_p = Lerp2(entity->deferred_p, GetTileCenter(state->map, entity->p), 10.0f * dt);
 		}

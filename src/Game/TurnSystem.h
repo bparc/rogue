@@ -97,6 +97,10 @@ fn void SetupTurn(turn_system_t *queue, s32 MovementPointCount)
 fn void ClearTurnQueue(turn_system_t *queue);
 fn void PushTurn(turn_system_t *queue, entity_t *entity);
 
+fn entity_t *PullUntilCurrent(turn_system_t *System, entity_storage_t *storage);
+fn entity_t *GetActive(const turn_system_t *System);
+fn int32_t IsActive(const turn_system_t *System, entity_id_t id);
+
 fn void InteruptTurn(turn_system_t *Queue, entity_t *Entity);
 fn void AcceptTurn(turn_system_t *queue, entity_t *entity);
 
@@ -108,7 +112,7 @@ fn b32 IsActionQueueCompleted(const turn_system_t *queue);
 fn void Brace(turn_system_t *queue, entity_t *entity);
 fn s32 ConsumeMovementPoints(turn_system_t *queue, s32 count);
 fn s32 ConsumeActionPoints(turn_system_t *queue, s32 count);
-fn entity_t *GetActiveUnit(const turn_system_t *queue);
+
 
 // grid-based movement
 fn b32 IsCellEmpty(turn_system_t *System, v2s p);

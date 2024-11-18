@@ -68,7 +68,10 @@ fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_
 	if (EndTurn)
 	{
 		if (TurnForcefullySkipped)
+		{
 			Brace(queue, Entity);
+			CloseInventory(state->interface);
+		}
 		AcceptTurn(queue, Entity);
 	}
 }

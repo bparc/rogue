@@ -3,8 +3,7 @@ fn void HUD(command_buffer_t *out,game_state_t *state, turn_system_t *queue, ent
 {
     BeginInterface(state->interface, input);
 
-    entity_t *ActiveEntity = GetActiveUnit(queue);
-
+    entity_t *ActiveEntity = GetActive(queue);
     TurnQueue(out, state, queue, assets, state->cursor);
 
     interface_t *In = state->interface;

@@ -9,7 +9,7 @@ fn void ClearTurnQueue(turn_system_t *System)
 	System->QueueSize = 0;;
 }
 
-fn entity_t *NextInOrder(turn_system_t *System, entity_storage_t *storage)
+fn entity_t *PullUntilActive(turn_system_t *System, entity_storage_t *storage)
 {
 	entity_t *result = 0;
 	if (System->QueueSize > 0)
@@ -21,7 +21,12 @@ fn entity_t *NextInOrder(turn_system_t *System, entity_storage_t *storage)
 	return result;
 }
 
-fn entity_t *GetActiveUnit(const turn_system_t *System)
+fn b32 IsActionQueueCompleted(const turn_system_t *System)
+{
+	return (System->action_count == 0);
+}
+
+fn entity_t *GetActive(const turn_system_t *System)
 {
 	entity_t *result = 0;
 	if (System->QueueSize > 0)
@@ -29,14 +34,9 @@ fn entity_t *GetActiveUnit(const turn_system_t *System)
 	return result;
 }
 
-fn b32 IsActionQueueCompleted(const turn_system_t *System)
+fn int32_t IsActive(const turn_system_t *System, entity_id_t id)
 {
-	return (System->action_count == 0);
-}
-
-fn int32_t IsEntityActive(turn_system_t *System, entity_storage_t *storage, entity_id_t id)
-{
-	entity_t *result = NextInOrder(System, storage);
+	entity_t *result = GetActive(System);
 	if (result)
 		return (result->id == id);
 	return 0;
