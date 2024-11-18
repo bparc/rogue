@@ -10,6 +10,8 @@ fn void HUD(command_buffer_t *out,game_state_t *state, turn_queue_t *queue, enti
     interface_t *In = state->interface;
     if (IsPlayer(ActiveEntity))
     {   
+        MiniMap(Debug.out_top, state->layout, ActiveEntity->p, assets);
+        
         if (In->InventoryOpened)
         {
             Inventory(V2(100.0f, 25.0f), out, ActiveEntity->inventory, input, assets->Font, state->interface, ActiveEntity, Cons, dt, true, NULL);
@@ -20,7 +22,6 @@ fn void HUD(command_buffer_t *out,game_state_t *state, turn_queue_t *queue, enti
         }
 
         ActionMenu(ActiveEntity, state, out, assets, input, queue);
-        MiniMap(Debug.out_top, state->layout, ActiveEntity->p, assets);
     }
     
     EndInterface(state->interface);
