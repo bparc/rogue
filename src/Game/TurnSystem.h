@@ -108,6 +108,6 @@ fn s32 ConsumeActionPoints(turn_system_t *queue, s32 count);
 fn entity_t *GetActiveUnit(const turn_system_t *queue);
 
 // grid-based movement
-fn b32 IsWorldPointEmpty(turn_system_t *System, v2s p);
+fn b32 IsCellEmpty(turn_system_t *System, v2s p);
 fn b32 Move(turn_system_t *System, entity_t *entity, v2s offset);
 fn b32 Launch(turn_system_t *System, v2s source, entity_t *target, u8 push_distance, s32 strength);

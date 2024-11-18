@@ -45,7 +45,7 @@ fn s32 BeginTurn(game_state_t *game, entity_t *entity)
 		s32 index = path->length - 1;
 		while (index >= 0)
 		{
-			if (IsWorldPointEmpty(game->turns, path->tiles[index].p) == false)
+			if (IsCellEmpty(game->turns, path->tiles[index].p) == false)
 			{
 				index--;
 				continue;

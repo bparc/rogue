@@ -499,7 +499,7 @@ fn inline s32 CheckTurnInterupts(game_state_t *state, entity_t *ActiveEntity)
 	return (Interupted);
 }
 
-fn b32 IsWorldPointEmpty(turn_system_t *System, v2s p)
+fn b32 IsCellEmpty(turn_system_t *System, v2s p)
 {
 	entity_t *collidingEntity = GetEntityByPosition(System->storage, p);
 
@@ -514,7 +514,7 @@ fn b32 IsWorldPointEmpty(turn_system_t *System, v2s p)
 fn b32 Move(turn_system_t *System, entity_t *entity, v2s offset)
 {
 	v2s requested_p = Add32(entity->p, offset);
-	b32 valid = IsWorldPointEmpty(System, requested_p);
+	b32 valid = IsCellEmpty(System, requested_p);
 	if (valid)
 		entity->p = requested_p;
 	return (valid);
@@ -588,7 +588,7 @@ fn int MoveFitsWithSize(turn_system_t* System, entity_t *requestee, v2s requeste
     }
 
     for (int i = 0; i < numCoords; i++) {
-        if (!IsWorldPointEmpty(System, moveCoords[i])) {
+        if (!IsCellEmpty(System, moveCoords[i])) {
 			return false;
         }
     }

@@ -82,7 +82,7 @@ fn void CreateContainer(game_state_t *state, v2s position)
             s32 GreenHerbCount = 1 + (rand() % 4);
             while (GreenHerbCount--)
                 Eq_AddItem(&Container->inventory, item_green_herb);    
-            if (RandomChance(20))
+            if (RandomChance(35))
                 Eq_AddItem(&Container->inventory, item_assault_rifle);
 
             Result = true;
