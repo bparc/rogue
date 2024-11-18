@@ -1,7 +1,7 @@
 typedef struct
 {
     s32 DraggedItemID;
-    b32 inventory_visible;
+    b32 InventoryOpened;
     
     inventory_t *DraggedContainer;
     item_t DraggedItem;
@@ -41,17 +41,17 @@ fn void EndInterface(interface_t *In)
 
 fn void OpenInventory(interface_t *In)
 {
-	In->inventory_visible = true;
+	In->InventoryOpened = true;
 }
 
 fn void CloseInventory(interface_t *In)
 {
-	In->inventory_visible = false;
+	In->InventoryOpened = false;
 }
 
 fn void ToggleInventory(interface_t *In)
 {
-	In->inventory_visible = !In->inventory_visible;
+	In->InventoryOpened = !In->InventoryOpened;
 }
 
 fn void BeginItemDrag(interface_t *In, const item_t *Item, inventory_t *SourceContainer)
