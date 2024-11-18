@@ -20,7 +20,8 @@ fn void HUD(command_buffer_t *out,game_world_t *state, turn_queue_t *queue, enti
     if (IsPlayer(ActiveEntity))
     {        
         ActionMenu(ActiveEntity, state, out, assets, input, queue);
+        MiniMap(Debug.out_top, state->layout, ActiveEntity->p, assets);
     }
-
+    
     EndInterface(state->interface);
 }

@@ -35,6 +35,7 @@ fn void Tick(game_world_t *state, f32 dt, client_input_t input, virtual_controls
 #include "Renderer/Render.c"
 
 #include "UI/hud_inventory.c"
+#include "UI/hud_minimap.c"
 #include "UI/hud_bar.c"
 #include "UI/hud_queue.c"
 #include "UI/hud.c"

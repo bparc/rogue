@@ -36,5 +36,3 @@ fn void SetupGenerator(map_layout_t *Gen)
 
 fn void OpenEveryDoor(map_t *Map, const room_t *Room);
 fn room_t *RoomFromPosition(map_layout_t *Layout, v2s P);
-
-fn void RenderDebugGeneratorState(command_buffer_t *out, map_layout_t *Gen, v2s PlayerP, assets_t *Assets);
