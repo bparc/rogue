@@ -25,7 +25,7 @@ fn void DrawDiegeticText(game_state_t *game, v2 p, v2 offset, v4 color, const ch
 	DrawText(out, game->assets->Font, screen_p, string, color);
 }
 
-fn inline s32 DoAction(cursor_t *cursor, map_t *map, entity_t *user, entity_t *target, turn_queue_t *queue, const action_params_t *settings)
+fn inline s32 Cursor_DoAction(cursor_t *cursor, map_t *map, entity_t *user, entity_t *target, turn_queue_t *queue, const action_params_t *settings)
 {
 	if (!target)
 		return 0;
@@ -72,7 +72,7 @@ fn void DoCursor(game_state_t *Game, command_buffer_t *out, virtual_controls_t c
 		// are activated directly from the menu, without opening the cursor.
 		if (IsTargetSelf(equipped.type))
 		{
-			DoAction(cursor, map, user, user, queue, settings);
+			Cursor_DoAction(cursor, map, user, user, queue, settings);
 		}
 		else
 		{
@@ -144,7 +144,7 @@ fn void DoCursor(game_state_t *Game, command_buffer_t *out, virtual_controls_t c
 				target_valid |= IsTraversable(map, cursor->p); 
 			b32 positioned_on_user = CompareVectors(cursor->p, user->p);
 			if (target_valid && (positioned_on_user == false)) {
-				DoAction(cursor, map, user, target, queue, settings);
+				Cursor_DoAction(cursor, map, user, target, queue, settings);
 			}
 		}
 	}

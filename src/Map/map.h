@@ -94,3 +94,11 @@ typedef struct
 
 fn dda_line_t BeginDDALine(const map_t *map, v2s from, v2s to);
 fn b32 ContinueDDALine(dda_line_t *it);
+
+typedef enum
+{
+    high_velocity,
+    low_velocity
+} hit_velocity_t;
+
+fn void BloodSplatter(map_t *map, v2s shooter_position, v2s hit_position, blood_type_t blood_type, hit_velocity_t hit_velocity);

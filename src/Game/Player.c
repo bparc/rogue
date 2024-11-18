@@ -53,7 +53,7 @@ fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_
 		(CursorEnabled == false) && (queue->movement_points > 0);
 	if (DirInput.Inputed && AllowedToMove)
 	{
-		b32 Moved = Move(state, Entity, DirInput.Direction);
+		b32 Moved = Move(queue, Entity, DirInput.Direction);
 		if (Moved && (queue->god_mode_enabled == false))
 		{
 			ConsumeMovementPoints(queue, 1);

@@ -41,7 +41,7 @@
 #include "Game/particle.c"
 
 #include "UI/hud.h"
-#include "Game/Game.h"
+#include "Game/Game.c"
 
 // NOTE(): Editor/
 #include "UI/editor.h"

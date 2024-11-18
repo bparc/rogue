@@ -77,18 +77,6 @@ fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count)
 	return sufficient;
 }
 
-fn s32 CountHostiles(turn_queue_t *Queue)
-{
-	s32 Result = 0;
-	for (s32 Index = 0; Index < Queue->num; Index++)
-	{
-		entity_t *Entity = GetEntity(Queue->storage, Queue->entities[Index]);
-		if (IsHostile(Entity))
-			Result++;
-	}
-	return Result;
-}
-
 fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_id_t target, v2s target_p)
 {
 	async_action_t *result = 0;
@@ -209,6 +197,111 @@ const f32 ScaleTByDistance(v2 a, v2 b, f32 t)
 {
 	f32 result = t / (Distance(a, b) * 0.005f);
 	return result;
+}
+
+fn void DoDamage(game_state_t *game, entity_t *user, entity_t *target, s32 damage, const char *damage_type_prefix)
+{
+    damage = damage + (rand() % 3);
+    LogLn(game->log, "%shit! inflicted %i %s of %sdamage upon the target!",
+        damage_type_prefix, damage, damage == 1 ? "point" : "points", damage_type_prefix);
+    TakeHP(target, (s16)damage);
+    CreateDamageNumber(game->particles, Add(target->deferred_p, V2(-25.0f, -25.0f)), damage);
+
+    if ((rand() / (float)RAND_MAX) < 20) {
+        blood_type_t blood_type = (target->enemy_type == 0) ? blood_red : blood_green;
+        hit_velocity_t hit_velocity = (rand() % 2 == 0) ? high_velocity : low_velocity; // Just a temporary thing until we add ammo types
+        BloodSplatter(game->map, user->p, target->p, blood_type, hit_velocity);
+    }
+}
+
+fn inline void AOE(game_state_t *state, entity_t *user, entity_t *target, const action_params_t *params)
+{
+    entity_storage_t *storage = state->storage;
+    
+    const char *prefix = "blast ";
+    s32 damage = params->damage;
+    v2s area = params->area;
+    s32 radius_inner = area.x;
+    s32 radius_outer = area.x * (s32)2;
+    v2s explosion_center = state->cursor->p;
+    for (s32 i = 0; i < storage->EntityCount; i++)
+    {
+        entity_t *entity = &storage->entities[i];
+        f32 distance = DistanceV2S(explosion_center, entity->p);
+        
+        if (distance <= radius_inner) {
+            DoDamage(state, user, entity, damage, prefix);
+        } else if (distance <= radius_outer) {
+            DoDamage(state, user, entity, damage, prefix);
+            Launch(state->turns, explosion_center, entity, 2, 25);
+        }
+    }
+}
+
+fn inline void SingleTarget(game_state_t *state, entity_t *user, entity_t *target, const action_params_t *params)
+{
+    if ((IsPlayer(user) && state->turns->god_mode_enabled))
+    {
+        DoDamage(state, user, target, target->health, "");
+    }
+    else
+    {
+        s32 chance = CalculateHitChance(user, target, params->type);
+        s32 roll = rand() % 100;
+        s32 roll_crit = rand() % 100;
+
+        b32 missed = !(roll < chance);
+        b32 crited = (roll_crit < CRITICAL_DAMAGE_MULTIPLIER);
+        b32 grazed = ((roll >= chance)) && (roll < (chance + GRAZE_THRESHOLD));
+
+        if ((missed == false))
+        {    
+            if (crited) {
+                DoDamage(state, user, target, params->damage * CRITICAL_DAMAGE_MULTIPLIER, "critical ");
+                CreateCombatText(state->particles, target->deferred_p, 0);
+            } else {
+                DoDamage(state, user, target, params->damage, "");
+                CreateCombatText(state->particles, target->deferred_p, 1);
+            }
+        }
+        else
+        {
+            if (grazed) {
+                DoDamage(state, user, target, params->damage / 2, "graze ");
+                CreateCombatText(state->particles, target->deferred_p, 3);
+            } else {
+                LogLn(state->log, "missed!");
+                CreateDamageNumber(state->particles, target->deferred_p, 0);
+                CreateCombatText(state->particles, target->deferred_p, 2);
+            }
+        }
+    }
+}
+
+fn void CommitAction(game_state_t *state, entity_t *user, entity_t *target, action_t *action, v2s target_p)
+{
+    const action_params_t *params = GetParameters(action->type);
+
+    switch (params->mode)
+    {
+    case action_mode_damage:
+    {
+        if (IsZero(params->area))
+        {
+            SingleTarget(state, user, target, params);
+        }
+        else
+        {
+            AOE(state, user, target, params);
+        }
+
+        // NOTE(): Reset per-turn attack buffs/modifiers.
+        user->has_hitchance_boost = false;
+        user->hitchance_boost_multiplier = 1.0f;
+    } break;
+    case action_mode_heal: Heal(target, (s16) params->value); break;
+    case action_mode_dash: user->p = target_p; break;
+    }
 }
 
 fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, command_buffer_t *out, f32 dt, assets_t *assets, game_state_t *state)
@@ -362,6 +455,7 @@ fn void Camera(game_state_t *Game, entity_t *TrackedEntity, const client_input_t
 
 fn void TurnQueueBeginFrame(turn_queue_t *Queue, game_state_t *Game, f32 dt)
 {
+	Queue->map = Game->map;
 	Queue->storage = Game->storage;
 	Queue->seconds_elapsed += dt;
 	Queue->time += (dt * 4.0f);
@@ -403,4 +497,126 @@ fn inline s32 CheckTurnInterupts(game_state_t *state, entity_t *ActiveEntity)
 	}
 
 	return (Interupted);
+}
+
+fn b32 IsWorldPointEmpty(turn_queue_t *System, v2s p)
+{
+	entity_t *collidingEntity = GetEntityByPosition(System->storage, p);
+
+	if (collidingEntity == NULL)
+    {
+		return IsTraversable(System->map, p);
+	}
+
+	return false;
+}
+
+fn b32 Move(turn_queue_t *System, entity_t *entity, v2s offset)
+{
+	v2s requested_p = Add32(entity->p, offset);
+	b32 valid = IsWorldPointEmpty(System, requested_p);
+	if (valid)
+		entity->p = requested_p;
+	return (valid);
+}
+
+fn int MoveFitsWithSize(turn_queue_t* System, entity_t *requestee, v2s requestedPos)
+{
+    int currentX = requestee->p.x;
+    int currentY = requestee->p.y;
+
+    int deltaX = requestedPos.x - currentX; // For example: if requestee is at 8,8 and requestedPos is at 9,9
+    int deltaY = requestedPos.y - currentY; //				then delta x will be 9-8=1
+
+    v2s moveCoords[3]; // For diagonal movement there's three coords
+    int numCoords = 0;
+
+    // Moving up
+    if (deltaX == 0 && deltaY == -1) {
+        moveCoords[0] = (v2s){currentX, currentY - 1};     // Tile above (1,1)
+        moveCoords[1] = (v2s){currentX + 1, currentY - 1}; // Tile above (2,1)
+        numCoords = 2;
+    }
+    // Moving down
+    else if (deltaX == 0 && deltaY == 1) {
+        moveCoords[0] = (v2s){currentX, currentY + 2};     // Tile below (1,2)
+        moveCoords[1] = (v2s){currentX + 1, currentY + 2}; // Tile below (2,2)
+        numCoords = 2;
+    }
+    // Moving left
+    else if (deltaX == -1 && deltaY == 0) {
+        moveCoords[0] = (v2s){currentX - 1, currentY};     // Tile to the left (1,1)
+        moveCoords[1] = (v2s){currentX - 1, currentY + 1}; // Tile to the left (1,2)
+        numCoords = 2;
+    }
+    // Moving right
+    else if (deltaX == 1 && deltaY == 0) {
+        moveCoords[0] = (v2s){currentX + 2, currentY};     // Tile to the right (2,1)
+        moveCoords[1] = (v2s){currentX + 2, currentY + 1}; // Tile to the right (2,2)
+        numCoords = 2;
+    }
+    // Moving up-left (diagonal)
+    else if (deltaX == -1 && deltaY == -1) {
+        moveCoords[0] = (v2s){currentX - 1, currentY - 1}; // Top-left
+        moveCoords[1] = (v2s){currentX, currentY - 1};     // Top center
+        moveCoords[2] = (v2s){currentX - 1, currentY};     // Left center
+        numCoords = 3;
+    }
+    // Moving up-right (diagonal)
+    else if (deltaX == 1 && deltaY == -1) {
+        moveCoords[0] = (v2s){currentX + 2, currentY - 1}; // Top-right
+        moveCoords[1] = (v2s){currentX + 1, currentY - 1}; // Top center
+        moveCoords[2] = (v2s){currentX + 2, currentY};     // Right center
+        numCoords = 3;
+    }
+    // Moving down-left (diagonal)
+    else if (deltaX == -1 && deltaY == 1) {
+        moveCoords[0] = (v2s){currentX - 1, currentY + 2}; // Bottom-left
+        moveCoords[1] = (v2s){currentX, currentY + 2};     // Bottom center
+        moveCoords[2] = (v2s){currentX - 1, currentY + 1}; // Left center
+        numCoords = 3;
+    }
+    // Moving down-right (diagonal)
+    else if (deltaX == 1 && deltaY == 1) {
+        moveCoords[0] = (v2s){currentX + 2, currentY + 2}; // Bottom-right
+        moveCoords[1] = (v2s){currentX + 1, currentY + 2}; // Bottom center
+        moveCoords[2] = (v2s){currentX + 2, currentY + 1}; // Right center
+        numCoords = 3;
+    } else {
+        //DebugLog("Invalid movement of entity id: %d");
+        return false;
+    }
+
+    for (int i = 0; i < numCoords; i++) {
+        if (!IsWorldPointEmpty(System, moveCoords[i])) {
+			return false;
+        }
+    }
+
+    return true;
+}
+
+fn b32 Launch(turn_queue_t *System, v2s source, entity_t *target, u8 push_distance, s32 strength)
+{
+    v2s direction = Sub32(target->p, source);
+
+    if (direction.x != 0) direction.x = (direction.x > 0) ? 1 : -1;
+    if (direction.y != 0) direction.y = (direction.y > 0) ? 1 : -1;
+
+    s32 damage_per_tile = strength / (target->size.x * target->size.y);
+    s32 total_damage = 0;
+
+    for (s32 i = 0; i < push_distance; ++i) { // todo: make strength affect push_distance somewhat
+        v2s next_pos = Add32(target->p, direction); // Slime is moved through each tile on the way
+
+        if (!MoveFitsWithSize(System, target, next_pos)) {
+            TakeHP(target, (s16)damage_per_tile);
+            break;
+        } else {
+            target->p = next_pos;
+            ApplyTileEffects(System->map, target);
+        }
+    }
+
+    return false;
 }

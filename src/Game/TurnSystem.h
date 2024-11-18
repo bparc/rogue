@@ -36,11 +36,14 @@ typedef struct
 
 typedef struct
 {
+	entity_storage_t *storage;
+	map_t *map;
+
 	// NOTE(): Stores the turns as an list of entity ids
-// in a *reverse* order (the last turn in the queue will be executed first).
+	// in a *reverse* order (the last turn in the queue will be executed first).
 	s32 num;
 	entity_id_t entities[64];
-	entity_storage_t *storage;
+
 
 	// NOTE(): Turn State
 	v2s starting_p;
@@ -88,17 +91,22 @@ fn void SetupTurn(turn_queue_t *queue, s32 MovementPointCount)
 	queue->turn_inited = true;
 }
 
-fn void AcceptTurn(turn_queue_t *queue, entity_t *entity);;
-fn void Brace(turn_queue_t *queue, entity_t *entity);
-
-fn void PushTurn(turn_queue_t *queue, entity_t *entity);
+// turn management
 fn void ClearTurnQueue(turn_queue_t *queue);
+fn void AcceptTurn(turn_queue_t *queue, entity_t *entity);
+fn void PushTurn(turn_queue_t *queue, entity_t *entity);
+
+// animation system
 fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_id_t target, v2s target_p);
+fn b32 IsActionQueueCompleted(const turn_queue_t *queue);
 
-fn s32 CountHostiles(turn_queue_t *Queue);
-
+// resources
+fn void Brace(turn_queue_t *queue, entity_t *entity);
 fn s32 ConsumeMovementPoints(turn_queue_t *queue, s32 count);
 fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count);
 fn entity_t *GetActiveUnit(const turn_queue_t *queue);
 
-fn b32 IsActionQueueCompleted(const turn_queue_t *queue);
+// movement
+fn b32 IsWorldPointEmpty(turn_queue_t *System, v2s p);
+fn b32 Move(turn_queue_t *System, entity_t *entity, v2s offset);
+fn b32 Launch(turn_queue_t *System, v2s source, entity_t *target, u8 push_distance, s32 strength);

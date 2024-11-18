@@ -287,3 +287,51 @@ fn b32 IsLineOfSight(const map_t *map, v2s from, v2s to)
 
 	return true;
 }
+
+fn void BloodSplatter(map_t *map, v2s shooter_position, v2s hit_position, blood_type_t blood_type, hit_velocity_t hit_velocity)
+{ 
+    tile_t *initial_tile = GetTile(map, hit_position.x, hit_position.y);
+    if (initial_tile && IsTraversable(map, hit_position)) {
+        initial_tile->blood = blood_type;
+    }
+
+    v2s extended_position = Add32(hit_position, Sub32(hit_position, shooter_position));
+    dda_line_t dda = BeginDDALine(map, hit_position, extended_position);
+
+    int splatter_length;
+    if (hit_velocity == high_velocity) {
+        splatter_length = (rand() % 3) + 1;
+    } else {
+        splatter_length = 0;
+    }
+    int trail_count = 0;
+
+    while(ContinueDDALine(&dda) && trail_count < splatter_length) {
+        if (IsTraversable(map, dda.at)) {
+            tile_t *tile = GetTile(map, dda.at.x, dda.at.y);
+            if (tile) {
+                tile->blood = blood_type;
+                trail_count++;
+            }
+        } else {
+            break;
+        }
+    }
+
+        if (hit_velocity == low_velocity) {
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (rand() % 100 < 94) {
+                    continue;
+                }
+                v2s splatter_pos = V2S(hit_position.x + dx, hit_position.y + dy);
+                if (IsTraversable(map, splatter_pos)) {
+                    tile_t *tile = GetTile(map, splatter_pos.x, splatter_pos.y);
+                    if (tile) {
+                        tile->blood = blood_type;
+                    }
+                }
+            }
+        }
+    }
+}
