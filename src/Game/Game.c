@@ -22,6 +22,7 @@ typedef struct
 #include "Game/cursor.c"
 #include "Game/enemy.c"
 #include "Game/Player.c"
+#include "Game/Camera.c"
 #include "Game/TurnSystem.c"
 
 #include "Renderer/Render.c"
