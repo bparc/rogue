@@ -18,7 +18,6 @@ typedef struct
     s32                 container_count;
 } game_state_t;
 
-#include "Game/Scene.h"
 #include "Game/Scene.c"
 #include "Game/Game.c"
 
