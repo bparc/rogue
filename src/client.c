@@ -18,29 +18,6 @@
 #include "low/debug.c"
 #include "low/input.h"
 
-// NOTE(): Map/
-#include "Map/map.h"
-#include "Map/map.c"
-#include "Map/generator.h"
-#include "Map/generator.c"
-#include "Map/pathfinding.h"
-#include "Map/pathfinding.c"
-
-// NOTE(): Game/
-#include "Game/Action.h"
-#include "Game/items.h"
-#include "Game/inventory.h"
-#include "Game/inventory.c"
-
-#include "Game/entity.h"
-#include "Game/entity.c"
-#include "Game/Action.c"
-
-#include "Game/TurnSystem.h"
-#include "Game/cursor.h"
-#include "Game/particle.c"
-
-#include "UI/hud.h"
 #include "Game/Game.c"
 
 // NOTE(): Editor/
