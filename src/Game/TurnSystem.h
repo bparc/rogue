@@ -88,8 +88,6 @@ fn void SetupTurn(turn_queue_t *queue, s32 MovementPointCount)
 	queue->turn_inited = true;
 }
 
-fn void ControlPanel(turn_queue_t *queue, const virtual_controls_t *cons, entity_storage_t *storage);
-
 fn void AcceptTurn(turn_queue_t *queue, entity_t *entity);;
 fn void Brace(turn_queue_t *queue, entity_t *entity);
 
