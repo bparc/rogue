@@ -1,88 +1,88 @@
-fn void PushTurn(turn_system_t *queue, entity_t *entity)
+fn void PushTurn(turn_system_t *System, entity_t *entity)
 {
-	if (queue->num < ArraySize(queue->entities))
-		queue->entities[queue->num++] = entity->id;
+	if (System->QueueSize < ArraySize(System->Queue))
+		System->Queue[System->QueueSize++] = entity->id;
 }
 
-fn void ClearTurnQueue(turn_system_t *queue)
+fn void ClearTurnQueue(turn_system_t *System)
 {
-	queue->num = 0;;
+	System->QueueSize = 0;;
 }
 
-fn entity_t *NextInOrder(turn_system_t *queue, entity_storage_t *storage)
+fn entity_t *NextInOrder(turn_system_t *System, entity_storage_t *storage)
 {
 	entity_t *result = 0;
-	if (queue->num > 0)
+	if (System->QueueSize > 0)
 	{
-		result = GetEntity(storage, queue->entities[queue->num - 1]);
+		result = GetEntity(storage, System->Queue[System->QueueSize - 1]);
 		if (!result)
-			queue->num--; // NOTE(): The ID is invalid - pull it from the queue.
+			System->QueueSize--; // NOTE(): The ID is invalid - pull it from the System.
 	}
 	return result;
 }
 
-fn entity_t *GetActiveUnit(const turn_system_t *queue)
+fn entity_t *GetActiveUnit(const turn_system_t *System)
 {
 	entity_t *result = 0;
-	if (queue->num > 0)
-		result = GetEntity(queue->storage, queue->entities[queue->num - 1]);
+	if (System->QueueSize > 0)
+		result = GetEntity(System->storage, System->Queue[System->QueueSize - 1]);
 	return result;
 }
 
-fn b32 IsActionQueueCompleted(const turn_system_t *queue)
+fn b32 IsActionQueueCompleted(const turn_system_t *System)
 {
-	return (queue->action_count == 0);
+	return (System->action_count == 0);
 }
 
-fn int32_t IsEntityActive(turn_system_t *queue, entity_storage_t *storage, entity_id_t id)
+fn int32_t IsEntityActive(turn_system_t *System, entity_storage_t *storage, entity_id_t id)
 {
-	entity_t *result = NextInOrder(queue, storage);
+	entity_t *result = NextInOrder(System, storage);
 	if (result)
 		return (result->id == id);
 	return 0;
 }
 
-fn entity_t *PeekNextTurn(turn_system_t *queue, entity_storage_t *storage)
+fn entity_t *PeekNextTurn(turn_system_t *System, entity_storage_t *storage)
 {
 	entity_t *result = 0;
-	if (queue->num >= 2)
-		result = GetEntity(storage, queue->entities[queue->num - 2]);
+	if (System->QueueSize >= 2)
+		result = GetEntity(storage, System->Queue[System->QueueSize - 2]);
 	return result;
 }
 
-fn void AcceptTurn(turn_system_t *queue, entity_t *entity)
+fn void AcceptTurn(turn_system_t *System, entity_t *entity)
 {
-	DebugAssert(queue->turn_inited == true); // NOTE(): Propably a bug?
+	DebugAssert(System->turn_inited == true); // NOTE(): Propably a bug?
 
-	Assert(queue->num > 0);
-	queue->num--;
-	queue->turn_inited = false;
-	queue->prev_turn_entity = entity->id;
-	queue->seconds_elapsed = 0.0f;
+	Assert(System->QueueSize > 0);
+	System->QueueSize--;
+	System->turn_inited = false;
+	System->prev_turn_entity = entity->id;
+	System->seconds_elapsed = 0.0f;
 }
 
-fn s32 ConsumeMovementPoints(turn_system_t *queue, s32 count)
+fn s32 ConsumeMovementPoints(turn_system_t *System, s32 count)
 {
-	queue->movement_points -= count;
+	System->movement_points -= count;
 	return true;
 }
 
-fn s32 ConsumeActionPoints(turn_system_t *queue, s32 count)
+fn s32 ConsumeActionPoints(turn_system_t *System, s32 count)
 {
-	s32 sufficient = queue->action_points - count >= 0;
+	s32 sufficient = System->action_points - count >= 0;
 	if (sufficient)
-		queue->action_points -= count;
+		System->action_points -= count;
 	else
 		DebugLog("Insufficient amount of action points! (%i req.)", count);
 	return sufficient;
 }
 
-fn void QueryAsynchronousAction(turn_system_t *queue, action_type_t type, entity_id_t target, v2s target_p)
+fn void QueryAsynchronousAction(turn_system_t *System, action_type_t type, entity_id_t target, v2s target_p)
 {
 	async_action_t *result = 0;
-	if ((queue->action_count < ArraySize(queue->actions)))
+	if ((System->action_count < ArraySize(System->actions)))
 	{
-		result = &queue->actions[queue->action_count++];
+		result = &System->actions[System->action_count++];
 		
 		ZeroStruct(result);
 		result->target_id = target;
@@ -92,65 +92,65 @@ fn void QueryAsynchronousAction(turn_system_t *queue, action_type_t type, entity
 	}
 }
 
-fn void ControlPanel(turn_system_t *queue, const virtual_controls_t *cons, entity_storage_t *storage)
+fn void ControlPanel(turn_system_t *System, const virtual_controls_t *cons, entity_storage_t *storage)
 {
 	if (WentDown(cons->debug[0])) // Toggle
-		queue->break_mode_enabled = !queue->break_mode_enabled;
+		System->break_mode_enabled = !System->break_mode_enabled;
 	if (WentDown(cons->debug[2])) // Toggle
-		queue->god_mode_enabled = !queue->god_mode_enabled;
+		System->god_mode_enabled = !System->god_mode_enabled;
 	if (WentDown(cons->debug[3])) // Toggle
-		queue->free_camera_mode_enabled = !queue->free_camera_mode_enabled;
+		System->free_camera_mode_enabled = !System->free_camera_mode_enabled;
 
 	DebugPrint(
 		"ACT %i | MOV %i | BRK (F1): %s%s%s | GOD (F3): %s | FREE (F4): %s",
-		(queue->action_points),
-		(queue->movement_points),
-		(queue->break_mode_enabled ? "ON" : "OFF"),
-		(queue->interp_state == interp_wait_for_input) ? " | STEP (F2) -> " : "",
-		(queue->interp_state == interp_wait_for_input) ? interpolator_state_t_names[queue->requested_state] : "",
-		(queue->god_mode_enabled ? "ON" : "OFF"),
-		(queue->free_camera_mode_enabled ? "ON" : "OFF"));
+		(System->action_points),
+		(System->movement_points),
+		(System->break_mode_enabled ? "ON" : "OFF"),
+		(System->interp_state == interp_wait_for_input) ? " | STEP (F2) -> " : "",
+		(System->interp_state == interp_wait_for_input) ? interpolator_state_t_names[System->requested_state] : "",
+		(System->god_mode_enabled ? "ON" : "OFF"),
+		(System->free_camera_mode_enabled ? "ON" : "OFF"));
 }
 
-fn inline s32 ChangeQueueState(turn_system_t *queue, interpolator_state_t state)
+fn inline s32 ChangeQueueState(turn_system_t *System, interpolator_state_t state)
 {
 	s32 result = false;
-	queue->time = 0.0f;
+	System->time = 0.0f;
 
 	#if _DEBUG
-	result = (queue->break_mode_enabled == false);
+	result = (System->break_mode_enabled == false);
 	if (result)
 	{
-		queue->interp_state = state;
+		System->interp_state = state;
 	}
 	else
 	{
-		queue->interp_state = interp_wait_for_input;
-		queue->requested_state = state;
-		queue->request_step = false;
+		System->interp_state = interp_wait_for_input;
+		System->requested_state = state;
+		System->request_step = false;
 	}
 	#else
-	queue->interp_state = state;
+	System->interp_state = state;
 	result = true;
 	#endif
 	return result;
 }
 
-fn evicted_entity_t *GetEvictedEntity(turn_system_t *queue, entity_id_t ID)
+fn evicted_entity_t *GetEvictedEntity(turn_system_t *System, entity_id_t ID)
 {
-	for (s32 index = 0; index < queue->num_evicted_entities; index++)
+	for (s32 index = 0; index < System->num_evicted_entities; index++)
 	{
-		evicted_entity_t *entity = &queue->evicted_entities[index];
+		evicted_entity_t *entity = &System->evicted_entities[index];
 		if (entity->id == ID)
 			return entity;
 	}
 	return NULL;
 }
 
-fn void GarbageCollect(game_state_t *Game, turn_system_t *queue, f32 dt)
+fn void GarbageCollect(game_state_t *Game, turn_system_t *System, f32 dt)
 {
 	// TODO(): This will mess up the turn oder...
-	entity_storage_t *storage = queue->storage;
+	entity_storage_t *storage = System->storage;
 	for (s32 index = 0; index < storage->EntityCount; index++)
 	{
 		entity_t *entity = &storage->entities[index];
@@ -158,9 +158,9 @@ fn void GarbageCollect(game_state_t *Game, turn_system_t *queue, f32 dt)
 		{
 			Perish(Game, entity);
 
-			if (queue->num_evicted_entities < ArraySize(queue->evicted_entities))
+			if (System->num_evicted_entities < ArraySize(System->evicted_entities))
 			{
-				evicted_entity_t *evicted = &queue->evicted_entities[queue->num_evicted_entities++];
+				evicted_entity_t *evicted = &System->evicted_entities[System->num_evicted_entities++];
 				evicted->entity = *entity;
 				evicted->time_remaining = 1.0f;
 			}
@@ -169,25 +169,25 @@ fn void GarbageCollect(game_state_t *Game, turn_system_t *queue, f32 dt)
 		}
 	}
 
-	for (s32 index = 0; index < queue->num_evicted_entities; index++)
+	for (s32 index = 0; index < System->num_evicted_entities; index++)
 	{
-		evicted_entity_t *entity = &queue->evicted_entities[index];
+		evicted_entity_t *entity = &System->evicted_entities[index];
 		entity->time_remaining -= (dt * ENTITY_EVICTION_SPEED);
 		if (entity->time_remaining <= 0.0f)
-			queue->evicted_entities[index--] = queue->evicted_entities[--queue->num_evicted_entities];
+			System->evicted_entities[index--] = System->evicted_entities[--System->num_evicted_entities];
 	}
 }
 
-fn void Brace(turn_system_t *queue, entity_t *entity)
+fn void Brace(turn_system_t *System, entity_t *entity)
 {
-	if (queue->movement_points >= 2 && ((entity->hitchance_boost_multiplier + 0.1f) <= 2.0f))
+	if (System->movement_points >= 2 && ((entity->hitchance_boost_multiplier + 0.1f) <= 2.0f))
 	{
 		entity->has_hitchance_boost = true;
-		queue->movement_points -= 2;
+		System->movement_points -= 2;
 		entity->hitchance_boost_multiplier += 0.1f;
 		DebugLog("Used 2 movement points to brace for a hit chance bonus. Hit chance multiplied by %g for next attack.", entity->hitchance_boost_multiplier);
 	}
-	else if (queue->movement_points >= 2 && entity->hitchance_boost_multiplier + 0.1f > 2.0f)
+	else if (System->movement_points >= 2 && entity->hitchance_boost_multiplier + 0.1f > 2.0f)
 	{
 		DebugLog("Brace invalid. Your hit chance multiplier for next attack is %g which is maximum.", entity->hitchance_boost_multiplier);
 	}
@@ -304,13 +304,13 @@ fn void CommitAction(game_state_t *state, entity_t *user, entity_t *target, acti
     }
 }
 
-fn void ResolveAsynchronousActionQueue(turn_system_t *queue, entity_t *user, command_buffer_t *out, f32 dt, assets_t *assets, game_state_t *state)
+fn void ResolveAsynchronousActionQueue(turn_system_t *System, entity_t *user, command_buffer_t *out, f32 dt, assets_t *assets, game_state_t *state)
 {
 	const map_t *map = state->map;
 
-	for (s32 index = 0; index < queue->action_count; index++)
+	for (s32 index = 0; index < System->action_count; index++)
 	{
-		async_action_t *action = &queue->actions[index];
+		async_action_t *action = &System->actions[index];
 		const action_params_t *params = GetParameters(action->action_type.type);
 
 		b32 finished = true;
@@ -340,8 +340,8 @@ fn void ResolveAsynchronousActionQueue(turn_system_t *queue, entity_t *user, com
 
 		if (finished)
 		{
-			queue->actions[index--] = queue->actions[--queue->action_count];
-			CommitAction(state, user, GetEntity(queue->storage, action->target_id), &action->action_type, action->target_p);
+			System->actions[index--] = System->actions[--System->action_count];
+			CommitAction(state, user, GetEntity(System->storage, action->target_id), &action->action_type, action->target_p);
 		}
 
 		action->elapsed += dt * 1.0f;
@@ -358,72 +358,72 @@ fn v2 CameraTracking(v2 p, v2 player_world_pos, v2 viewport, f32 dt)
 	return p;
 }
 
-fn void AI(game_state_t *state, entity_storage_t *storage, map_t *map, turn_system_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets, entity_t *entity)
+fn void AI(game_state_t *state, entity_storage_t *storage, map_t *map, turn_system_t *System, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets, entity_t *entity)
 {
 	RenderRange(out, map, entity->p, ENEMY_DEBUG_RANGE, Green());
 
-	switch(queue->interp_state)
+	switch(System->interp_state)
 	{
 	case interp_wait_for_input:
 		{
 			if (WentDown(cons.debug[1]))
 			{
-				queue->interp_state = queue->requested_state;
-				queue->time = 0.0f;
+				System->interp_state = System->requested_state;
+				System->time = 0.0f;
 			}
 		} break;
 	Request:
 	case interp_request:
 		{
-			queue->starting_p = entity->p;
+			System->starting_p = entity->p;
 			s32 cost = Decide(state, entity);
-				queue->action_points -= cost;
+				System->action_points -= cost;
 			
-			if (!ChangeQueueState(queue, interp_transit))
+			if (!ChangeQueueState(System, interp_transit))
 				break;
-			queue->time = dt;
+			System->time = dt;
 		}; // NOTE(): Intentional fall-through. We want to start handling transit immediatly, instead of waiting an addidional frame.
 	case interp_transit:
 		{
-			v2 From = GetTileCenter(map, queue->starting_p);
+			v2 From = GetTileCenter(map, System->starting_p);
 			v2 To = GetTileCenter(map, entity->p);
-			entity->deferred_p = Lerp2(From, To, queue->time);
+			entity->deferred_p = Lerp2(From, To, System->time);
 
-			if ((queue->time >= 1.0f))
+			if ((System->time >= 1.0f))
 			{
-			 	if (queue->action_points > 0)
+			 	if (System->action_points > 0)
 			 	{
-			 		if (ChangeQueueState(queue, interp_request))
+			 		if (ChangeQueueState(System, interp_request))
 			 			goto Request;
 			 	}
 			 	else
 			 	{
 			 		ScheduleEnemyAction(state, entity, ENEMY_DEBUG_RANGE);
 
-			 		if ((IsActionQueueCompleted(queue) == false))
-						ChangeQueueState(queue, interp_action);
+			 		if ((IsActionQueueCompleted(System) == false))
+						ChangeQueueState(System, interp_action);
 					else
-						ChangeQueueState(queue, interp_accept);
+						ChangeQueueState(System, interp_accept);
 			 	}
 			}
 		} break;
 	case interp_action:
 		{
 			// NOTE(): Stall until all action are completed.
-			if ((IsActionQueueCompleted(queue) == false))
-				queue->time = 0.0f;
+			if ((IsActionQueueCompleted(System) == false))
+				System->time = 0.0f;
 
-			if (queue->time >= 3.0f)
-				ChangeQueueState(queue, interp_accept);
+			if (System->time >= 3.0f)
+				ChangeQueueState(System, interp_accept);
 		} break;
 	case interp_accept:
 		{
-			if (queue->time > 0.1f)
+			if (System->time > 0.1f)
 			{
 				#if ENABLE_TURN_SYSTEM_DEBUG_LOGS
-				DebugLog("turn finished in %.2f seconds", queue->seconds_elapsed);
+				DebugLog("turn finished in %.2f seconds", System->seconds_elapsed);
 				#endif
-				AcceptTurn(queue, entity);
+				AcceptTurn(System, entity);
 			}
 		} break;
 	}	
@@ -432,13 +432,13 @@ fn void AI(game_state_t *state, entity_storage_t *storage, map_t *map, turn_syst
 fn void Camera(game_state_t *Game, entity_t *TrackedEntity, const client_input_t *Input, f32 dt)
 {
 	camera_t *Camera = Game->camera;
-	turn_system_t *queue = Game->turns;
+	turn_system_t *System = Game->turns;
 	map_t *map = Game->map;
 
 	// NOTE(): We're focusing the camera either on a cursor or on a player position,
 	// depending on the current mode.
 	v2 focus_p = Game->cursor->active ? GetTileCenter(map, Game->cursor->p) : TrackedEntity->deferred_p;
-	if (!queue->free_camera_mode_enabled)
+	if (!System->free_camera_mode_enabled)
 	{
 		Game->camera->p = CameraTracking(Game->camera->p, focus_p, GetViewport(Input), dt);
 
@@ -475,10 +475,10 @@ fn void InteruptTurn(turn_system_t *Queue, entity_t *Entity)
 
 fn inline s32 CheckTurnInterupts(game_state_t *state, entity_t *ActiveEntity)
 {
-	turn_system_t *queue = state->turns;
+	turn_system_t *System = state->turns;
 	s32 Interupted = false;
 
-	entity_storage_t *storage = queue->storage;
+	entity_storage_t *storage = System->storage;
 	for (s32 Index = 0; Index < storage->EntityCount; Index++)
 	{
 		entity_t *Entity = &storage->entities[Index];
@@ -489,7 +489,7 @@ fn inline s32 CheckTurnInterupts(game_state_t *state, entity_t *ActiveEntity)
 				CreateCombatText(state->particles, Entity->deferred_p, combat_text_alerted);
 				Entity->Alerted = true;
 
-				InteruptTurn(queue, Entity);
+				InteruptTurn(System, Entity);
 				Interupted = true;
 				break;
 			}

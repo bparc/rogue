@@ -43,9 +43,9 @@ fn void TurnQueue(command_buffer_t *out, game_state_t *state, turn_system_t *que
         DrawTurnQueuePicFadeOut(out, x, &y, sz, entity, assets, t, spacing);
     }
 
-    for (s32 index = queue->num - 1; index >= 0; index--)
+    for (s32 index = queue->QueueSize - 1; index >= 0; index--)
     {
-        entity_id_t ID = queue->entities[index];
+        entity_id_t ID = queue->Queue[index];
         entity_t *entity = GetEntity(storage, ID);
         if (entity)
         {

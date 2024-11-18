@@ -41,8 +41,8 @@ typedef struct
 
 	// NOTE(): Stores the turns as an list of entity ids
 	// in a *reverse* order (the last turn in the queue will be executed first).
-	s32 num;
-	entity_id_t entities[64];
+	s32 QueueSize;
+	entity_id_t Queue[64];
 
 
 	// NOTE(): Turn State
