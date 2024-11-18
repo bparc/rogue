@@ -20,7 +20,7 @@ int IsValidEntity(s32 globalX, s32 globalY, char *Data, s32 startX, s32 startY, 
     return true; 
 }
 
-fn void MakeSimpleMap(game_world_t *world)
+fn void MakeSimpleMap(game_state_t *world)
 {
 	#define X 20
 	#define Y 20
@@ -136,7 +136,7 @@ fn void MakeSimpleMap(game_world_t *world)
 }
 #endif
 
-fn void Editor(editor_state_t *editor, game_world_t *state, command_buffer_t *out,
+fn void Editor(editor_state_t *editor, game_state_t *state, command_buffer_t *out,
 	const client_input_t *input, log_t *log, assets_t *assets, const virtual_controls_t *cons)
 {
 

@@ -1,4 +1,4 @@
-fn v2s ViewportToMap(const game_world_t *World, v2 p)
+fn v2s ViewportToMap(const game_state_t *World, v2 p)
 {
 	p = Sub(p, World->camera->p);
 	p = IsoToScreen(p);
@@ -47,7 +47,7 @@ fn inline void RenderEntity(command_buffer_t *out, const entity_t *entity, f32 a
 	RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
 }
 
-fn inline void RenderTile(command_buffer_t *out, map_t *map, s32 x, s32 y, assets_t *assets, game_world_t *World)
+fn inline void RenderTile(command_buffer_t *out, map_t *map, s32 x, s32 y, assets_t *assets, game_state_t *World)
 {
 	v2s at = {x, y};
 	if (!IsEmpty(map, at))
@@ -80,7 +80,7 @@ fn inline void RenderTile(command_buffer_t *out, map_t *map, s32 x, s32 y, asset
 	}
 }
 
-fn inline void Render_ClipToViewport(game_world_t *World, map_t *map, bb_t clipplane, command_buffer_t *out)
+fn inline void Render_ClipToViewport(game_state_t *World, map_t *map, bb_t clipplane, command_buffer_t *out)
 {
 	v2 viewport = Sub(clipplane.max, clipplane.min);
 	assets_t *assets = World->assets;
@@ -154,7 +154,7 @@ fn inline void Render_ClipToViewport(game_world_t *World, map_t *map, bb_t clipp
     	RenderTile(out,map,min.x+x,min.y+y,assets,World);
 }
 
-fn void Render_DrawFrame(game_world_t *state, command_buffer_t *out, f32 dt, assets_t *assets, v2 viewport)
+fn void Render_DrawFrame(game_state_t *state, command_buffer_t *out, f32 dt, assets_t *assets, v2 viewport)
 {
 	map_t *map = state->map;
 	entity_storage_t *storage = state->storage;

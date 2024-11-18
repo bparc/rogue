@@ -1,4 +1,4 @@
-fn b32 IsWorldPointEmpty(game_world_t *state, v2s p)
+fn b32 IsWorldPointEmpty(game_state_t *state, v2s p)
 {
 	entity_t *collidingEntity = GetEntityByPosition(state->storage, p);
 
@@ -10,7 +10,7 @@ fn b32 IsWorldPointEmpty(game_world_t *state, v2s p)
 	return false;
 }
 
-fn b32 Move(game_world_t *world, entity_t *entity, v2s offset)
+fn b32 Move(game_state_t *world, entity_t *entity, v2s offset)
 {
 	v2s requested_p = Add32(entity->p, offset);
 	b32 valid = IsWorldPointEmpty(world, requested_p);
@@ -19,7 +19,7 @@ fn b32 Move(game_world_t *world, entity_t *entity, v2s offset)
 	return (valid);
 }
 
-int MoveFitsWithSize(game_world_t* world, entity_t *requestee, v2s requestedPos)
+int MoveFitsWithSize(game_state_t* world, entity_t *requestee, v2s requestedPos)
 {
     int currentX = requestee->p.x;
     int currentY = requestee->p.y;
@@ -162,7 +162,7 @@ fn void ProcessStatusEffects(entity_t *entity)
     }
 }
 
-fn void PushEntity(game_world_t *state, v2s source, entity_t *target, u8 push_distance, s32 strength)
+fn void PushEntity(game_state_t *state, v2s source, entity_t *target, u8 push_distance, s32 strength)
 {
     v2s direction = Sub32(target->p, source);
 
@@ -269,7 +269,7 @@ fn void AddBloodOnNearbyTiles(map_t *map, v2s shooter_position, v2s hit_position
 }
 
 #define BLOOD_SPLATTER_CHANCE 0.3f
-fn void DoDamage(game_world_t *game, entity_t *user, entity_t *target, s32 damage, const char *damage_type_prefix)
+fn void DoDamage(game_state_t *game, entity_t *user, entity_t *target, s32 damage, const char *damage_type_prefix)
 {
     damage = damage + (rand() % 3);
     LogLn(game->log, "%shit! inflicted %i %s of %sdamage upon the target!",
@@ -284,7 +284,7 @@ fn void DoDamage(game_world_t *game, entity_t *user, entity_t *target, s32 damag
     }
 }
 
-fn inline void AOE(game_world_t *state, entity_t *user, entity_t *target, const action_params_t *params)
+fn inline void AOE(game_state_t *state, entity_t *user, entity_t *target, const action_params_t *params)
 {
     entity_storage_t *storage = state->storage;
     
@@ -308,7 +308,7 @@ fn inline void AOE(game_world_t *state, entity_t *user, entity_t *target, const 
     }
 }
 
-fn inline void SingleTarget(game_world_t *state, entity_t *user, entity_t *target, const action_params_t *params)
+fn inline void SingleTarget(game_state_t *state, entity_t *user, entity_t *target, const action_params_t *params)
 {
     if ((IsPlayer(user) && state->turns->god_mode_enabled))
     {
@@ -349,7 +349,7 @@ fn inline void SingleTarget(game_world_t *state, entity_t *user, entity_t *targe
 }
 
 // todo: In the future make walls protect entities from explosions using ray casting
-fn void CommitAction(game_world_t *state, entity_t *user, entity_t *target, action_t *action, v2s target_p)
+fn void CommitAction(game_state_t *state, entity_t *user, entity_t *target, action_t *action, v2s target_p)
 {
     const action_params_t *params = GetParameters(action->type);
 

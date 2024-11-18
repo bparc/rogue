@@ -1,4 +1,4 @@
-fn void EstablishTurnOrder(game_world_t *game, turn_queue_t *queue)
+fn void EstablishTurnOrder(game_state_t *game, turn_queue_t *queue)
 {
 	entity_storage_t *Storage = queue->storage;
 	ClearTurnQueue(queue);
@@ -18,7 +18,7 @@ fn void EstablishTurnOrder(game_world_t *game, turn_queue_t *queue)
 	}
 }
 
-fn s32 BeginTurn(game_world_t *game, entity_t *entity)
+fn s32 BeginTurn(game_state_t *game, entity_t *entity)
 {
 	ProcessStatusEffects(entity);
 
@@ -60,7 +60,7 @@ fn s32 BeginTurn(game_world_t *game, entity_t *entity)
 	return movement_point_count;
 }
 
-fn s32 Decide(game_world_t *game, entity_t *entity)
+fn s32 Decide(game_state_t *game, entity_t *entity)
 {
 	path_t *path = &game->turns->path;
 	s32 index = entity->DEBUG_step_count++;
@@ -69,14 +69,14 @@ fn s32 Decide(game_world_t *game, entity_t *entity)
 	return 1;
 }
 
-fn inline void SubdivideLargeSlime(game_world_t *game, entity_t *entity, s32 x, s32 y)
+fn inline void SubdivideLargeSlime(game_state_t *game, entity_t *entity, s32 x, s32 y)
 {
     entity_t *result = CreateSlime(game, Add32(entity->p, V2S(x, y)));
     if (result)
         result->deferred_p = entity->deferred_p;
 }
 
-fn void Perish(game_world_t *game, entity_t *entity)
+fn void Perish(game_state_t *game, entity_t *entity)
 {
 	switch (entity->enemy_type)
 	{
@@ -90,7 +90,7 @@ fn void Perish(game_world_t *game, entity_t *entity)
 	}
 }
 
-fn b32 ScheduleEnemyAction(game_world_t *World, entity_t *requestee, s32 effective_range)
+fn b32 ScheduleEnemyAction(game_state_t *World, entity_t *requestee, s32 effective_range)
 {
 	turn_queue_t *queue = World->turns;
 	entity_id_t result = 0;

@@ -22,7 +22,7 @@ fn void DrawTurnQueuePicFadeOut(command_buffer_t *out, f32 x, f32 *y, v2 sz, ent
     *y += y_spacing * t;
 }
 
-fn void TurnQueue(command_buffer_t *out, game_world_t *state, turn_queue_t *queue, assets_t *assets, cursor_t *cursor)
+fn void TurnQueue(command_buffer_t *out, game_state_t *state, turn_queue_t *queue, assets_t *assets, cursor_t *cursor)
 {
     entity_storage_t *storage = queue->storage;
 

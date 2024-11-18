@@ -16,7 +16,7 @@ typedef struct
 
     container_t         containers[64];
     s32                 container_count;
-} game_world_t;
+} game_state_t;
 
 #include "Game/Scene.h"
 #include "Game/Scene.c"
@@ -38,7 +38,7 @@ typedef struct
 #include "UI/hud_queue.c"
 #include "UI/hud.c"
 
-fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *assets)
+fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *assets)
 {
 	state->memory = memory;
 	state->assets = assets;
@@ -62,17 +62,17 @@ fn void Setup(game_world_t *state, memory_t *memory, log_t *log, assets_t *asset
 	CreateScene(state, state->layout);
 }
 
-fn void BeginGameWorld(game_world_t *state)
+fn void BeginGameWorld(game_state_t *state)
 {
 
 }
 
-fn void EndGameWorld(game_world_t *state)
+fn void EndGameWorld(game_state_t *state)
 {
 
 }
 
-fn void Tick(game_world_t *state, f32 dt, client_input_t input, virtual_controls_t cons, command_buffer_t *Layer0, command_buffer_t *Layer1)
+fn void Tick(game_state_t *state, f32 dt, client_input_t input, virtual_controls_t cons, command_buffer_t *Layer0, command_buffer_t *Layer1)
 {
 	BeginGameWorld(state);
 	TurnSystem(state, state->storage, state->map, state->turns, dt, &input, cons, state->log, Layer1, state->assets);	

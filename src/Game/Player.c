@@ -1,4 +1,4 @@
-fn inline void SetupPlayer(game_world_t *World, entity_t *Player)
+fn inline void SetupPlayer(game_state_t *World, entity_t *Player)
 {
 	inventory_t *Inventory = Player->inventory;
     Eq_AddItem(Inventory, item_green_herb);
@@ -12,7 +12,7 @@ fn inline void SetupPlayer(game_world_t *World, entity_t *Player)
     Eq_AddItem(Inventory, item_green_herb);
 }
 
-fn inline void Player(entity_t *Entity, game_world_t *state, const client_input_t *input, command_buffer_t *out, const virtual_controls_t *cons)
+fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_t *input, command_buffer_t *out, const virtual_controls_t *cons)
 {
 	turn_queue_t *queue = state->turns;
 	// NOTE(): Controls

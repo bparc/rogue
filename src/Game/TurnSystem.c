@@ -159,7 +159,7 @@ fn evicted_entity_t *GetEvictedEntity(turn_queue_t *queue, entity_id_t ID)
 	return NULL;
 }
 
-fn void GarbageCollect(game_world_t *Game, turn_queue_t *queue, f32 dt)
+fn void GarbageCollect(game_state_t *Game, turn_queue_t *queue, f32 dt)
 {
 	// TODO(): This will mess up the turn oder...
 	entity_storage_t *storage = queue->storage;
@@ -211,7 +211,7 @@ const f32 ScaleTByDistance(v2 a, v2 b, f32 t)
 	return result;
 }
 
-fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, command_buffer_t *out, f32 dt, assets_t *assets, game_world_t *state)
+fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, command_buffer_t *out, f32 dt, assets_t *assets, game_state_t *state)
 {
 	const map_t *map = state->map;
 
@@ -265,7 +265,7 @@ fn v2 CameraTracking(v2 p, v2 player_world_pos, v2 viewport, f32 dt)
 	return p;
 }
 
-fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets, entity_t *entity)
+fn void AI(game_state_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets, entity_t *entity)
 {
 	RenderRange(out, map, entity->p, ENEMY_DEBUG_RANGE, Green());
 
@@ -336,7 +336,7 @@ fn void AI(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queu
 	}	
 }
 
-fn void Camera(game_world_t *Game, entity_t *TrackedEntity, const client_input_t *Input, f32 dt)
+fn void Camera(game_state_t *Game, entity_t *TrackedEntity, const client_input_t *Input, f32 dt)
 {
 	camera_t *Camera = Game->camera;
 	turn_queue_t *queue = Game->turns;
@@ -360,14 +360,14 @@ fn void Camera(game_world_t *Game, entity_t *TrackedEntity, const client_input_t
 	}
 }
 
-fn void TurnQueueBeginFrame(turn_queue_t *Queue, game_world_t *Game, f32 dt)
+fn void TurnQueueBeginFrame(turn_queue_t *Queue, game_state_t *Game, f32 dt)
 {
 	Queue->storage = Game->storage;
 	Queue->seconds_elapsed += dt;
 	Queue->time += (dt * 4.0f);
 }
 
-fn void TurnQueueEndFrame(turn_queue_t *Queue, game_world_t *Game)
+fn void TurnQueueEndFrame(turn_queue_t *Queue, game_state_t *Game)
 {
 
 }
@@ -379,7 +379,7 @@ fn void InteruptTurn(turn_queue_t *Queue, entity_t *Entity)
 	Queue->turn_inited = false;
 }
 
-fn inline s32 CheckTurnInterupts(game_world_t *state, entity_t *ActiveEntity)
+fn inline s32 CheckTurnInterupts(game_state_t *state, entity_t *ActiveEntity)
 {
 	turn_queue_t *queue = state->turns;
 	s32 Interupted = false;
@@ -405,7 +405,7 @@ fn inline s32 CheckTurnInterupts(game_world_t *state, entity_t *ActiveEntity)
 	return (Interupted);
 }
 
-fn void TurnSystem(game_world_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
+fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
 	entity_t *ActiveEntity = NULL;
 

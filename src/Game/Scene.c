@@ -1,4 +1,4 @@
-fn entity_t *CreatePlayer(game_world_t *state, v2s p)
+fn entity_t *CreatePlayer(game_state_t *state, v2s p)
 {
     entity_t *result = 0;
     if (state->Player == 0)
@@ -25,7 +25,7 @@ fn entity_t *CreatePlayer(game_world_t *state, v2s p)
     return result;
 }
 
-fn entity_t *CreateSlime(game_world_t *state, v2s p)
+fn entity_t *CreateSlime(game_state_t *state, v2s p)
 {
 	u16 slime_hp = 54;
 	u16 slime_max_hp = 54;
@@ -38,7 +38,7 @@ fn entity_t *CreateSlime(game_world_t *state, v2s p)
     return result;
 }
 
-fn entity_t *CreateBigSlime(game_world_t *state, v2s p)
+fn entity_t *CreateBigSlime(game_state_t *state, v2s p)
 {
 	u16 slime_hp = 400;
 	u16 slime_max_hp = 400;
@@ -51,7 +51,7 @@ fn entity_t *CreateBigSlime(game_world_t *state, v2s p)
     return result;
 }
 
-fn void CreatePoisonTrap(game_world_t *state, v2s p)
+fn void CreatePoisonTrap(game_state_t *state, v2s p)
 {
 	u8 flags = static_entity_flags_trap | static_entity_flags_stepon_trigger;
 
@@ -64,7 +64,7 @@ fn void CreatePoisonTrap(game_world_t *state, v2s p)
 	CreateStaticEntity(state->storage, p, V2S(1,1), flags, effects);
 }
 
-fn container_t *PushContainer(game_world_t *state)
+fn container_t *PushContainer(game_state_t *state)
 {
     container_t *result = 0;
     if (state->container_count < ArraySize(state->containers))
@@ -78,7 +78,7 @@ fn container_t *PushContainer(game_world_t *state)
     return result;
 }
 
-fn void CreateContainer(game_world_t *state, v2s position)
+fn void CreateContainer(game_state_t *state, v2s position)
 {
     b32 Result = false;
     if (InMapBounds(state->map, position))
@@ -100,7 +100,7 @@ fn void CreateContainer(game_world_t *state, v2s position)
     }
 }
 
-fn container_t *GetContainer(game_world_t *state, v2s position)
+fn container_t *GetContainer(game_state_t *state, v2s position)
 {
     container_t *Result = 0;
     if (InMapBounds(state->map, position))

@@ -61,7 +61,7 @@ typedef struct
 	assets_t assets;
 	bmfont_t font;
 	editor_state_t editor;
-	game_world_t world;
+	game_state_t world;
 	command_buffer_t buffers[output_count];
 	log_t *event_log;
 	memory_t memory;

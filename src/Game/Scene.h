@@ -1,19 +1,19 @@
-fn container_t *PushContainer(game_world_t *state);
-fn container_t *GetContainer(game_world_t *state, v2s position);
+fn container_t *PushContainer(game_state_t *state);
+fn container_t *GetContainer(game_state_t *state, v2s position);
 
-fn inline void SetupPlayer(game_world_t *World, entity_t *Entity);
+fn inline void SetupPlayer(game_state_t *World, entity_t *Entity);
 
 // NOTE(): Entities
-fn entity_t *CreatePlayer(game_world_t *state, v2s p);
+fn entity_t *CreatePlayer(game_state_t *state, v2s p);
 
-fn entity_t *CreateSlime(game_world_t *state, v2s p);
-fn entity_t *CreateBigSlime(game_world_t *state, v2s p);
+fn entity_t *CreateSlime(game_state_t *state, v2s p);
+fn entity_t *CreateBigSlime(game_state_t *state, v2s p);
 
 // NOTE(): Map Objects
-fn void CreatePoisonTrap(game_world_t *state, v2s p);
-fn void CreateContainer(game_world_t *state, v2s position);
+fn void CreatePoisonTrap(game_state_t *state, v2s p);
+fn void CreateContainer(game_state_t *state, v2s position);
 
-fn void CreateScene(game_world_t *Scene, map_layout_t *Layout)
+fn void CreateScene(game_state_t *Scene, map_layout_t *Layout)
 {   
     CreateMapFromLayout(Scene->map, Layout);
 
