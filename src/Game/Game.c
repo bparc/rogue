@@ -60,7 +60,7 @@ fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *asset
 fn void EstablishTurnOrder(turn_system_t *System)
 {
 	entity_storage_t *Storage = System->storage;
-	ClearTurnQueue(System);
+	
 
 	PushTurn(System, GetEntity(System->storage, System->Player));
 	
@@ -81,7 +81,10 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 
 	b32 TurnHasEnded = (ActiveEntity == NULL);
 	if (TurnHasEnded)
+	{
+		ClearTurnQueue(System);
 		EstablishTurnOrder(queue);
+	}
 
 	if (ActiveEntity)
 	{
