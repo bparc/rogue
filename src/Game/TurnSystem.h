@@ -82,6 +82,11 @@ typedef struct
 	path_t path;
 } turn_system_t;
 
+fn b32 GodModeDisabled(turn_system_t *System)
+{
+	return (!System->god_mode_enabled);
+}
+
 fn void SetupTurn(turn_system_t *queue, s32 MovementPointCount)
 {
 	queue->movement_points = MovementPointCount;
@@ -97,7 +102,7 @@ fn void SetupTurn(turn_system_t *queue, s32 MovementPointCount)
 fn void ClearTurnQueue(turn_system_t *queue);
 fn void PushTurn(turn_system_t *queue, entity_t *entity);
 
-fn entity_t *PullUntilCurrent(turn_system_t *System, entity_storage_t *storage);
+fn entity_t *PullUntilActive(turn_system_t *System);
 fn entity_t *GetActive(const turn_system_t *System);
 fn int32_t IsActive(const turn_system_t *System, entity_id_t id);
 
@@ -116,5 +121,5 @@ fn s32 ConsumeActionPoints(turn_system_t *queue, s32 count);
 
 // grid-based movement
 fn b32 IsCellEmpty(turn_system_t *System, v2s p);
-fn b32 Move(turn_system_t *System, entity_t *entity, v2s offset);
+fn b32 MakeMove(turn_system_t *System, entity_t *entity, v2s offset);
 fn b32 Launch(turn_system_t *System, v2s source, entity_t *target, u8 push_distance, s32 strength);

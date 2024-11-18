@@ -9,12 +9,12 @@ fn void ClearTurnQueue(turn_system_t *System)
 	System->QueueSize = 0;;
 }
 
-fn entity_t *PullUntilActive(turn_system_t *System, entity_storage_t *storage)
+fn entity_t *PullUntilActive(turn_system_t *System)
 {
 	entity_t *result = 0;
 	if (System->QueueSize > 0)
 	{
-		result = GetEntity(storage, System->Queue[System->QueueSize - 1]);
+		result = GetEntity(System->storage, System->Queue[System->QueueSize - 1]);
 		if (!result)
 			System->QueueSize--; // NOTE(): The ID is invalid - pull it from the System.
 	}
@@ -478,13 +478,16 @@ fn b32 IsCellEmpty(turn_system_t *System, v2s p)
 	return false;
 }
 
-fn b32 Move(turn_system_t *System, entity_t *entity, v2s offset)
+fn b32 MakeMove(turn_system_t *System, entity_t *entity, v2s offset)
 {
-	v2s requested_p = Add32(entity->p, offset);
-	b32 valid = IsCellEmpty(System, requested_p);
-	if (valid)
-		entity->p = requested_p;
-	return (valid);
+	v2s NextCell = Add32(entity->p, offset);
+	b32 Moved = IsCellEmpty(System, NextCell);
+	if (Moved)
+	{
+		StepOnTile(System->map, entity);
+		entity->p = NextCell;
+	}
+	return (Moved);
 }
 
 fn int MoveFitsWithSize(turn_system_t* System, entity_t *requestee, v2s requestedPos)
@@ -581,7 +584,7 @@ fn b32 Launch(turn_system_t *System, v2s source, entity_t *target, u8 push_dista
             break;
         } else {
             target->p = next_pos;
-            ApplyTileEffects(System->map, target);
+            StepOnTile(System->map, target);
         }
     }
 

@@ -53,12 +53,9 @@ fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_
 		(CursorEnabled == false) && (queue->movement_points > 0);
 	if (DirInput.Inputed && AllowedToMove)
 	{
-		b32 Moved = Move(queue, Entity, DirInput.Direction);
-		if (Moved && (queue->god_mode_enabled == false))
-		{
+		b32 Moved = MakeMove(queue, Entity, DirInput.Direction);
+		if (Moved && GodModeDisabled(queue))
 			ConsumeMovementPoints(queue, 1);
-			ApplyTileEffects(state->map, Entity);
-		}
 	}
 
 	// NOTE(): Finish

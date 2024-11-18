@@ -85,14 +85,14 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 	entity_t *ActiveEntity = NULL;
 
 	BeginTurnSystem(queue, state, dt);
-	ActiveEntity = PullUntilActive(queue, storage);
+	ActiveEntity = PullUntilActive(queue);
 
 	b32 TurnHasEnded = (ActiveEntity == NULL);
 	if (TurnHasEnded)
 	{
 		ClearTurnQueue(queue);
 		EstablishTurnOrder(queue);
-		ActiveEntity = PullUntilActive(queue, storage);
+		ActiveEntity = PullUntilActive(queue);
 	}
 
 	if (ActiveEntity)
