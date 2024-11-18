@@ -63,6 +63,7 @@ typedef enum
 
 typedef struct
 {
+    s32 ID;
     v2s size;
     inventory_t inventory;
     container_type_t type;

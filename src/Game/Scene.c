@@ -66,30 +66,16 @@ fn void CreatePoisonTrap(game_state_t *state, v2s p)
 	CreateStaticEntity(state->storage, p, V2S(1,1), flags, effects);
 }
 
-fn container_t *PushContainer(game_state_t *state)
-{
-    container_t *result = 0;
-    if (state->container_count < ArraySize(state->containers))
-    {
-        result = &state->containers[state->container_count++];
-    }
-    else
-    {
-        DebugLog("Map's container capacity exceeded");
-    }
-    return result;
-}
-
 fn void CreateContainer(game_state_t *state, v2s position)
 {
     b32 Result = false;
     if (InMapBounds(state->map, position))
     {
         s32 Index = GetTileIndex(state->map, position);
-        container_t *Container = PushContainer(state);
+        container_t *Container = PushContainer(state->storage);
         if (Container)
         {
-            state->map->container_ids[Index] = state->container_count;
+            state->map->container_ids[Index] = Container->ID;
             SetupInventory(&Container->inventory);
             Eq_AddItem(&Container->inventory, item_green_herb);
             Eq_AddItem(&Container->inventory, item_green_herb);
@@ -104,13 +90,16 @@ fn void CreateContainer(game_state_t *state, v2s position)
 
 fn container_t *GetContainer(game_state_t *state, v2s position)
 {
+    entity_storage_t *Storage = state->storage;
+    map_t *Map = state->map;
+
     container_t *Result = 0;
     if (InMapBounds(state->map, position))
     {
         s32 TileIndex = GetTileIndex(state->map, position);
-        s32 ContainerIndex = (state->map->container_ids[TileIndex] - 1);
-        if ((ContainerIndex >= 0) && (ContainerIndex < state->container_count))
-            Result = &state->containers[ContainerIndex];
+        s32 ContainerIndex = (Map->container_ids[TileIndex] - 1);
+        if ((ContainerIndex >= 0) && (ContainerIndex < Storage->ContainerCount))
+            Result = &Storage->Containers[ContainerIndex];
     }
     return Result;
 }

@@ -14,8 +14,7 @@ typedef struct
 	memory_t 			*memory;
 	map_layout_t 		*layout;
 
-    container_t         containers[64];
-    s32                 container_count;
+    
 } game_state_t;
 
 #include "Game/Scene.c"

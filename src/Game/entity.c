@@ -257,3 +257,15 @@ fn void ProcessStatusEffects(entity_t *entity)
         }
     }
 }
+
+fn container_t *PushContainer(entity_storage_t *Storage)
+{
+    container_t *result = 0;
+    if (Storage->ContainerCount < ArraySize(Storage->Containers))
+    {
+        result = &Storage->Containers[Storage->ContainerCount++];
+        ZeroStruct(result);
+        result->ID = Storage->ContainerCount;
+    }
+    return result;
+}
