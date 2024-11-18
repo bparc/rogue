@@ -95,8 +95,10 @@ fn void SetupTurn(turn_system_t *queue, s32 MovementPointCount)
 
 // turn management
 fn void ClearTurnQueue(turn_system_t *queue);
-fn void AcceptTurn(turn_system_t *queue, entity_t *entity);
 fn void PushTurn(turn_system_t *queue, entity_t *entity);
+
+fn void InteruptTurn(turn_system_t *Queue, entity_t *Entity);
+fn void AcceptTurn(turn_system_t *queue, entity_t *entity);
 
 // animation system
 fn void QueryAsynchronousAction(turn_system_t *queue, action_type_t type, entity_id_t target, v2s target_p);

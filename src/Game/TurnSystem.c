@@ -430,7 +430,7 @@ fn void BeginTurnSystem(turn_system_t *Queue, game_state_t *Game, f32 dt)
 
 fn void EndTurnSystem(turn_system_t *Queue, game_state_t *Game)
 {
-
+	
 }
 
 fn void InteruptTurn(turn_system_t *Queue, entity_t *Entity)
