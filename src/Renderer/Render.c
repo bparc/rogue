@@ -161,7 +161,7 @@ fn void Render_DrawFrame(game_state_t *state, command_buffer_t *out, f32 dt, ass
 	entity_t *player = DEBUGGetPlayer(storage);
 	particles_t *particles = state->particles;
 	command_buffer_t *out_top = Debug.out;
-	turn_queue_t *queue = state->turns;
+	turn_system_t *queue = state->turns;
 
 	//DrawRect(out, V2(0.0f, 0.0f), V2(1000.0f, 1000.0f), SKY_COLOR); // NOTE(): Background
 

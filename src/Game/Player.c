@@ -14,7 +14,7 @@ fn inline void SetupPlayer(game_state_t *World, entity_t *Player)
 
 fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_t *input, command_buffer_t *out, const virtual_controls_t *cons)
 {
-	turn_queue_t *queue = state->turns;
+	turn_system_t *queue = state->turns;
 	// NOTE(): Controls
 	dir_input_t DirInput = GetDirectionalInput(input);
 	b32 CursorEnabled = IsCursorEnabled(state->cursor);

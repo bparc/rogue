@@ -1,4 +1,4 @@
-fn void EstablishTurnOrder(game_state_t *game, turn_queue_t *queue)
+fn void EstablishTurnOrder(game_state_t *game, turn_system_t *queue)
 {
 	entity_storage_t *Storage = queue->storage;
 	ClearTurnQueue(queue);
@@ -28,7 +28,7 @@ fn s32 BeginTurn(game_state_t *game, entity_t *entity)
 		//movement_point_count = 2 + (rand() % 2);
 
 		// NOTE(): Request a path to the player.
-		turn_queue_t *queue = game->turns;
+		turn_system_t *queue = game->turns;
 		entity_t *player = FindClosestPlayer(game->storage, entity->p);
 		Assert(player);
 
@@ -92,7 +92,7 @@ fn void Perish(game_state_t *game, entity_t *entity)
 
 fn b32 ScheduleEnemyAction(game_state_t *World, entity_t *requestee, s32 effective_range)
 {
-	turn_queue_t *queue = World->turns;
+	turn_system_t *queue = World->turns;
 	entity_id_t result = 0;
 
 	entity_t *target = FindClosestPlayer(World->storage, requestee->p);

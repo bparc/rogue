@@ -8,13 +8,11 @@ typedef struct
 	particles_t 		*particles;
 	interface_t 		*interface;
 	slot_bar_t 			slot_bar;
-	turn_queue_t 		*turns;
+	turn_system_t 		*turns;
 	map_t 				*map;
 	camera_t 			*camera;
 	memory_t 			*memory;
-	map_layout_t 		*layout;
-
-    
+	map_layout_t 		*layout;    
 } game_state_t;
 
 #include "Game/Scene.c"
@@ -41,7 +39,7 @@ fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *asset
 	state->log = log;
 	state->camera 		= PushStruct(camera_t, memory);
 	state->cursor 		= PushStruct(cursor_t, memory);
-	state->turns  		= PushStruct(turn_queue_t, memory);
+	state->turns  		= PushStruct(turn_system_t, memory);
 	state->storage 		= PushStruct(entity_storage_t, memory);
 	state->particles 	= PushStruct(particles_t, memory);
 	state->interface 	= PushStruct(interface_t, memory);
@@ -68,7 +66,7 @@ fn void EndGameWorld(game_state_t *state)
 
 }
 
-fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
+fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, turn_system_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
 	entity_t *ActiveEntity = NULL;
 

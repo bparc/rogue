@@ -1,15 +1,15 @@
-fn void PushTurn(turn_queue_t *queue, entity_t *entity)
+fn void PushTurn(turn_system_t *queue, entity_t *entity)
 {
 	if (queue->num < ArraySize(queue->entities))
 		queue->entities[queue->num++] = entity->id;
 }
 
-fn void ClearTurnQueue(turn_queue_t *queue)
+fn void ClearTurnQueue(turn_system_t *queue)
 {
 	queue->num = 0;;
 }
 
-fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)
+fn entity_t *NextInOrder(turn_system_t *queue, entity_storage_t *storage)
 {
 	entity_t *result = 0;
 	if (queue->num > 0)
@@ -21,7 +21,7 @@ fn entity_t *NextInOrder(turn_queue_t *queue, entity_storage_t *storage)
 	return result;
 }
 
-fn entity_t *GetActiveUnit(const turn_queue_t *queue)
+fn entity_t *GetActiveUnit(const turn_system_t *queue)
 {
 	entity_t *result = 0;
 	if (queue->num > 0)
@@ -29,12 +29,12 @@ fn entity_t *GetActiveUnit(const turn_queue_t *queue)
 	return result;
 }
 
-fn b32 IsActionQueueCompleted(const turn_queue_t *queue)
+fn b32 IsActionQueueCompleted(const turn_system_t *queue)
 {
 	return (queue->action_count == 0);
 }
 
-fn int32_t IsEntityActive(turn_queue_t *queue, entity_storage_t *storage, entity_id_t id)
+fn int32_t IsEntityActive(turn_system_t *queue, entity_storage_t *storage, entity_id_t id)
 {
 	entity_t *result = NextInOrder(queue, storage);
 	if (result)
@@ -42,7 +42,7 @@ fn int32_t IsEntityActive(turn_queue_t *queue, entity_storage_t *storage, entity
 	return 0;
 }
 
-fn entity_t *PeekNextTurn(turn_queue_t *queue, entity_storage_t *storage)
+fn entity_t *PeekNextTurn(turn_system_t *queue, entity_storage_t *storage)
 {
 	entity_t *result = 0;
 	if (queue->num >= 2)
@@ -50,7 +50,7 @@ fn entity_t *PeekNextTurn(turn_queue_t *queue, entity_storage_t *storage)
 	return result;
 }
 
-fn void AcceptTurn(turn_queue_t *queue, entity_t *entity)
+fn void AcceptTurn(turn_system_t *queue, entity_t *entity)
 {
 	DebugAssert(queue->turn_inited == true); // NOTE(): Propably a bug?
 
@@ -61,13 +61,13 @@ fn void AcceptTurn(turn_queue_t *queue, entity_t *entity)
 	queue->seconds_elapsed = 0.0f;
 }
 
-fn s32 ConsumeMovementPoints(turn_queue_t *queue, s32 count)
+fn s32 ConsumeMovementPoints(turn_system_t *queue, s32 count)
 {
 	queue->movement_points -= count;
 	return true;
 }
 
-fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count)
+fn s32 ConsumeActionPoints(turn_system_t *queue, s32 count)
 {
 	s32 sufficient = queue->action_points - count >= 0;
 	if (sufficient)
@@ -77,7 +77,7 @@ fn s32 ConsumeActionPoints(turn_queue_t *queue, s32 count)
 	return sufficient;
 }
 
-fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_id_t target, v2s target_p)
+fn void QueryAsynchronousAction(turn_system_t *queue, action_type_t type, entity_id_t target, v2s target_p)
 {
 	async_action_t *result = 0;
 	if ((queue->action_count < ArraySize(queue->actions)))
@@ -92,7 +92,7 @@ fn void QueryAsynchronousAction(turn_queue_t *queue, action_type_t type, entity_
 	}
 }
 
-fn void ControlPanel(turn_queue_t *queue, const virtual_controls_t *cons, entity_storage_t *storage)
+fn void ControlPanel(turn_system_t *queue, const virtual_controls_t *cons, entity_storage_t *storage)
 {
 	if (WentDown(cons->debug[0])) // Toggle
 		queue->break_mode_enabled = !queue->break_mode_enabled;
@@ -112,7 +112,7 @@ fn void ControlPanel(turn_queue_t *queue, const virtual_controls_t *cons, entity
 		(queue->free_camera_mode_enabled ? "ON" : "OFF"));
 }
 
-fn inline s32 ChangeQueueState(turn_queue_t *queue, interpolator_state_t state)
+fn inline s32 ChangeQueueState(turn_system_t *queue, interpolator_state_t state)
 {
 	s32 result = false;
 	queue->time = 0.0f;
@@ -136,7 +136,7 @@ fn inline s32 ChangeQueueState(turn_queue_t *queue, interpolator_state_t state)
 	return result;
 }
 
-fn evicted_entity_t *GetEvictedEntity(turn_queue_t *queue, entity_id_t ID)
+fn evicted_entity_t *GetEvictedEntity(turn_system_t *queue, entity_id_t ID)
 {
 	for (s32 index = 0; index < queue->num_evicted_entities; index++)
 	{
@@ -147,7 +147,7 @@ fn evicted_entity_t *GetEvictedEntity(turn_queue_t *queue, entity_id_t ID)
 	return NULL;
 }
 
-fn void GarbageCollect(game_state_t *Game, turn_queue_t *queue, f32 dt)
+fn void GarbageCollect(game_state_t *Game, turn_system_t *queue, f32 dt)
 {
 	// TODO(): This will mess up the turn oder...
 	entity_storage_t *storage = queue->storage;
@@ -178,7 +178,7 @@ fn void GarbageCollect(game_state_t *Game, turn_queue_t *queue, f32 dt)
 	}
 }
 
-fn void Brace(turn_queue_t *queue, entity_t *entity)
+fn void Brace(turn_system_t *queue, entity_t *entity)
 {
 	if (queue->movement_points >= 2 && ((entity->hitchance_boost_multiplier + 0.1f) <= 2.0f))
 	{
@@ -304,7 +304,7 @@ fn void CommitAction(game_state_t *state, entity_t *user, entity_t *target, acti
     }
 }
 
-fn void ResolveAsynchronousActionQueue(turn_queue_t *queue, entity_t *user, command_buffer_t *out, f32 dt, assets_t *assets, game_state_t *state)
+fn void ResolveAsynchronousActionQueue(turn_system_t *queue, entity_t *user, command_buffer_t *out, f32 dt, assets_t *assets, game_state_t *state)
 {
 	const map_t *map = state->map;
 
@@ -358,7 +358,7 @@ fn v2 CameraTracking(v2 p, v2 player_world_pos, v2 viewport, f32 dt)
 	return p;
 }
 
-fn void AI(game_state_t *state, entity_storage_t *storage, map_t *map, turn_queue_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets, entity_t *entity)
+fn void AI(game_state_t *state, entity_storage_t *storage, map_t *map, turn_system_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets, entity_t *entity)
 {
 	RenderRange(out, map, entity->p, ENEMY_DEBUG_RANGE, Green());
 
@@ -432,7 +432,7 @@ fn void AI(game_state_t *state, entity_storage_t *storage, map_t *map, turn_queu
 fn void Camera(game_state_t *Game, entity_t *TrackedEntity, const client_input_t *Input, f32 dt)
 {
 	camera_t *Camera = Game->camera;
-	turn_queue_t *queue = Game->turns;
+	turn_system_t *queue = Game->turns;
 	map_t *map = Game->map;
 
 	// NOTE(): We're focusing the camera either on a cursor or on a player position,
@@ -453,7 +453,7 @@ fn void Camera(game_state_t *Game, entity_t *TrackedEntity, const client_input_t
 	}
 }
 
-fn void TurnQueueBeginFrame(turn_queue_t *Queue, game_state_t *Game, f32 dt)
+fn void TurnQueueBeginFrame(turn_system_t *Queue, game_state_t *Game, f32 dt)
 {
 	Queue->map = Game->map;
 	Queue->storage = Game->storage;
@@ -461,12 +461,12 @@ fn void TurnQueueBeginFrame(turn_queue_t *Queue, game_state_t *Game, f32 dt)
 	Queue->time += (dt * 4.0f);
 }
 
-fn void TurnQueueEndFrame(turn_queue_t *Queue, game_state_t *Game)
+fn void TurnQueueEndFrame(turn_system_t *Queue, game_state_t *Game)
 {
 
 }
 
-fn void InteruptTurn(turn_queue_t *Queue, entity_t *Entity)
+fn void InteruptTurn(turn_system_t *Queue, entity_t *Entity)
 {
 	// NOTE(): Alert/Interupt Player Turn
 	PushTurn(Queue, Entity);
@@ -475,7 +475,7 @@ fn void InteruptTurn(turn_queue_t *Queue, entity_t *Entity)
 
 fn inline s32 CheckTurnInterupts(game_state_t *state, entity_t *ActiveEntity)
 {
-	turn_queue_t *queue = state->turns;
+	turn_system_t *queue = state->turns;
 	s32 Interupted = false;
 
 	entity_storage_t *storage = queue->storage;
@@ -499,7 +499,7 @@ fn inline s32 CheckTurnInterupts(game_state_t *state, entity_t *ActiveEntity)
 	return (Interupted);
 }
 
-fn b32 IsWorldPointEmpty(turn_queue_t *System, v2s p)
+fn b32 IsWorldPointEmpty(turn_system_t *System, v2s p)
 {
 	entity_t *collidingEntity = GetEntityByPosition(System->storage, p);
 
@@ -511,7 +511,7 @@ fn b32 IsWorldPointEmpty(turn_queue_t *System, v2s p)
 	return false;
 }
 
-fn b32 Move(turn_queue_t *System, entity_t *entity, v2s offset)
+fn b32 Move(turn_system_t *System, entity_t *entity, v2s offset)
 {
 	v2s requested_p = Add32(entity->p, offset);
 	b32 valid = IsWorldPointEmpty(System, requested_p);
@@ -520,7 +520,7 @@ fn b32 Move(turn_queue_t *System, entity_t *entity, v2s offset)
 	return (valid);
 }
 
-fn int MoveFitsWithSize(turn_queue_t* System, entity_t *requestee, v2s requestedPos)
+fn int MoveFitsWithSize(turn_system_t* System, entity_t *requestee, v2s requestedPos)
 {
     int currentX = requestee->p.x;
     int currentY = requestee->p.y;
@@ -596,7 +596,7 @@ fn int MoveFitsWithSize(turn_queue_t* System, entity_t *requestee, v2s requested
     return true;
 }
 
-fn b32 Launch(turn_queue_t *System, v2s source, entity_t *target, u8 push_distance, s32 strength)
+fn b32 Launch(turn_system_t *System, v2s source, entity_t *target, u8 push_distance, s32 strength)
 {
     v2s direction = Sub32(target->p, source);
 

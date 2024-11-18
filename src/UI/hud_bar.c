@@ -1,4 +1,4 @@
-fn void ActionMenu(entity_t *user, game_state_t *state, command_buffer_t *out, assets_t *assets, const client_input_t *input, turn_queue_t *queue) {
+fn void ActionMenu(entity_t *user, game_state_t *state, command_buffer_t *out, assets_t *assets, const client_input_t *input, turn_system_t *queue) {
     v2 action_bar_size = V2(540.0f, 60.0f);
     v2 slot_size = V2(50.0f, 50.0f);
     

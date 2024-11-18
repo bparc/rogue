@@ -1,4 +1,4 @@
-fn void HUD(command_buffer_t *out,game_state_t *state, turn_queue_t *queue, entity_storage_t *storage,
+fn void HUD(command_buffer_t *out,game_state_t *state, turn_system_t *queue, entity_storage_t *storage,
     assets_t *assets, const client_input_t *input, const virtual_controls_t *Cons, f32 dt)
 {
     BeginInterface(state->interface, input);

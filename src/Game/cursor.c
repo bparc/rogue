@@ -25,7 +25,7 @@ fn void DrawDiegeticText(game_state_t *game, v2 p, v2 offset, v4 color, const ch
 	DrawText(out, game->assets->Font, screen_p, string, color);
 }
 
-fn inline s32 Cursor_DoAction(cursor_t *cursor, map_t *map, entity_t *user, entity_t *target, turn_queue_t *queue, const action_params_t *settings)
+fn inline s32 Cursor_DoAction(cursor_t *cursor, map_t *map, entity_t *user, entity_t *target, turn_system_t *queue, const action_params_t *settings)
 {
 	if (!target)
 		return 0;
@@ -49,7 +49,7 @@ fn void DoCursor(game_state_t *Game, command_buffer_t *out, virtual_controls_t c
 	slot_bar_t *bar = &Game->slot_bar;
 	map_t *map = Game->map;
 	entity_storage_t *storage = Game->storage;
-	turn_queue_t *queue = Game->turns;
+	turn_system_t *queue = Game->turns;
 
 	// NOTE(): Setup
 	action_t equipped = GetEquippedAction(bar, user);
