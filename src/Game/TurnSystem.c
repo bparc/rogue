@@ -326,7 +326,7 @@ fn void ResolveAsynchronousActionQueue(turn_system_t *System, entity_t *user, co
 			v2 To = user->deferred_p;
 			f32 time = ScaleTByDistance(From, To, action->elapsed);
 			finished = (time >= 1.0f);
-			DrawRangedAnimation(out, To, From, params->animation_ranged, time);
+			RenderRangedAnimation(out, To, From, params->animation_ranged, time);
 		}
 		else
 		if (params->flags & action_display_move_name)

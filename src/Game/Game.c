@@ -40,8 +40,7 @@ typedef struct
 } game_state_t;
 
 #include "Game/Scene.c"
-#include "Renderer/draw.h"
-#include "Renderer/draw.c"
+#include "Renderer/Draw.c"
 
 #include "Game/cursor.c"
 #include "Game/enemy.c"
