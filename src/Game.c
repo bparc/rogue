@@ -113,7 +113,7 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 
 		if (ActiveEntity->flags & entity_flags_controllable)
 		{
-			s32 Interupted = CheckTurnInterupts(state, ActiveEntity);
+			s32 Interupted = CheckEnemyAlertStates(state, ActiveEntity);
 			if (!Interupted)
 				Player(ActiveEntity, state, input, out, &cons);
 		}

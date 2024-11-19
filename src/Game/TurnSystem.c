@@ -440,7 +440,7 @@ fn void InteruptTurn(turn_system_t *Queue, entity_t *Entity)
 	Queue->turn_inited = false;
 }
 
-fn inline s32 CheckTurnInterupts(game_state_t *state, entity_t *ActiveEntity)
+fn inline s32 CheckEnemyAlertStates(game_state_t *state, entity_t *ActiveEntity)
 {
 	turn_system_t *System = state->turns;
 	s32 Interupted = false;
