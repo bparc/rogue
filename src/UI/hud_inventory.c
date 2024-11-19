@@ -130,8 +130,10 @@ fn void ContextMenu(command_buffer_t *Out, interface_t *In, inventory_t *Eq, inv
 
 fn void OpenContainer(interface_t *In, container_t *Container)
 {
-    OpenInventory(In);
-    In->OpenedContainer = Container;
+    if (Container)
+    {
+        In->OpenedContainer = Container;
+    }
 }
 
 fn void CloseContainer(interface_t *In)

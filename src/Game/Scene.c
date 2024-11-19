@@ -81,9 +81,7 @@ fn void CreateRandomLoot(game_state_t *state, v2s position)
             // randomize loot
             s32 GreenHerbCount = 1 + (rand() % 4);
             while (GreenHerbCount--)
-                Eq_AddItem(&Container->inventory, item_green_herb);    
-            if (RandomChance(35))
-                Eq_AddItem(&Container->inventory, item_assault_rifle);
+                Eq_AddItem(&Container->inventory, item_green_herb);
 
             Result = true;
         }
@@ -158,7 +156,7 @@ fn void CreateScene(game_state_t *Scene, map_layout_t *Layout)
 
         v2s Pos = GetRoomPosition(Layout, StartingRoom);
         CreatePlayer(Scene, Add32(Pos, V2S(1, 1)));
-        CreateRandomLoot(Scene, Add32(Pos, V2S(2, 2)));
-        CreateRandomLoot(Scene, Add32(Pos, V2S(2, 5)));
+        //CreateRandomLoot(Scene, Add32(Pos, V2S(2, 2)));
+        //CreateRandomLoot(Scene, Add32(Pos, V2S(2, 5)));
     }
 }

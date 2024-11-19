@@ -1,6 +1,7 @@
 fn inline void SetupPlayer(game_state_t *World, entity_t *Player)
 {
 	inventory_t *Inventory = Player->inventory;
+	#if 0
     Eq_AddItem(Inventory, item_green_herb);
     Eq_AddItem(Inventory, item_green_herb);
     Eq_AddItem(Inventory, item_assault_rifle);
@@ -10,6 +11,7 @@ fn inline void SetupPlayer(game_state_t *World, entity_t *Player)
     Eq_AddItem(Inventory, item_green_herb);
     Eq_AddItem(Inventory, item_green_herb);
     Eq_AddItem(Inventory, item_green_herb);
+    #endif
 }
 
 fn container_t *GetAdjacentContainer(game_state_t *State, v2s Cell)
@@ -50,9 +52,7 @@ fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_
 	container_t *Container = GetAdjacentContainer(state, Entity->p);
 	if (Container)
 	{
-		RenderDiegeticText(state->camera, state->assets->Font, Entity->deferred_p, V2(-10.0f, -50.0f), White(), "Press R to open.");
-		if (IsKeyPressed(input, 'R'))
-			OpenContainer(state->interface, Container);
+		OpenContainer(state->interface, Container);
 	}
 
 	if(!Container || (state->interface->OpenedContainer != Container))

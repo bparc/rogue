@@ -11,7 +11,7 @@ fn void HUD(command_buffer_t *out,game_state_t *state, turn_system_t *queue, ent
     {   
         MiniMap(Debug.out_top, state->layout, ActiveEntity->p, assets);
         
-        if (In->InventoryOpened)
+        if (In->InventoryOpened || In->OpenedContainer)
         {
             Inventory(V2(100.0f, 25.0f), out, ActiveEntity->inventory, input, assets->Font, state->interface, ActiveEntity, Cons, dt, true, NULL);
             if (In->OpenedContainer)

@@ -101,8 +101,8 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 		if ((queue->turn_inited == false))
 		{
 			CloseCursor(state->cursor);
-			CloseInventory(state->interface);
-			
+			CloseInventory(state->interface);			
+
 			s32 MovementPointCount = BeginTurn(state, ActiveEntity);
 			SetupTurn(queue, MovementPointCount);
 			
@@ -116,13 +116,13 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 			s32 Interupted = CheckEnemyAlertStates(state, ActiveEntity);
 			if (!Interupted)
 			{
-				b32 BlockInputs = false;
+				b32 BlockMovementInputs = false;
 				if (IsCursorEnabled(state->cursor))
-					BlockInputs = true;
+					BlockMovementInputs = true;
 
 				dir_input_t DirInput = GetDirectionalInput(input);
 				DoCursor(state, out, cons, ActiveEntity, DirInput);
-				Player(ActiveEntity, state, input, out, &cons, DirInput, BlockInputs);
+				Player(ActiveEntity, state, input, out, &cons, DirInput, BlockMovementInputs);
 			}
 		}
 		else
