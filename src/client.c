@@ -18,7 +18,7 @@
 #include "low/debug.c"
 #include "low/input.h"
 
-#include "Game/Game.c"
+#include "Game.c"
 
 // NOTE(): Editor/
 #include "UI/editor.h"
