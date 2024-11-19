@@ -1,8 +1,8 @@
 fn void MiniMap(command_buffer_t *out, map_layout_t *Gen, v2s PlayerP, assets_t *Assets)
 {
-    v2 ChunkSz = V2(32.0f, 32.0f);
+    v2 ChunkSz = V2(16.0f, 16.0f);
     v2 ChunkHalfSz = Scale(ChunkSz, 0.5f);
-    v2 GlobalOffset = V2(1080.0f, 10.0f);
+    v2 GlobalOffset = V2(1325.0f, 10.0f);
 
     v2s PlayerChunkAt = Div32(PlayerP, V2S(20, 20));
 
