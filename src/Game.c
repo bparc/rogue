@@ -115,7 +115,15 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 		{
 			s32 Interupted = CheckEnemyAlertStates(state, ActiveEntity);
 			if (!Interupted)
-				Player(ActiveEntity, state, input, out, &cons);
+			{
+				b32 BlockInputs = false;
+				if (IsCursorEnabled(state->cursor))
+					BlockInputs = true;
+
+				dir_input_t DirInput = GetDirectionalInput(input);
+				DoCursor(state, out, cons, ActiveEntity, DirInput);
+				Player(ActiveEntity, state, input, out, &cons, DirInput, BlockInputs);
+			}
 		}
 		else
 		{

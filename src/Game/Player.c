@@ -39,14 +39,10 @@ fn b32 GetAdjacentDoor(game_state_t *State, v2s Cell, v2s *DoorCell)
 	return Result;
 }
 
-fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_t *input, command_buffer_t *out, const virtual_controls_t *cons)
+fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_t *input, command_buffer_t *out, const virtual_controls_t *cons, dir_input_t DirInput, b32 BlockInputs)
 {
 	turn_system_t *queue = state->turns;
-	// NOTE(): Controls
-	dir_input_t DirInput = GetDirectionalInput(input);
-	b32 CursorEnabled = IsCursorEnabled(state->cursor);
-	DoCursor(state, out, *cons, Entity, DirInput);
-			
+	// NOTE(): Controls		
 	if (WentDown(cons->Inventory))
 		ToggleInventory(state->interface);
 
@@ -75,7 +71,7 @@ fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_
 
 	// NOTE(): Move
 	b32 AllowedToMove = IsActionQueueCompleted(queue) /* Can't move when skill animations are playing! */ &&
-		(CursorEnabled == false) && (queue->movement_points > 0);
+		(BlockInputs == false) && (queue->movement_points > 0);
 	if (DirInput.Inputed && AllowedToMove)
 	{
 		b32 Moved = MakeMove(queue, Entity, DirInput.Direction);
