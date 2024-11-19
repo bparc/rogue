@@ -136,7 +136,8 @@ fn void OpenContainer(interface_t *In, container_t *Container)
 
 fn void CloseContainer(interface_t *In)
 {
-    In->OpenedContainer = NULL;
+    if (In->OpenedContainer != NULL)
+        In->OpenedContainer = NULL;
 }
 
 fn void Inventory(v2 EqMin, command_buffer_t *Out, inventory_t *Eq, const client_input_t *Input,

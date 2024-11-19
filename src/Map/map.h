@@ -14,8 +14,9 @@ typedef enum
 
 typedef enum
 {
-	tile_Floor = 1,
-	tile_Door = 16,
+	tile_floor 	= 1,
+	tile_wall 	= 2,
+	tile_door 	= 16,
 } tile_type_t;
 
 typedef struct
@@ -59,6 +60,7 @@ fn trap_type_t GetTileTrapType(const map_t *map, s32 x, s32 y);
 fn b32 IsTraversable(const map_t *map, v2s p);
 fn b32 IsEmpty(const map_t *map, v2s p);
 
+fn b32 IsDoor(const map_t *map, v2s Index);
 fn b32 IsWall(const map_t *map, v2s p);
 fn s32 IsCorner(const map_t *map, v2s offset, s32 Index);
 fn s32 IsEdge(const map_t *map, v2s offset, s32 Index);

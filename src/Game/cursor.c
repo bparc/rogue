@@ -11,20 +11,6 @@ fn void RenderHitChance(command_buffer_t *out, assets_t *assets, v2 p, s32 hit_c
     DrawText(out, assets->Font, screen_position, hit_chance_text, White());
 }
 
-fn void DrawDiegeticText(game_state_t *game, v2 p, v2 offset, v4 color, const char *format, ...)
-{
-	char string[256] = "";
-	va_list args = {0};
-	va_start(args, format);
-	vsnprintf(string, sizeof(string), format, args);
-	va_end(args);
-
-	command_buffer_t *out = Debug.out_top;
-	v2 screen_p = CameraToScreen(game->camera, p);
-	screen_p = Add(screen_p, offset);
-	DrawText(out, game->assets->Font, screen_p, string, color);
-}
-
 fn inline s32 Cursor_DoAction(cursor_t *cursor, map_t *map, entity_t *user, entity_t *target, turn_system_t *queue, const action_params_t *settings)
 {
 	if (!target)
@@ -132,7 +118,7 @@ fn void DoCursor(game_state_t *Game, command_buffer_t *out, virtual_controls_t c
 		if (IsHostile(target))
 		{
 			s32 chance = CalculateHitChance(user, target, equipped.type);
-			DrawDiegeticText(Game, target->deferred_p, V2(-20.0f, -85.0f), White(), "%i%%", chance);
+			RenderDiegeticText(Game->camera, Game->assets->Font, target->deferred_p, V2(-20.0f, -85.0f), White(), "%i%%", chance);
 
 			cursor->Target = target->id;
 		}

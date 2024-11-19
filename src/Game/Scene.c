@@ -66,7 +66,7 @@ fn void CreatePoisonTrap(game_state_t *state, v2s p)
 	CreateStaticEntity(state->storage, p, V2S(1,1), flags, effects);
 }
 
-fn void CreateContainer(game_state_t *state, v2s position)
+fn void CreateRandomLoot(game_state_t *state, v2s position)
 {
     b32 Result = false;
     if (InMapBounds(state->map, position))
@@ -106,26 +106,59 @@ fn container_t *GetContainer(game_state_t *state, v2s position)
     return Result;
 }
 
+fn void CreateRoomInterior(game_state_t *Scene, room_t room, v2s chunk_size)
+{
+    map_t *Map = Scene->map;
+    entity_storage_t *Storage = Scene->storage;
+
+#define X DUNGEON_ROOM_SIZE_Y
+#define Y DUNGEON_ROOM_SIZE_X
+    
+    s32 RandomRoomIndex = rand() % ArraySize(Dungeon_RoomPresets);
+    char *Data = Dungeon_RoomPresets[RandomRoomIndex];
+
+    v2s min = Mul32(room.ChunkAt, chunk_size);
+    for (s32 y = 1; y < Y - 1; y++)
+    {
+        for (s32 x = 1; x < X - 1; x++)
+        {
+            v2s TileIndex = {x, y};
+            TileIndex = Add32(min, TileIndex);
+
+            u8 value = tile_floor;
+            switch (Data[y * X + x])
+            {
+            case 'W': value = tile_wall; break;
+            case 'S': CreateSlime(Scene, TileIndex); break;
+            case 'C': CreateRandomLoot(Scene, TileIndex); break;
+            case 'P': CreatePoisonTrap(Scene, TileIndex); break;
+            }
+            SetTileValue(Map, TileIndex, value);
+        }
+    }
+#undef X
+#undef Y
+}
+
 fn void CreateScene(game_state_t *Scene, map_layout_t *Layout)
 {   
     CreateMapFromLayout(Scene->map, Layout);
 
     for (s32 Index = 1; Index < Layout->PlacedRoomCount; Index++)
     {
-        v2s Pos = GetRoomPosition(Layout, &Layout->PlacedRooms[Index]);
-        CreateSlime(Scene, Add32(Pos, V2S(7, 8)));
-        CreateSlime(Scene, Add32(Pos, V2S(14, 5)));
+        room_t *Room = &Layout->PlacedRooms[Index];
+        v2s Pos = GetRoomPosition(Layout, Room);
+        CreateRoomInterior(Scene, *Room, Layout->ChunkSize);
     }
 
     // 
     if (Layout->PlacedRoomCount)
     {
         const room_t *StartingRoom = &Layout->PlacedRooms[0];
-        GenerateRoomInterior(Scene->map, *StartingRoom, Layout->ChunkSize);
 
         v2s Pos = GetRoomPosition(Layout, StartingRoom);
-        CreatePlayer(Scene,    Add32(Pos, V2S(1, 1)));
-        CreateContainer(Scene, Add32(Pos, V2S(2, 2)));
-        CreateContainer(Scene, Add32(Pos, V2S(2, 5)));
+        CreatePlayer(Scene, Add32(Pos, V2S(1, 1)));
+        CreateRandomLoot(Scene, Add32(Pos, V2S(2, 2)));
+        CreateRandomLoot(Scene, Add32(Pos, V2S(2, 5)));
     }
 }

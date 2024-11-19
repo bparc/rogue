@@ -69,7 +69,7 @@ fn inline void RenderTile(command_buffer_t *out, map_t *map, s32 x, s32 y, asset
 		}
 		if (IsWall(map, at))
 			RenderIsoTile(out, map, at, White(), true, 15);
-		if (GetTileValue(map, at.x, at.y) == tile_Door)
+		if (GetTileValue(map, at.x, at.y) == tile_door)
 			RenderIsoTile(out, map, at, Red(), true, 25);
 
 		if ((GetContainer(World, at) != NULL))
@@ -190,7 +190,7 @@ fn void Render_DrawFrame(game_state_t *state, command_buffer_t *out, f32 dt, ass
 
 		v2 screen_p = CameraToScreen(state->camera, Sub(entity->deferred_p, V2(60.0f, 60.0f)));
 		screen_p.x -= 25.0f;
-		RenderHPBar(out_top, screen_p, assets, entity);
+		RenderHP(out_top, screen_p, assets, entity);
 	}
 	for (s32 index = 0; index < queue->num_evicted_entities; index++)
 	{

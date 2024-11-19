@@ -334,7 +334,7 @@ fn void ResolveAsynchronousActionQueue(turn_system_t *System, entity_t *user, co
 			f32 time = action->elapsed;
 			v2 X = EaseInThenOut(40.0f, 60.0f, 15.0f, time);
 			f32 alpha = 1.0f - X.y;
-			DrawDiegeticText(state, user->deferred_p, V2((-20.0f + X.x), -80.0f), A(White(), alpha), params->name);
+			RenderDiegeticText(state->camera, state->assets->Font, user->deferred_p, V2((-20.0f + X.x), -80.0f), A(White(), alpha), params->name);
 			finished =  (time >= 1.0f);
 		}
 

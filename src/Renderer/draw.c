@@ -109,7 +109,7 @@ fn void RenderTileAlignedBitmap(command_buffer_t *out, map_t *map, v2s offset, b
 	DrawBitmap(out, p, bitmap->scale, color, bitmap);
 }
 
-fn void RenderHPBar(command_buffer_t *out, v2 p, assets_t *assets, entity_t *entity)
+fn void RenderHP(command_buffer_t *out, v2 p, assets_t *assets, entity_t *entity)
 {
     // todo: Add animation when chunk of health is lost, add art asset
     f32 health_percentage = (f32)entity->health / entity->max_health;
@@ -123,4 +123,18 @@ fn void RenderHPBar(command_buffer_t *out, v2 p, assets_t *assets, entity_t *ent
     DrawRect(out, bar_p, health_bar_size, Green());
     DrawRectOutline(out, bar_p, health_bar_size, Black());
     DrawFormat(out, assets->Font, Add(bar_p, V2(4.0f,-10.0f)), White(), "%i/%i", entity->health,entity->max_health);
+}
+
+fn void RenderDiegeticText(const camera_t *Camera, const bmfont_t *Font, v2 p, v2 offset, v4 color, const char *format, ...)
+{
+    char string[256] = "";
+    va_list args = {0};
+    va_start(args, format);
+    vsnprintf(string, sizeof(string), format, args);
+    va_end(args);
+
+    command_buffer_t *out = Debug.out_top;
+    v2 screen_p = CameraToScreen(Camera, p);
+    screen_p = Add(screen_p, offset);
+    DrawText(out, Font, screen_p, string, color);
 }

@@ -12,6 +12,33 @@ fn inline void SetupPlayer(game_state_t *World, entity_t *Player)
     Eq_AddItem(Inventory, item_green_herb);
 }
 
+fn container_t *GetAdjacentContainer(game_state_t *State, v2s Cell)
+{
+	container_t *Result = 0;
+	for (s32 DirIndex = 0; DirIndex < 4;DirIndex++)
+	{
+		v2s AdjacentCell = Add32(Cell, cardinal_directions[DirIndex]);
+		container_t *Container = GetContainer(State, AdjacentCell);
+		if (Container)
+		{
+			Result = Container;		
+			break;
+		}
+	}
+	return Result;
+}
+
+fn b32 GetAdjacentDoor(game_state_t *State, v2s Cell, v2s *DoorCell)
+{
+	b32 Result = 0;
+	for (s32 DirIndex = 0; (DirIndex < 4) && !Result; DirIndex++)
+	{
+		*DoorCell = Add32(Cell, cardinal_directions[DirIndex]);
+		Result = IsDoor(State->map, *DoorCell);
+	}
+	return Result;
+}
+
 fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_t *input, command_buffer_t *out, const virtual_controls_t *cons)
 {
 	turn_system_t *queue = state->turns;
@@ -24,29 +51,27 @@ fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_
 		ToggleInventory(state->interface);
 
 	// NOTE(): Check Containers
-	container_t *AdjacentContainer = NULL;
-	for (s32 DirIndex = 0;
-		DirIndex < 4;
-		DirIndex++)
+	container_t *Container = GetAdjacentContainer(state, Entity->p);
+	if (Container)
 	{
-		v2s Dir = cardinal_directions[DirIndex];
-		v2s Adjacent = Add32(Entity->p, Dir);
-		container_t *Container = GetContainer(state, Adjacent);
-		if (Container)
-		{
-			AdjacentContainer = Container;
-			DrawDiegeticText(state, Entity->deferred_p, V2(-10.0f, -50.0f), White(), "Press R to open.");
-			if (IsKeyPressed(input, 'R'))
-			{
-				OpenContainer(state->interface, Container);
-			}
-			break;
-		}
+		RenderDiegeticText(state->camera, state->assets->Font, Entity->deferred_p, V2(-10.0f, -50.0f), White(), "Press R to open.");
+		if (IsKeyPressed(input, 'R'))
+			OpenContainer(state->interface, Container);
 	}
 
-	b32 ContainerOutOfRange = state->interface->OpenedContainer && !AdjacentContainer;
-	if (ContainerOutOfRange)
+	if(!Container || (state->interface->OpenedContainer != Container))
+	{
 		CloseContainer(state->interface);
+	}
+
+	// NOTE(): Check Doors
+	v2s DoorIndex = {0};
+	if (GetAdjacentDoor(state, Entity->p, &DoorIndex))
+	{
+		RenderDiegeticText(state->camera, state->assets->Font, Entity->deferred_p, V2(-10.0f, -50.0f), White(), "Press R to open.");
+		if (IsKeyPressed(input, 'R'))
+			SetTileValue(state->map, DoorIndex, tile_floor);
+	}
 
 	// NOTE(): Move
 	b32 AllowedToMove = IsActionQueueCompleted(queue) /* Can't move when skill animations are playing! */ &&

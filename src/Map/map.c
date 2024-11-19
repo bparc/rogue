@@ -226,6 +226,12 @@ fn bitmap_t *PickTileBitmap(const map_t* map, s32 x, s32 y, assets_t *assets)
 	return (&assets->Tilesets[0].LowTiles[ID][0]);
 }
 
+fn b32 IsDoor(const map_t *map, v2s Index)
+{
+	b32 result = (GetTileValue(map, Index.x, Index.y) == tile_door);
+	return result;
+}
+
 fn b32 IsWall(const map_t *map, v2s p)
 {
 	b32 result = GetTileValue(map, p.x, p.y) == 2;
@@ -281,7 +287,7 @@ fn b32 IsLineOfSight(const map_t *map, v2s from, v2s to)
 	while (ContinueDDALine(&dda)) {
 		if (CompareVectors(dda.at, from))
 			continue;
-		if (IsWall(map, dda.at))
+		if (IsWall(map, dda.at) || IsDoor(map, dda.at))
 			return false;
 	}
 

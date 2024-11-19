@@ -183,7 +183,7 @@ fn void LayoutRoom(map_t *Map, room_t room, const b32 PlaceDoors, v2s chunk_size
 	else
 	if (!CompareVectors(room.ChunkAt, room.PrevChunk))
 	{
-		SetTileValue(Map, room.Doors[0], tile_Floor);
+		SetTileValue(Map, room.Doors[0], tile_door);
 	}
 }
 
@@ -201,55 +201,6 @@ fn void CreateMapFromLayout(map_t *Map, map_layout_t *Layout)
         room_t *room = &Layout->PlacedRooms[Index];
         LayoutRoom(Map, *room, true, Layout->ChunkSize);
     }
-}
-
-fn void GenerateRoomInterior(map_t *Map, room_t room, v2s chunk_size)
-{
-#define X 20
-#define Y 20
-	char Data[Y][X] = {
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', ' ', ' ', ' ', ' ', ' ', 'W', 'W', 'W', 'W', '#', '#', '#', 'W', 'W', 'W', '#', '#',
-	'#', '#', '#', ' ', ' ', ' ', ' ', ' ', 'W', '#', '#', '#', '#', '#', '#', 'W', 'W', 'W', '#', '#',
-	'#', '#', '#', ' ', '#', '#', '#', ' ', 'W', '#', '#', '#', '#', '#', '#', 'W', 'W', 'W', '#', '#',
-	'#', '#', '#', ' ', '#', '#', '#', ' ', 'W', '#', '#', '#', '#', '#', '#', 'W', 'W', 'W', '#', '#',
-	'#', '#', '#', ' ', '#', '#', '#', ' ', 'W', '#', '#', '#', '#', '#', '#', 'W', 'W', 'W', '#', '#',
-	'#', '#', '#', ' ', '#', '#', '#', ' ', 'W', '#', '#', '#', '#', '#', '#', 'W', 'W', 'W', '#', '#',
-	'#', '#', '#', ' ', ' ', ' ', ' ', ' ', 'W', '#', '#', '#', '#', '#', '#', 'W', 'W', 'W', '#', '#',
-	'#', '#', '#', ' ', ' ', ' ', ' ', ' ', 'W', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#',
-	};
-
-	v2s min = Mul32(room.ChunkAt, chunk_size);
-	for (s32 y = 1; y < Y - 1; y++)
-	{
-		for (s32 x = 1; x < X - 1; x++)
-		{
-			v2s at = min;
-			at.x += x;
-			at.y += y;
-
-			u8 value = 0;
-			switch (Data[y][x])
-			{
-			case 'W': value = 2; break;
-			case '#': value = 1; break;
-			}
-			SetTileValue(Map, at, value);
-		}
-	}
-#undef X
-#undef Y
 }
 
 fn s32 IsMapLayoutIndexValid(map_layout_t *Layout, v2s Index)
@@ -284,7 +235,7 @@ fn room_t *RoomFromPosition(map_layout_t *Layout, v2s Pos)
 fn void OpenEveryDoor(map_t *Map, const room_t *Room)
 {
 	if (Room)
-		SetTileValue(Map, Room->Doors[0], tile_Floor);
+		SetTileValue(Map, Room->Doors[0], tile_floor);
 }
 
 fn v2s GetRoomPosition(const map_layout_t *Layout, const room_t *Room)
