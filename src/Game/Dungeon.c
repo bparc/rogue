@@ -138,7 +138,7 @@ fn void CreateRoomInterior(game_state_t *Scene, room_t room, v2s chunk_size)
 #undef Y
 }
 
-fn void CreateScene(game_state_t *Scene, map_layout_t *Layout)
+fn void CreateDungeon(game_state_t *Scene, map_layout_t *Layout)
 {   
     CreateMapFromLayout(Scene->map, Layout);
 

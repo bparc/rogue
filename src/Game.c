@@ -40,7 +40,7 @@ typedef struct
 	map_layout_t 		*layout;    
 } game_state_t;
 
-#include "Game/Scene.c"
+#include "Game/Dungeon.c"
 #include "Renderer/Draw.c"
 
 #include "Game/cursor.c"
@@ -78,7 +78,7 @@ fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *asset
 	DefaultActionBar(&state->slot_bar,  assets);
 
 	GenerateDungeon(state->layout, 6, *state->memory);
-	CreateScene(state, state->layout);
+	CreateDungeon(state, state->layout);
 }
 
 fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, turn_system_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
