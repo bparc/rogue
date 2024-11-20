@@ -22,6 +22,7 @@ typedef enum {
 
 typedef struct
 {
+    action_type_t action;
     item_type_t type;
     item_categories_t category;
     const char *name;
@@ -74,7 +75,6 @@ typedef struct {
 } item_t;
 
 static item_params_t _Global_Item_Data[item_type_count];
-static const char *_Global_Item_Names[item_type_count];
 
 fn const item_params_t *GetItemParams(item_type_t type)
 {
@@ -89,29 +89,6 @@ fn item_t MakeItemFromType(item_type_t Type)
     return Result;  
 }
 
-fn const char *NameFromItemType(const char *name, memory_t *memory)
-{
-    s32 length = StringLength(name);
-    char *result = PushSize(memory, (length + 1));
-    result[length] = 0;
-    if (length)
-        result[0] = ToUpper(result[0]);
-
-    s32 at = 0;
-    while (at < length)
-    {
-        char *ch = &result[at];
-        *ch = ToUpper(name[at]);
-
-        if (*ch == '_')
-            *ch = ' ';
-
-        at++;
-    }
-
-    return result;
-}
-
 void DefaultItemValues(void)
 {
     for (s32 index = 0; index < ArraySize(_Global_Item_Data); index++)
@@ -120,51 +97,8 @@ void DefaultItemValues(void)
         Params->type = (item_type_t)index;
         Params->category = (item_categories_t)index;
         if (Params->name == NULL)
-            Params->name = _Global_Item_Names[index];
+            Params->name = "Not Set";
         if (IsZero(Params->size))
             Params->size = V2S(1, 1);
     }
-}
-
-fn void SetupItemDataTable(memory_t *memory, const assets_t *assets)
-{
-#define ITM(Type) \
-_Global_Item_Names[item_##Type] = NameFromItemType(#Type, memory); \
-_Global_Item_Data[item_##Type]  = (item_params_t)
-
-    ITM(standard_caseless_rifle)
-    {
-        .name = "MilSpec Penetrator",
-        .category = ammunition,
-        .ammo = "7.62x51mm_caseless",
-        .armor_penetration = 12,
-        .price = 15,
-        .quantity = 30,
-        .description = "Common military-grade caseless rifle round for versatile use and easy logistics.",
-        .size = V2S(1, 1),
-    };
-
-    ITM(green_herb)
-    {
-        .name = "Green Herb",
-        .size = V2S(1, 1),
-    };
-
-    ITM(assault_rifle)
-    {
-        .size = V2S(5, 2),
-        .name = "T-17 Assault Rifle",
-        .category = rifle,
-        .range = 25,
-        .damage = 18,
-        .price = 300,
-        .durability = 120,
-        .ammo = "7.62x51mm_caseless", // Weapon will borrow armor penetration from its ammo type
-        .description = "A rugged and reliable assault rifle designed for military use, compatible with 7.62x51mm caseless rounds. Effective at any range.",
-    };
-
-
-#undef ITM
-
-    DefaultItemValues();
 }

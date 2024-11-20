@@ -1,5 +1,12 @@
 typedef struct
 {
+    const virtual_controls_t *Cons;
+    const client_input_t *Input;
+	command_buffer_t *Out;
+    bmfont_t *Font;
+    turn_system_t *TurnSystem;
+    f32 DeltaTime;
+    
     s32 DraggedItemID;
     b32 InventoryOpened;
     
@@ -23,21 +30,6 @@ typedef struct
 
 fn void CloseContainer(interface_t *In);
 fn void OpenContainer(interface_t *In, container_t *Container);
-
-fn void BeginInterface(interface_t *In, const client_input_t *Input)
-{
-	In->Cursor = GetCursorOffset(Input);
-	In->Interact[0] = (!In->Buttons[0] && Input->mouse_buttons[0]);
-	In->Interact[1] = (!In->Buttons[1] && Input->mouse_buttons[1]);
-
-	In->Buttons[0] = Input->mouse_buttons[0];
-	In->Buttons[1] = Input->mouse_buttons[1];
-}
-
-fn void EndInterface(interface_t *In)
-{
-
-}
 
 fn void OpenInventory(interface_t *In)
 {

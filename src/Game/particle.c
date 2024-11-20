@@ -4,12 +4,12 @@ typedef enum {
     combat_text_miss,
     combat_text_graze,
     combat_text_alerted,
+    combat_text_heal,
 } combat_text_type_t;
 
 typedef enum
 {
 	particle_type_none,
-	//particle_type_bitmap,
 	particle_type_number,
 	particle_type_combat_text
 } particle_type_t;

@@ -227,7 +227,8 @@ fn void Render_DrawFrame(game_state_t *state, command_buffer_t *out, f32 dt, ass
 	                    case combat_text_hit:      text = "HIT";      break;
 	                    case combat_text_miss:     color = LightGrey(); text = "MISS";     break;
 	                    case combat_text_graze:    text = "GRAZE";    break;
-	                    case combat_text_alerted:  text = "!"; color = Red(); break;
+	                    case combat_text_alerted:  text = "!"; color = White(); break;
+	                    case combat_text_heal:     text = "HEAL"; color = Green(); break;
 	                }
 
 	                DrawFormat(out_top, assets->Font, p, color, "%s", text);

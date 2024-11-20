@@ -73,6 +73,7 @@ typedef struct
 	pad_button_t dpad_right;
 	pad_button_t dpad_down;
 	pad_button_t dpad_left;
+	pad_button_t Modal;
 
 	pad_button_t confirm, cancel;
 
@@ -131,6 +132,7 @@ fn virtual_controls_t MapKeyboardToVirtualCons(const client_input_t *input, u8 k
 	result.x			= MapVirtualButton(key_code_tab, input, keys_prev);
 	result.y			= MapVirtualButton(key_code_space, input, keys_prev);
 	result.select		= MapVirtualButton('B', input, keys_prev);
+	result.Modal        = MapVirtualButton(key_code_shift, input, keys_prev);
 	return result;
 }
 
@@ -157,36 +159,31 @@ typedef struct
 	s32 Inputed;
 } dir_input_t;
 
-fn dir_input_t GetDirectionalInput(const client_input_t *In)
+fn dir_input_t GetDirectionalInput(const virtual_controls_t *In)
 {
 	dir_input_t Result = {0};
 	Result.DirIndex = -1;
 
 	const v2s *Dirs = cardinal_directions;
-	if (IsKeyPressed(In, key_code_shift))
+	if (IsDown(In->Modal))
 		Dirs = diagonal_directions;
 	Result.Dirs[0] = Dirs[0];
 	Result.Dirs[1] = Dirs[1];
 	Result.Dirs[2] = Dirs[2];
 	Result.Dirs[3] = Dirs[3];
 
-	s32 Keys = In->char_count;
-	while (Keys--)
-	{
-		u8 key = In->char_queue[Keys];
-		if (ToUpper(key) == 'W')
-			Result.DirIndex = 0;
-		else
-		if (ToUpper(key) == 'D')
-			Result.DirIndex = 1;
-		else
-		if (ToUpper(key) == 'S')
-			Result.DirIndex = 2;
-		else
-		if (ToUpper(key) == 'A')
-			Result.DirIndex = 3;
-	}
-
+	if (WentDown(In->dpad_up))
+		Result.DirIndex = 0;
+	else
+	if (WentDown(In->dpad_right))
+		Result.DirIndex = 1;
+	else
+	if (WentDown(In->dpad_down))
+		Result.DirIndex = 2;
+	else
+	if (WentDown(In->dpad_left))
+		Result.DirIndex = 3;
+	
 	if (Result.DirIndex >= 0)
 	{
 		Result.Inputed = true;

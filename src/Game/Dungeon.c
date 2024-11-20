@@ -3,7 +3,7 @@ fn inline void SetupPlayer(game_state_t *World, entity_t *Entity);
 fn entity_t *CreatePlayer(game_state_t *state, v2s p)
 {
     entity_t *result = 0;
-    if (state->Player == 0)
+    if (state->player == 0)
     {
         u16 player_health = 62;
         u16 player_max_health = 62;
@@ -18,7 +18,7 @@ fn entity_t *CreatePlayer(game_state_t *state, v2s p)
         SetupInventory(result->inventory);
         SetupPlayer(state, result);
 
-        state->Player = result->id;
+        state->player = result->id;
     }
     else
     {

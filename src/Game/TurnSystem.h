@@ -36,41 +36,39 @@ typedef struct
 
 typedef struct
 {
-
+	// context
+	log_t 		   	 *log;
+	particles_t 	 *particles;
 	entity_storage_t *storage;
-	map_t *map;
+	map_t 			 *map;
+	entity_id_t 	 player;
 
-	// NOTE(): Stores the turns as an list of entity ids
-	// in a *reverse* order (the last turn in the queue will be executed first).
+	// queue
 	s32 QueueSize;
-	entity_id_t Queue[64];
-	entity_id_t Player;
+	entity_id_t Queue[64]; // // NOTE(): Stores the turns as an list of entity ids in a *reverse* order (the last turn in the queue will be executed first).
 
-	// NOTE(): Turn State
-	v2s starting_p;
-	interpolator_state_t interp_state;
-	f32 time; // NOTE(): A variable within 0.0 to 1.0 range for interpolating values.
-
+	// turn state
 	s32 turn_inited;
-	s32 max_action_points;
-	s32 action_points;
+	s32 action_points, initial_action_points;
 	s32 movement_points;
 	f32 seconds_elapsed; // NOTE(): Seconds elapsed from the start of the turn.
 
 	s32 action_count;
 	async_action_t actions[1];
 
-	// Some additional book-keeping
+	// animation system
+	interpolator_state_t interp_state;
+	v2s starting_p;
+	f32 time; // NOTE(): A variable within 0.0 to 1.0 range for interpolating values.
+
+	// NOTE(): Some additional book-keeping
 	// for the animation system to use.
 	entity_id_t prev_turn_entity;
-	// NOTE(): A small buffer that stores
-	// copies of deleted entities for
-	// a brief amount of time.
 	#define ENTITY_EVICTION_SPEED 2.0f
 	s32 num_evicted_entities;
-	evicted_entity_t evicted_entities[8];
+	evicted_entity_t evicted_entities[8]; // // NOTE(): A small buffer that stores copies of deleted entities for a brief amount of time.
 
-	// modes
+	// debug modes
 	s32 free_camera_mode_enabled;
 	s32 god_mode_enabled;
 
@@ -78,7 +76,7 @@ typedef struct
 	interpolator_state_t requested_state;
 	s32 request_step;
 
-	// NOTE(): AI stuff
+	// AI
 	path_t path;
 } turn_system_t;
 
@@ -87,10 +85,13 @@ fn b32 GodModeDisabled(turn_system_t *System)
 	return (!System->god_mode_enabled);
 }
 
-fn void SetupTurn(turn_system_t *queue, s32 MovementPointCount)
+fn void SetupTurn(turn_system_t *queue, s32 MovementPointCount, s32 ActionPointCount)
 {
+	queue->initial_action_points = ActionPointCount;
+	queue->action_points = queue->initial_action_points;
+	
 	queue->movement_points = MovementPointCount;
-	queue->action_points = 3;
+	
 	queue->interp_state = interp_request;
 	queue->time = 0.0f;
 	queue->seconds_elapsed = 0.0f;
@@ -109,6 +110,11 @@ fn int32_t IsActive(const turn_system_t *System, entity_id_t id);
 fn void InteruptTurn(turn_system_t *Queue, entity_t *Entity);
 fn void AcceptTurn(turn_system_t *queue, entity_t *entity);
 
+// actions
+fn void QueryAsynchronousAction(turn_system_t *System, action_type_t type, entity_id_t target, v2s target_p);
+fn void CommitAction(turn_system_t *state, entity_t *user, entity_t *target, action_t *action, v2s target_p);
+fn void UseItem(turn_system_t *State, entity_t *Entity, inventory_t *Eq, item_t Item);
+
 // animation system
 fn void QueryAsynchronousAction(turn_system_t *queue, action_type_t type, entity_id_t target, v2s target_p);
 fn b32 IsActionQueueCompleted(const turn_system_t *queue);
@@ -117,7 +123,6 @@ fn b32 IsActionQueueCompleted(const turn_system_t *queue);
 fn void Brace(turn_system_t *queue, entity_t *entity);
 fn s32 ConsumeMovementPoints(turn_system_t *queue, s32 count);
 fn s32 ConsumeActionPoints(turn_system_t *queue, s32 count);
-
 
 // grid-based movement
 fn b32 IsCellEmpty(turn_system_t *System, v2s p);

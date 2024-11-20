@@ -41,6 +41,8 @@ fn void MessageLog(command_buffer_t *out, const bmfont_t *font, v2 p, log_t *Log
 			v2 ease = EaseInThenOut(20.0f, 10.0f, 0.0f, t0);
 			f32 x = (17.0f + ease.x);
 			v4 color = A(White(), 1.0f - ease.y);
+
+			DrawRect(out, p, V2(1000.0f, 25.0f), W(Black(), 0.8f * color.w));
 			DrawText(out, font, V2(p.x + x, p.y), line->text, color);
 			p.y -= 25.0f;
 			continue;

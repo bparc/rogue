@@ -92,11 +92,18 @@ typedef struct {
 } slot_bar_t;
 
 static action_params_t _Global_Action_Data[action_type_count];
-static const char *_Global_Action_Names[action_type_count];
 
 static inline const action_params_t *GetParameters(action_type_t type)
 {
 	return &_Global_Action_Data[type];
+}
+
+static action_t ActionFromType(action_type_t Type)
+{
+	action_t Result = {0};
+	Result.type = Type;
+	Result.params = GetParameters(Type);
+	return Result;
 }
 
 fn inline s32 GetAPCost(action_type_t type)

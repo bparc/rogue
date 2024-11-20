@@ -116,16 +116,24 @@ fn b32 ContextMenuItem(inventory_layout_t *Layout, const char *Text)
     return Result;
 }
 
-fn void ContextMenu(command_buffer_t *Out, interface_t *In, inventory_t *Eq, inventory_layout_t Layout, item_id_t Item)
+fn void ContextMenu(interface_t *In, inventory_layout_t Layout, command_buffer_t *Out, entity_t *User, inventory_t *Eq, item_id_t ItemID, turn_system_t *TurnSystem)
 {
-    if (ContextMenuItem(&Layout, "Use"))
-        DebugLog("Use...");
-    if (ContextMenuItem(&Layout, "Examine"))
-        DebugLog("Examine...");
-    if (ContextMenuItem(&Layout, "Remove"))
-        Eq_RemoveItem(Eq, Item);
-    ContextMenuItem(&Layout, "Drop");
-    ContextMenuItem(&Layout, "Exit");
+    item_t *Item = Eq_GetItem(Eq, ItemID);
+    if (Item)
+    {
+        if (Item->params->action != action_none)
+        {
+            if (ContextMenuItem(&Layout, "Use"))
+                UseItem(TurnSystem, User, Eq, *Item);
+        }
+
+        if (ContextMenuItem(&Layout, "Examine"))
+            DebugLog("Examine...");
+        if (ContextMenuItem(&Layout, "Remove"))
+            Eq_RemoveItem(Eq, ItemID);
+        ContextMenuItem(&Layout, "Drop");
+        ContextMenuItem(&Layout, "Exit");
+    }
 }
 
 fn void OpenContainer(interface_t *In, container_t *Container)
@@ -145,9 +153,15 @@ fn void CloseContainer(interface_t *In)
     }
 }
 
-fn void Inventory(v2 EqMin, command_buffer_t *Out, inventory_t *Eq, const client_input_t *Input,
-    bmfont_t *Font, interface_t *In, entity_t *User, const virtual_controls_t *Cons, f32 dt, b32 DrawUserInfo, container_t *Container)
+fn void Inventory(interface_t *In, v2 EqMin, inventory_t *Eq, entity_t *User, container_t *Container, b32 DrawUserInfo)
 {
+    command_buffer_t *Out = In->Out;
+    const virtual_controls_t *Cons = In->Cons;
+    f32 dt = In->DeltaTime;
+    turn_system_t *TurnSystem = In->TurnSystem;
+    bmfont_t *Font = In->Font;
+    const client_input_t *Input = In->Input;
+
     v2 Cursor = GetCursorOffset(Input);
     const char *Tooltip = NULL;
 
@@ -270,7 +284,7 @@ fn void Inventory(v2 EqMin, command_buffer_t *Out, inventory_t *Eq, const client
         // NOTE(): Begin Context Menu
         Layout.ContextMenuMin = Bounds.min = In->ClickOffset;
         Layout.At = Bounds.min;
-        ContextMenu(Out, In, Eq, Layout, In->ContextMenuItem);
+        ContextMenu(In, Layout, Out, User, Eq, In->ContextMenuItem, TurnSystem);
         // NOTE(): End Context Menu
         Bounds.max.x = (Bounds.min.x + Layout.ContextMenuItemWidth);
         Bounds.max.y = Layout.At.y;

@@ -1,51 +1,47 @@
-fn s32 BeginTurn(game_state_t *game, entity_t *entity)
+fn void FindPathToEntity(turn_system_t *State, v2s From, entity_t *Entity, path_t *Path, s32 MaxLength, memory_t Memory)
 {
-	ProcessStatusEffects(entity);
-
-	s32 movement_point_count = 10;
-	if (IsHostile(entity))
+	if (Entity)
 	{
-		//movement_point_count = 2 + (rand() % 2);
+		FindPath(State->map, From, Entity->p, Path, Memory);
+		Path->length = Min32(Path->length, MaxLength);
 
-		// NOTE(): Request a path to the player.
-		turn_system_t *queue = game->turns;
-		entity_t *player = FindClosestPlayer(game->storage, entity->p);
-		Assert(player);
-
-		path_t *path = &queue->path;
-		if (!FindPath(game->map, entity->p, player->p, path, *game->memory))
-			DebugLog("Couldn't find a path!");
-		movement_point_count = 6;
-		queue->max_action_points = movement_point_count;
-
-		path->length = Min32(path->length, movement_point_count);
-
-		// NOTE(): Truncate path to the closest unoccupied point to the
-		// destination.
-		s32 index = path->length - 1;
+		// truncate to the closest unoccupied point to the entity
+		s32 index = Path->length - 1;
 		while (index >= 0)
 		{
-			if (IsCellEmpty(game->turns, path->tiles[index].p) == false)
+			if (IsCellEmpty(State, Path->tiles[index].p) == false)
 			{
 				index--;
 				continue;
 			}
 			break;
 		}
-		movement_point_count = path->length = (index + 1);
-		
-		entity->DEBUG_step_count = 0;
+	
+		Path->length = (index + 1);
 	}
-
-	return movement_point_count;
 }
 
-fn s32 Decide(game_state_t *game, entity_t *entity)
+fn s32 BeginEnemyTurn(turn_system_t *State, entity_t *entity, memory_t Memory)
 {
-	path_t *path = &game->turns->path;
-	s32 index = entity->DEBUG_step_count++;
-	if (index < path->length)
-		entity->p = path->tiles[index].p;
+	s32 movement_point_count = 6;
+	FindPathToEntity(State, entity->p, FindClosestPlayer(State->storage, entity->p), &State->path, 6, Memory);
+
+	entity->DEBUG_step_count = 0;
+	return (movement_point_count);
+}
+
+fn s32 Decide(turn_system_t *System, entity_t *entity)
+{
+	path_t *path = &System->path;
+	s32 CurrentNode = entity->DEBUG_step_count++;
+	if (CurrentNode < path->length)
+	{
+		entity->p = path->tiles[CurrentNode].p;
+	}
+	else
+	{
+		System->movement_points = 0; // Stop
+	}
 	return 1;
 }
 

@@ -8,6 +8,8 @@
 #include "Map/pathfinding.c"
 
 // NOTE(): Game/
+#include "Game/particle.c"
+
 #include "Game/Action.h"
 #include "Game/items.h"
 #include "Game/inventory.h"
@@ -19,13 +21,12 @@
 
 #include "Game/TurnSystem.h"
 #include "Game/cursor.h"
-#include "Game/particle.c"
 
 #include "UI/interface.h"
 
 typedef struct
 {
-	entity_id_t			Player;
+	entity_id_t			player;
 	assets_t 			*assets;
 	log_t 				*log;
 	cursor_t 			*cursor;
@@ -57,6 +58,8 @@ typedef struct
 #include "UI/hud_queue.c"
 #include "UI/hud.c"
 
+#include "GameData.h"
+
 fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *assets)
 {
 	state->memory = memory;
@@ -77,13 +80,14 @@ fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *asset
 
 	DefaultActionBar(&state->slot_bar,  assets);
 
-	GenerateDungeon(state->layout, 6, *state->memory);
+	GenerateDungeon(state->layout, 12, *state->memory);
 	CreateDungeon(state, state->layout);
 }
 
 fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, turn_system_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
 	entity_t *ActiveEntity = NULL;
+	ControlPanel(state->turns, &cons, state->storage);
 
 	BeginTurnSystem(queue, state, dt);
 	ActiveEntity = PullUntilActive(queue);
@@ -103,10 +107,12 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 			CloseCursor(state->cursor);
 			CloseInventory(state->interface);			
 
-			s32 MovementPointCount = BeginTurn(state, ActiveEntity);
-			SetupTurn(queue, MovementPointCount);
-			
-			Assert(queue->turn_inited);
+			s32 MovementPointCount = MAX_PLAYER_MOVEMENT_POINTS;
+			if (IsHostile(ActiveEntity))
+				MovementPointCount = BeginEnemyTurn(queue, ActiveEntity, *state->memory);
+
+			SetupTurn(queue, MovementPointCount, 4);
+			ProcessStatusEffects(ActiveEntity);
 		}
 
 		Camera(state, ActiveEntity, input, dt);
@@ -120,20 +126,19 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 				if (IsCursorEnabled(state->cursor))
 					BlockMovementInputs = true;
 
-				dir_input_t DirInput = GetDirectionalInput(input);
+				dir_input_t DirInput = GetDirectionalInput(&cons);
 				DoCursor(state, out, cons, ActiveEntity, DirInput);
 				Player(ActiveEntity, state, input, out, &cons, DirInput, BlockMovementInputs);
 			}
 		}
 		else
 		{
-			AI(state, storage, map, queue, dt, input, cons, log, out, assets, ActiveEntity);
+			AI(state, dt, out, cons, ActiveEntity);
 		}
 	}
 
 	ResolveAsynchronousActionQueue(queue, ActiveEntity, out, dt, assets, state);
 	GarbageCollect(state, queue, dt);
-	ControlPanel(state->turns, &cons, state->storage);
 
 	EndTurnSystem(queue, state);
 }
@@ -141,6 +146,6 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 fn void Tick(game_state_t *state, f32 dt, client_input_t input, virtual_controls_t cons, command_buffer_t *Layer0, command_buffer_t *Layer1)
 {
 	TurnSystem(state, state->storage, state->map, state->turns, dt, &input, cons, state->log, Layer1, state->assets);	
-	HUD(Debug.out, state, state->turns, state->storage, state->assets, &input, &cons, dt);
+	HUD(Debug.out, state, &input, &cons, dt);
 	Render_DrawFrame(state, Layer0, dt, state->assets, V2(input.viewport[0], input.viewport[1]));
 }

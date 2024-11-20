@@ -1,8 +1,9 @@
 fn inline void SetupPlayer(game_state_t *World, entity_t *Player)
 {
 	inventory_t *Inventory = Player->inventory;
-	#if 0
     Eq_AddItem(Inventory, item_green_herb);
+    Eq_AddItem(Inventory, item_assault_rifle);
+    #if 0
     Eq_AddItem(Inventory, item_green_herb);
     Eq_AddItem(Inventory, item_assault_rifle);
     Eq_AddItem(Inventory, item_green_herb);

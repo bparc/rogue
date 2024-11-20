@@ -62,6 +62,7 @@ fn void _Flood(const map_t *map, u8 *visited, min_queue_t *queue, min_queue_entr
 
 fn s32 FindPath(const map_t *map, v2s source, v2s dest, path_t *out, memory_t memory)
 {
+	DebugLog("requesting a path from %i, %i to %i, %i", source.x, source.y, dest.x, dest.y);
 	u8 *visited = PushArray(u8, &memory, map->x * map->y);
 	memset(visited, 0, map->x * map->y);
 

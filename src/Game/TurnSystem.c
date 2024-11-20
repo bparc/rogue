@@ -199,7 +199,7 @@ const f32 ScaleTByDistance(v2 a, v2 b, f32 t)
 	return result;
 }
 
-fn void DoDamage(game_state_t *game, entity_t *user, entity_t *target, s32 damage, const char *damage_type_prefix)
+fn void DoDamage(turn_system_t *game, entity_t *user, entity_t *target, s32 damage, const char *damage_type_prefix)
 {
     damage = damage + (rand() % 3);
     LogLn(game->log, "%shit! inflicted %i %s of %sdamage upon the target!",
@@ -214,7 +214,7 @@ fn void DoDamage(game_state_t *game, entity_t *user, entity_t *target, s32 damag
     }
 }
 
-fn inline void AOE(game_state_t *state, entity_t *user, entity_t *target, const action_params_t *params)
+fn inline void AOE(turn_system_t *state, entity_t *user, entity_t *target, const action_params_t *params, v2s TileIndex)
 {
     entity_storage_t *storage = state->storage;
     
@@ -223,7 +223,7 @@ fn inline void AOE(game_state_t *state, entity_t *user, entity_t *target, const 
     v2s area = params->area;
     s32 radius_inner = area.x;
     s32 radius_outer = area.x * (s32)2;
-    v2s explosion_center = state->cursor->p;
+    v2s explosion_center = TileIndex;
     for (s32 i = 0; i < storage->EntityCount; i++)
     {
         entity_t *entity = &storage->entities[i];
@@ -233,14 +233,14 @@ fn inline void AOE(game_state_t *state, entity_t *user, entity_t *target, const 
             DoDamage(state, user, entity, damage, prefix);
         } else if (distance <= radius_outer) {
             DoDamage(state, user, entity, damage, prefix);
-            Launch(state->turns, explosion_center, entity, 2, 25);
+            Launch(state, explosion_center, entity, 2, 25);
         }
     }
 }
 
-fn inline void SingleTarget(game_state_t *state, entity_t *user, entity_t *target, const action_params_t *params)
+fn inline void SingleTarget(turn_system_t *state, entity_t *user, entity_t *target, const action_params_t *params)
 {
-    if ((IsPlayer(user) && state->turns->god_mode_enabled))
+    if ((IsPlayer(user) && state->god_mode_enabled))
     {
         DoDamage(state, user, target, target->health, "");
     }
@@ -278,7 +278,7 @@ fn inline void SingleTarget(game_state_t *state, entity_t *user, entity_t *targe
     }
 }
 
-fn void CommitAction(game_state_t *state, entity_t *user, entity_t *target, action_t *action, v2s target_p)
+fn void CommitAction(turn_system_t *state, entity_t *user, entity_t *target, action_t *action, v2s target_p)
 {
     const action_params_t *params = GetParameters(action->type);
 
@@ -292,16 +292,30 @@ fn void CommitAction(game_state_t *state, entity_t *user, entity_t *target, acti
         }
         else
         {
-            AOE(state, user, target, params);
+            AOE(state, user, target, params, target_p);
         }
 
         // NOTE(): Reset per-turn attack buffs/modifiers.
         user->has_hitchance_boost = false;
         user->hitchance_boost_multiplier = 1.0f;
     } break;
-    case action_mode_heal: Heal(target, (s16) params->value); break;
+    case action_mode_heal:
+    	{
+    		Heal(target, (s16) params->value);
+    		CreateCombatText(state->particles, target->deferred_p, combat_text_heal);
+    	} break;
     case action_mode_dash: user->p = target_p; break;
     }
+}
+
+fn void UseItem(turn_system_t *State, entity_t *Entity, inventory_t *Eq, item_t Item)
+{
+	action_type_t Action = Item.params->action;
+	if (Action != action_none)
+	{
+		QueryAsynchronousAction(State, Action, Entity->id, Entity->p);
+		Eq_RemoveItem(Eq, Item.ID);
+	}
 }
 
 fn void ResolveAsynchronousActionQueue(turn_system_t *System, entity_t *user, command_buffer_t *out, f32 dt, assets_t *assets, game_state_t *state)
@@ -341,15 +355,21 @@ fn void ResolveAsynchronousActionQueue(turn_system_t *System, entity_t *user, co
 		if (finished)
 		{
 			System->actions[index--] = System->actions[--System->action_count];
-			CommitAction(state, user, GetEntity(System->storage, action->target_id), &action->action_type, action->target_p);
+			CommitAction(state->turns, user, GetEntity(System->storage, action->target_id), &action->action_type, action->target_p);
 		}
 
 		action->elapsed += dt * 1.0f;
 	}
 }
 
-fn void AI(game_state_t *state, entity_storage_t *storage, map_t *map, turn_system_t *System, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets, entity_t *entity)
+fn void AI(game_state_t *state, f32 dt, command_buffer_t *out, virtual_controls_t cons, entity_t *entity)
 {
+	assets_t *assets = state->assets;
+	map_t *map = state->map;
+	turn_system_t *System = state->turns;
+	entity_storage_t *storage = state->storage;
+	log_t *log = state->log;
+
 	RenderRange(out, map, entity->p, ENEMY_DEBUG_RANGE, Green());
 
 	switch(System->interp_state)
@@ -366,8 +386,8 @@ fn void AI(game_state_t *state, entity_storage_t *storage, map_t *map, turn_syst
 	case interp_request:
 		{
 			System->starting_p = entity->p;
-			s32 cost = Decide(state, entity);
-				System->action_points -= cost;
+			s32 cost = Decide(System, entity);
+			System->action_points -= cost;
 			
 			if (!ChangeQueueState(System, interp_transit))
 				break;
@@ -421,9 +441,12 @@ fn void AI(game_state_t *state, entity_storage_t *storage, map_t *map, turn_syst
 
 fn void BeginTurnSystem(turn_system_t *Queue, game_state_t *Game, f32 dt)
 {
-	Queue->Player = Game->Player;
-	Queue->map = Game->map;
-	Queue->storage = Game->storage;
+	Queue->player 		= Game->player;
+	Queue->map 			= Game->map;
+	Queue->storage 		= Game->storage;
+	Queue->particles 	= Game->particles;
+	Queue->log 			= Game->log;
+	
 	Queue->seconds_elapsed += dt;
 	Queue->time += (dt * 4.0f);
 }
@@ -594,7 +617,7 @@ fn b32 Launch(turn_system_t *System, v2s source, entity_t *target, u8 push_dista
 fn void EstablishTurnOrder(turn_system_t *System)
 {
 	entity_storage_t *Storage = System->storage;
-	PushTurn(System, GetEntity(System->storage, System->Player));
+	PushTurn(System, GetEntity(System->storage, System->player));
 	
 	for (s32 index = 0; index < Storage->EntityCount; index++)
 	{
