@@ -13,18 +13,21 @@ fn void RenderHitChance(command_buffer_t *out, assets_t *assets, v2 p, s32 hit_c
 
 fn inline s32 Cursor_DoAction(cursor_t *cursor, map_t *map, entity_t *user, entity_t *target, turn_system_t *queue, const action_params_t *settings)
 {
-	if (!target)
-		return 0;
-
 	entity_id_t id = target ? target->id : 0;
-	v2s p = target ? target->p : cursor->p;
+	v2s TargetedCell = target ? target->p : cursor->p;
+
+	b32 TargetValid = true;
+    if (IsTargetField(settings->type))
+    	TargetValid = (TargetValid && IsTraversable(map, cursor->p));
+    if (IsTargetHostile(settings->type))
+    	TargetValid = (TargetValid && IsHostile(target));
 
 	b32 Query = false;
-	b32 LOSTest = IsLineOfSight(map, user->p, p);
-    if (LOSTest)
+    if (IsLineOfSight(map, user->p, TargetedCell) && TargetValid)
        	Query = ConsumeActionPoints(queue, queue->god_mode_enabled ? 0 : settings->cost);
+
     if (Query)
-		QueryAsynchronousAction(queue, settings->type, id, p);
+		QueryAsynchronousAction(queue, settings->type, id, TargetedCell);
 	return Query;
 }
 
@@ -123,15 +126,8 @@ fn void DoCursor(game_state_t *Game, command_buffer_t *out, virtual_controls_t c
 			cursor->Target = target->id;
 		}
 		// NOTE(): Perform an action on the target.
-		if (WentUp(cons.confirm))
-		{
-			b32 target_valid = IsHostile(target);
-			if (IsTargetAny(equipped.type))
-				target_valid |= IsTraversable(map, cursor->p); 
-			b32 positioned_on_user = CompareVectors(cursor->p, user->p);
-			if (target_valid && (positioned_on_user == false)) {
-				Cursor_DoAction(cursor, map, user, target, queue, settings);
-			}
-		}
+		b32 not_positioned_on_user = !CompareVectors(cursor->p, user->p);
+		if (WentUp(cons.confirm) && not_positioned_on_user)
+			Cursor_DoAction(cursor, map, user, target, queue, settings);
 	}
 }

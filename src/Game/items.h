@@ -88,17 +88,3 @@ fn item_t MakeItemFromType(item_type_t Type)
     Result.size   = Result.params->size;
     return Result;  
 }
-
-void DefaultItemValues(void)
-{
-    for (s32 index = 0; index < ArraySize(_Global_Item_Data); index++)
-    {
-        item_params_t *Params = &_Global_Item_Data[index];
-        Params->type = (item_type_t)index;
-        Params->category = (item_categories_t)index;
-        if (Params->name == NULL)
-            Params->name = "Not Set";
-        if (IsZero(Params->size))
-            Params->size = V2S(1, 1);
-    }
-}

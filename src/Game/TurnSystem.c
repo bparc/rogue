@@ -193,121 +193,6 @@ fn void Brace(turn_system_t *System, entity_t *entity)
 	}
 }
 
-const f32 ScaleTByDistance(v2 a, v2 b, f32 t)
-{
-	f32 result = t / (Distance(a, b) * 0.005f);
-	return result;
-}
-
-fn void DoDamage(turn_system_t *game, entity_t *user, entity_t *target, s32 damage, const char *damage_type_prefix)
-{
-    damage = damage + (rand() % 3);
-    LogLn(game->log, "%shit! inflicted %i %s of %sdamage upon the target!",
-        damage_type_prefix, damage, damage == 1 ? "point" : "points", damage_type_prefix);
-    TakeHP(target, (s16)damage);
-    CreateDamageNumber(game->particles, Add(target->deferred_p, V2(-25.0f, -25.0f)), damage);
-
-    if ((rand() / (float)RAND_MAX) < 20) {
-        blood_type_t blood_type = (target->enemy_type == 0) ? blood_red : blood_green;
-        hit_velocity_t hit_velocity = (rand() % 2 == 0) ? high_velocity : low_velocity; // Just a temporary thing until we add ammo types
-        BloodSplatter(game->map, user->p, target->p, blood_type, hit_velocity);
-    }
-}
-
-fn inline void AOE(turn_system_t *state, entity_t *user, entity_t *target, const action_params_t *params, v2s TileIndex)
-{
-    entity_storage_t *storage = state->storage;
-    
-    const char *prefix = "blast ";
-    s32 damage = params->damage;
-    v2s area = params->area;
-    s32 radius_inner = area.x;
-    s32 radius_outer = area.x * (s32)2;
-    v2s explosion_center = TileIndex;
-    for (s32 i = 0; i < storage->EntityCount; i++)
-    {
-        entity_t *entity = &storage->entities[i];
-        f32 distance = DistanceV2S(explosion_center, entity->p);
-        
-        if (distance <= radius_inner) {
-            DoDamage(state, user, entity, damage, prefix);
-        } else if (distance <= radius_outer) {
-            DoDamage(state, user, entity, damage, prefix);
-            Launch(state, explosion_center, entity, 2, 25);
-        }
-    }
-}
-
-fn inline void SingleTarget(turn_system_t *state, entity_t *user, entity_t *target, const action_params_t *params)
-{
-    if ((IsPlayer(user) && state->god_mode_enabled))
-    {
-        DoDamage(state, user, target, target->health, "");
-    }
-    else
-    {
-        s32 chance = CalculateHitChance(user, target, params->type);
-        s32 roll = rand() % 100;
-        s32 roll_crit = rand() % 100;
-
-        b32 missed = !(roll < chance);
-        b32 crited = (roll_crit < CRITICAL_DAMAGE_MULTIPLIER);
-        b32 grazed = ((roll >= chance)) && (roll < (chance + GRAZE_THRESHOLD));
-
-        if ((missed == false))
-        {    
-            if (crited) {
-                DoDamage(state, user, target, params->damage * CRITICAL_DAMAGE_MULTIPLIER, "critical ");
-                CreateCombatText(state->particles, target->deferred_p, 0);
-            } else {
-                DoDamage(state, user, target, params->damage, "");
-                CreateCombatText(state->particles, target->deferred_p, 1);
-            }
-        }
-        else
-        {
-            if (grazed) {
-                DoDamage(state, user, target, params->damage / 2, "graze ");
-                CreateCombatText(state->particles, target->deferred_p, 3);
-            } else {
-                LogLn(state->log, "missed!");
-                CreateDamageNumber(state->particles, target->deferred_p, 0);
-                CreateCombatText(state->particles, target->deferred_p, 2);
-            }
-        }
-    }
-}
-
-fn void CommitAction(turn_system_t *state, entity_t *user, entity_t *target, action_t *action, v2s target_p)
-{
-    const action_params_t *params = GetParameters(action->type);
-
-    switch (params->mode)
-    {
-    case action_mode_damage:
-    {
-        if (IsZero(params->area))
-        {
-            SingleTarget(state, user, target, params);
-        }
-        else
-        {
-            AOE(state, user, target, params, target_p);
-        }
-
-        // NOTE(): Reset per-turn attack buffs/modifiers.
-        user->has_hitchance_boost = false;
-        user->hitchance_boost_multiplier = 1.0f;
-    } break;
-    case action_mode_heal:
-    	{
-    		Heal(target, (s16) params->value);
-    		CreateCombatText(state->particles, target->deferred_p, combat_text_heal);
-    	} break;
-    case action_mode_dash: user->p = target_p; break;
-    }
-}
-
 fn void UseItem(turn_system_t *State, entity_t *Entity, inventory_t *Eq, item_t Item)
 {
 	action_type_t Action = Item.params->action;
@@ -338,7 +223,7 @@ fn void ResolveAsynchronousActionQueue(turn_system_t *System, entity_t *user, co
 
 			v2 From = GetTileCenter(map, action->target_p);
 			v2 To = user->deferred_p;
-			f32 time = ScaleTByDistance(From, To, action->elapsed);
+			f32 time = action->elapsed / (Distance(From, To) * 0.005f);
 			finished = (time >= 1.0f);
 			RenderRangedAnimation(out, To, From, params->animation_ranged, time);
 		}
@@ -625,4 +510,116 @@ fn void EstablishTurnOrder(turn_system_t *System)
 		if (IsHostile(entity) && entity->Alerted)
 			PushTurn(System, entity);
 	}
+}
+
+fn void DoDamage(turn_system_t *game, entity_t *user, entity_t *target, s32 damage, const char *damage_type_prefix)
+{
+    damage = damage + (rand() % 3);
+    LogLn(game->log, "%shit! inflicted %i %s of %sdamage upon the target!",
+        damage_type_prefix, damage, damage == 1 ? "point" : "points", damage_type_prefix);
+    TakeHP(target, (s16)damage);
+    CreateDamageNumber(game->particles, Add(target->deferred_p, V2(-25.0f, -25.0f)), damage);
+
+    if ((rand() / (float)RAND_MAX) < 20) {
+        blood_type_t blood_type = (target->enemy_type == 0) ? blood_red : blood_green;
+        hit_velocity_t hit_velocity = (rand() % 2 == 0) ? high_velocity : low_velocity; // Just a temporary thing until we add ammo types
+        BloodSplatter(game->map, user->p, target->p, blood_type, hit_velocity);
+    }
+}
+
+fn inline void AOE(turn_system_t *state, entity_t *user, entity_t *target, const action_params_t *params, v2s TileIndex)
+{
+    entity_storage_t *storage = state->storage;
+    
+    const char *prefix = "blast ";
+    s32 damage = params->damage;
+    v2s area = params->area;
+    s32 radius_inner = area.x;
+    s32 radius_outer = area.x * (s32)2;
+    v2s explosion_center = TileIndex;
+    for (s32 i = 0; i < storage->EntityCount; i++)
+    {
+        entity_t *entity = &storage->entities[i];
+        f32 distance = DistanceV2S(explosion_center, entity->p);
+        
+        if (distance <= radius_inner) {
+            DoDamage(state, user, entity, damage, prefix);
+        } else if (distance <= radius_outer) {
+            DoDamage(state, user, entity, damage, prefix);
+            Launch(state, explosion_center, entity, 2, 25);
+        }
+    }
+}
+
+fn inline void SingleTarget(turn_system_t *state, entity_t *user, entity_t *target, const action_params_t *params)
+{
+    if ((IsPlayer(user) && state->god_mode_enabled))
+    {
+        DoDamage(state, user, target, target->health, "");
+    }
+    else
+    {
+		s32 chance = 100;
+		CalculateHitChance(user, target, params->type);
+
+        s32 roll = rand() % 100;
+        s32 roll_crit = rand() % 100;
+
+        b32 missed = !(roll < chance);
+        b32 crited = (roll_crit < CRITICAL_DAMAGE_MULTIPLIER);
+        b32 grazed = ((roll >= chance)) && (roll < (chance + GRAZE_THRESHOLD));
+
+        if ((missed == false))
+        {    
+            if (crited) {
+                DoDamage(state, user, target, params->damage * CRITICAL_DAMAGE_MULTIPLIER, "critical ");
+                CreateCombatText(state->particles, target->deferred_p, 0);
+            } else {
+                DoDamage(state, user, target, params->damage, "");
+                CreateCombatText(state->particles, target->deferred_p, 1);
+            }
+        }
+        else
+        {
+            if (grazed) {
+                DoDamage(state, user, target, params->damage / 2, "graze ");
+                CreateCombatText(state->particles, target->deferred_p, 3);
+            } else {
+                LogLn(state->log, "missed!");
+                CreateDamageNumber(state->particles, target->deferred_p, 0);
+                CreateCombatText(state->particles, target->deferred_p, 2);
+            }
+        }
+    }
+}
+
+fn void CommitAction(turn_system_t *state, entity_t *user, entity_t *target, action_t *action, v2s target_p)
+{
+    const action_params_t *params = GetParameters(action->type);
+
+    switch (params->mode)
+    {
+    case action_mode_damage:
+    {
+        if (IsZero(params->area))
+        {
+        	if (target)
+            	SingleTarget(state, user, target, params);
+        }
+        else
+        {
+            AOE(state, user, target, params, target_p);
+        }
+
+        // NOTE(): Reset per-turn attack buffs/modifiers.
+        user->has_hitchance_boost = false;
+        user->hitchance_boost_multiplier = 1.0f;
+    } break;
+    case action_mode_heal:
+    	{
+    		Heal(target, (s16) params->value);
+    		CreateCombatText(state->particles, target->deferred_p, combat_text_heal);
+    	} break;
+    case action_mode_dash: user->p = target_p; break;
+    }
 }

@@ -1,3 +1,17 @@
+void DefaultItemValues(void)
+{
+    for (s32 index = 0; index < ArraySize(_Global_Item_Data); index++)
+    {
+        item_params_t *Params = &_Global_Item_Data[index];
+        Params->type = (item_type_t)index;
+        Params->category = (item_categories_t)index;
+        if (Params->name == NULL)
+            Params->name = "Not Set";
+        if (IsZero(Params->size))
+            Params->size = V2S(1, 1);
+    }
+}
+
 fn void SetupItemDataTable(memory_t *memory, const assets_t *assets)
 {
 #define ITM(Type) _Global_Item_Data[item_##Type]  = (item_params_t)
@@ -40,6 +54,21 @@ fn void SetupItemDataTable(memory_t *memory, const assets_t *assets)
     DefaultItemValues();
 }
 
+void DefaultActionValues(void)
+{
+    for (s32 index = 0; index < ArraySize(_Global_Action_Data); index++)
+    {
+        action_params_t *Params = &_Global_Action_Data[index];
+        Params->type = (action_type_t)index;
+        if (Params->name == NULL)
+            Params->name = "Not Set";
+        if (!Params->range)
+            Params->range = 2;
+        if (!Params->target)
+            Params->target = target_hostile;
+    }
+}
+
 fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
 {
     #define ACT(Type) _Global_Action_Data[action_##Type]  = (action_params_t)
@@ -76,6 +105,7 @@ fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
         .range  = 6,
         .area   = {2, 2},
         .cost   = 1,
+        .target = target_field,
     };
     ACT(slash)
     {
@@ -85,10 +115,12 @@ fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
     };
     ACT(dash)
     {
+        .name = "Dash",
         .mode   = action_mode_dash,
         .flags  = action_display_move_name,
         .range  = 5,
         .cost   = 1,
+        .target = target_field,
     };
     ACT(slime_ranged)
     {

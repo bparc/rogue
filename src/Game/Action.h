@@ -17,8 +17,8 @@ const char *action_type_t_names[] =
 typedef enum
 {
 	target_self	   = 1 << 0,
-	//target_field   = 1 << 1,
-	//target_hostile = 1 << 2,
+	target_field   = 1 << 1,
+	target_hostile = 1 << 2,
 } target_flags_t;
 
 typedef enum {
@@ -69,7 +69,8 @@ typedef struct
 	//const bitmap_t *animation;
 } action_params_t;
 
-typedef struct {
+typedef struct
+{
 	action_type_t type;
 	const action_params_t *params;
 	bitmap_t *icon;
@@ -117,8 +118,12 @@ fn inline b32 IsTargetSelf(action_type_t type)
 	return _Global_Action_Data[type].target & target_self;
 }
 
-fn inline b32 IsTargetAny(action_type_t type)
+fn inline b32 IsTargetHostile(action_type_t type)
 {
-	s32 result = (GetParameters(type)->target == 0);
-	return result;
+	return _Global_Action_Data[type].target & target_hostile;
+}
+
+fn inline b32 IsTargetField(action_type_t type)
+{
+	return _Global_Action_Data[type].target & target_field;
 }

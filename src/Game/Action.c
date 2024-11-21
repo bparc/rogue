@@ -40,7 +40,7 @@ fn void DefaultActionBar(slot_bar_t *bar, assets_t *assets)
     SetMenuShortcut(bar, 0, Index++, action_dash);
 }
 
-fn s32 CalculateHitChance(const entity_t *user, const entity_t *target, action_type_t action_type)
+fn inline s32 CalculateHitChance(const entity_t *user, const entity_t *target, action_type_t action_type)
 {
     s32 final_hit_chance;
     f32 distance = DistanceV2S(user->p, target->p);
@@ -67,18 +67,4 @@ fn s32 CalculateHitChance(const entity_t *user, const entity_t *target, action_t
 
     final_hit_chance = 100;
     return final_hit_chance;
-}
-
-void DefaultActionValues(void)
-{
-    for (s32 index = 0; index < ArraySize(_Global_Action_Data); index++)
-    {
-        action_params_t *Params = &_Global_Action_Data[index];
-        Params->type = (action_type_t)index;
-        if (Params->name == NULL)
-            Params->name = "Not Set";
-        if (!Params->range)
-            Params->range = 2;
-
-    }
 }

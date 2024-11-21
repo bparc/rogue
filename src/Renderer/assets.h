@@ -1,8 +1,6 @@
 #define TILE_POSITION_COUNT 14
 #define TILE_VARIATIONS_COUNT_MAX 5
 
-
-
 typedef struct {
     bitmap_t LowTiles[TILE_POSITION_COUNT][TILE_VARIATIONS_COUNT_MAX]; //order as in enum below
 	bitmap_t MidTiles[TILE_POSITION_COUNT][TILE_VARIATIONS_COUNT_MAX]; //maybe require two actions to climb?
@@ -18,7 +16,6 @@ typedef struct {
 
 	bitmap_t action_bar_icons[16][1]; //icons:variations, order as in world.c
 } combat_ui_t;
-
 
 typedef struct
 {
