@@ -65,7 +65,6 @@ fn s32 CalculateHitChance(const entity_t *user, const entity_t *target, action_t
 
     final_hit_chance = Clamp32(final_hit_chance, 0, 100);
 
-    final_hit_chance = 100;
     return final_hit_chance;
 }
 
