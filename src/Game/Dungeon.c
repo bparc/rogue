@@ -7,7 +7,7 @@ fn entity_t *CreatePlayer(game_state_t *state, v2s p)
     {
         u16 player_health = 62;
         u16 player_max_health = 62;
-        u16 attack_dmg = 8;
+        u16 attack_dmg = 8; // What does this do now?
         s32 player_accuracy = 75; // Applying this value for both melee and ranged accuracy
         s32 player_evasion = 20;
         result = CreateEntity(state->storage, p, V2S(1, 1), entity_flags_controllable,

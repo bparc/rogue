@@ -75,19 +75,19 @@ fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
 
     ACT(melee_attack)
     {
-        .damage = 3,
+        .damage = 48,
         .cost   = 1,
     };
     ACT(ranged_attack)
     {
-        .range  = 5,
+        .range  = 10,
         .cost   = 1,
-        .damage = 4,
+        .damage = 38,
     };
     ACT(heal)
     {
         .mode = action_mode_heal,
-        .cost = 2,
+        .cost = 4,
         .damage = 10,
         .value  = 10,
         .target = target_self,
