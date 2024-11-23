@@ -80,4 +80,5 @@ fn void Win32GetInput(client_input_t *result, HWND window, s32 wheel_delta)
 	result->keys[key_code_f3] = (GetAsyncKeyState(VK_F3) < 0);
 	result->keys[key_code_f4] = (GetAsyncKeyState(VK_F4) < 0);
 	result->keys[key_code_f5] = (GetAsyncKeyState(VK_F5) < 0);
+	result->keys[key_code_f12] = (GetAsyncKeyState(VK_F12) < 0);
 }

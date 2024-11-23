@@ -1,5 +1,5 @@
 // NOTE(): Map/
-#include "Map/Levels.h"
+#include "Levels.h"
 #include "Map/map.h"
 #include "Map/map.c"
 #include "Map/generator.h"
@@ -23,6 +23,7 @@
 #include "Game/cursor.h"
 
 #include "UI/interface.h"
+#include "GameMenu.c"
 
 typedef struct
 {
@@ -38,7 +39,7 @@ typedef struct
 	map_t 				*map;
 	camera_t 			*camera;
 	memory_t 			*memory;
-	map_layout_t 		*layout;    
+	map_layout_t 		*layout;   
 } game_state_t;
 
 #include "Game/Dungeon.c"
@@ -62,6 +63,10 @@ typedef struct
 
 fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *assets)
 {
+	DebugLog("");
+
+	ZeroStruct(state);
+
 	state->memory = memory;
 	state->assets = assets;
 	state->log = log;
@@ -82,6 +87,8 @@ fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *asset
 
 	GenerateDungeon(state->layout, 12, *state->memory);
 	CreateDungeon(state, state->layout);
+
+	DebugLog("used memory %i/%i KB", memory->offset / 1024, memory->size / 1024);
 }
 
 fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, turn_system_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)

@@ -65,29 +65,32 @@ fn void OpenGLDispatchBuffer(const command_buffer_t *buffer, v4 viewport, camera
 
 				v2 offset = text->position;
 				const u8 *at = text->string;
-				while (*at)
+				if (at)
 				{
-					s32 codepoint = *at++;
-					bmfont_char_t glyph = font->chars[codepoint];
-
-					v2 bitmap_sz = V2(glyph.width, glyph.height);
-
-					v2 texture_sz = V2((f32)font->bitmap.x, (f32)font->bitmap.y);
-					v2 uv_min = V2(glyph.x, glyph.y);
-					v2 uv_max = Add(uv_min, bitmap_sz);
-					uv_min = Div(uv_min, texture_sz);
-					uv_max = Div(uv_max, texture_sz);
-
-					v2 bitmap_p = offset;
-					bitmap_p = Add(bitmap_p, V2(glyph.x_offset, glyph.y_offset));
-
-					bitmap_p = Sub(bitmap_p, V2(1.0f, 1.0f));
-					OpenGLRenderQuad(bitmap_p, Add(bitmap_p, bitmap_sz), uv_min, uv_max, (GLuint)font->bitmap.handle, V4(0.0f, 0.0f, 0.0f, text->color.w));
-
-					bitmap_p = Add(bitmap_p, V2(1.0f, 1.0f));
-					OpenGLRenderQuad(bitmap_p, Add(bitmap_p, bitmap_sz), uv_min, uv_max, (GLuint)font->bitmap.handle, text->color);
-
-					offset.x += glyph.x_advance;
+					while (*at)
+					{
+						s32 codepoint = *at++;
+						bmfont_char_t glyph = font->chars[codepoint];
+	
+						v2 bitmap_sz = V2(glyph.width, glyph.height);
+	
+						v2 texture_sz = V2((f32)font->bitmap.x, (f32)font->bitmap.y);
+						v2 uv_min = V2(glyph.x, glyph.y);
+						v2 uv_max = Add(uv_min, bitmap_sz);
+						uv_min = Div(uv_min, texture_sz);
+						uv_max = Div(uv_max, texture_sz);
+	
+						v2 bitmap_p = offset;
+						bitmap_p = Add(bitmap_p, V2(glyph.x_offset, glyph.y_offset));
+	
+						bitmap_p = Sub(bitmap_p, V2(1.0f, 1.0f));
+						OpenGLRenderQuad(bitmap_p, Add(bitmap_p, bitmap_sz), uv_min, uv_max, (GLuint)font->bitmap.handle, V4(0.0f, 0.0f, 0.0f, text->color.w));
+	
+						bitmap_p = Add(bitmap_p, V2(1.0f, 1.0f));
+						OpenGLRenderQuad(bitmap_p, Add(bitmap_p, bitmap_sz), uv_min, uv_max, (GLuint)font->bitmap.handle, text->color);
+	
+						offset.x += glyph.x_advance;
+					}
 				}
 			} break;
 		case command_t_bitmap:

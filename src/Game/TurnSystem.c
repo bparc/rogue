@@ -102,7 +102,7 @@ fn void ControlPanel(turn_system_t *System, const virtual_controls_t *cons, enti
 		System->free_camera_mode_enabled = !System->free_camera_mode_enabled;
 
 	DebugPrint(
-		"ACT %i | MOV %i | BRK (F1): %s%s%s | GOD (F3): %s | FREE (F4): %s",
+		"ACT %i | MOV %i | BRK (F1): %s%s%s | GOD (F3): %s | FREE (F4): %s | EXIT (F12)",
 		(System->action_points),
 		(System->movement_points),
 		(System->break_mode_enabled ? "ON" : "OFF"),

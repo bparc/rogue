@@ -52,7 +52,11 @@ fn void *_Push(memory_t *_memory, s32 count, const char name[])
 		_memory->node = block;
 	}
 #endif
-
+	
+	if (result)
+	{
+		memset(result, 0, count);
+	}
 	return result;
 }
 

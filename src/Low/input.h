@@ -20,6 +20,7 @@ typedef enum
 	key_code_f3,
 	key_code_f4,
 	key_code_f5,
+	key_code_f12,
 	// NOTE(): Key codes for letter keys
 	// are the same as the coresponding
 	// ASCII characters.
