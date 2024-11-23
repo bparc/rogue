@@ -1,12 +1,18 @@
 fn void PushTurn(turn_system_t *System, entity_t *entity)
 {
 	if ((System->QueueSize < ArraySize(System->Queue)) && entity)
+	{
 		System->Queue[System->QueueSize++] = entity->id;
+		System->Phase[System->PhaseSize++] = entity->id;
+		if (IsHostile(entity))
+			System->EncounterModeEnabled = true;
+	}
 }
 
 fn void ClearTurnQueue(turn_system_t *System)
 {
-	System->QueueSize = 0;;
+	System->QueueSize = 0;
+	System->PhaseSize = 0;
 }
 
 fn entity_t *PullUntilActive(turn_system_t *System)
@@ -102,14 +108,15 @@ fn void ControlPanel(turn_system_t *System, const virtual_controls_t *cons, enti
 		System->free_camera_mode_enabled = !System->free_camera_mode_enabled;
 
 	DebugPrint(
-		"ACT %i | MOV %i | BRK (F1): %s%s%s | GOD (F3): %s | FREE (F4): %s | EXIT (F12)",
+		"ACT %i | MOV %i | BRK (F1): %s%s%s | GOD (F3): %s | FREE (F4): %s | BATTLE: %s | EXIT (F12)",
 		(System->action_points),
 		(System->movement_points),
 		(System->break_mode_enabled ? "ON" : "OFF"),
 		(System->interp_state == interp_wait_for_input) ? " | STEP (F2) -> " : "",
 		(System->interp_state == interp_wait_for_input) ? interpolator_state_t_names[System->requested_state] : "",
 		(System->god_mode_enabled ? "ON" : "OFF"),
-		(System->free_camera_mode_enabled ? "ON" : "OFF"));
+		(System->free_camera_mode_enabled ? "ON" : "OFF"),
+		(System->EncounterModeEnabled ? "ON" : "OFF"));
 }
 
 fn inline s32 ChangeQueueState(turn_system_t *System, interpolator_state_t state)
@@ -149,7 +156,6 @@ fn evicted_entity_t *GetEvictedEntity(turn_system_t *System, entity_id_t ID)
 
 fn void GarbageCollect(game_state_t *Game, turn_system_t *System, f32 dt)
 {
-	// TODO(): This will mess up the turn oder...
 	entity_storage_t *storage = System->storage;
 	for (s32 index = 0; index < storage->EntityCount; index++)
 	{
@@ -166,6 +172,7 @@ fn void GarbageCollect(game_state_t *Game, turn_system_t *System, f32 dt)
 			}
 
 			storage->entities[index--] = storage->entities[--storage->EntityCount];
+			System->Events |= system_any_evicted;
 		}
 	}
 
@@ -214,6 +221,7 @@ fn void ResolveAsynchronousActionQueue(turn_system_t *System, entity_t *user, co
 
 		b32 finished = true;
 
+		// animate
 		if (params->animation_ranged)
 		{
 			// NOTE(): Ranged actions take some amount of time
@@ -237,6 +245,7 @@ fn void ResolveAsynchronousActionQueue(turn_system_t *System, entity_t *user, co
 			finished =  (time >= 1.0f);
 		}
 
+		// commit
 		if (finished)
 		{
 			System->actions[index--] = System->actions[--System->action_count];
@@ -338,7 +347,7 @@ fn void BeginTurnSystem(turn_system_t *Queue, game_state_t *Game, f32 dt)
 
 fn void EndTurnSystem(turn_system_t *Queue, game_state_t *Game)
 {
-	
+	Queue->Events = 0;
 }
 
 fn void InteruptTurn(turn_system_t *Queue, entity_t *Entity)
@@ -501,6 +510,8 @@ fn b32 Launch(turn_system_t *System, v2s source, entity_t *target, u8 push_dista
 
 fn void EstablishTurnOrder(turn_system_t *System)
 {
+	ClearTurnQueue(System);
+
 	entity_storage_t *Storage = System->storage;
 	PushTurn(System, GetEntity(System->storage, System->player));
 	
@@ -622,4 +633,27 @@ fn void CommitAction(turn_system_t *state, entity_t *user, entity_t *target, act
     	} break;
     case action_mode_dash: user->p = target_p; break;
     }
+}
+
+fn void CheckEncounterModeStatus(turn_system_t *System)
+{
+	s32 AliveHostiles = 0;
+
+	if (System->EncounterModeEnabled)
+	{
+		DebugLog("checking...");
+		
+		for (s32 Index = 0; Index < System->PhaseSize; Index++)
+		{
+			entity_t *Entity = GetEntity(System->storage, System->Phase[Index]);
+			if (IsAlive(Entity) && IsHostile(Entity))
+				AliveHostiles++;
+		}
+
+		if (AliveHostiles == 0)
+		{
+			System->EncounterModeEnabled = false;
+			DebugLog("disengaging encounter mode...");
+		}
+	}
 }

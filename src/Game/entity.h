@@ -82,6 +82,7 @@ fn container_t *PushContainer(entity_storage_t *Storage);
 // NOTE(): Lifetime Management
 fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *map, u16 max_health_points, s32 accuracy, s32 evasion, s32 remaining_action_points, s32 remaining_movement_points, f32 hitchance_boost_multiplier);
 fn static_entity_t *CreateStaticEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, status_effect_t status_effects[MAX_STATUS_EFFECTS]);
+fn b32 IsAlive(entity_t *Entity);
 
 fn entity_t *EntityFromIndex(entity_storage_t *storage, s32 index);
 fn entity_t *GetEntity(entity_storage_t *storage, entity_id_t id);

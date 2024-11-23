@@ -261,3 +261,14 @@ fn container_t *PushContainer(entity_storage_t *Storage)
     }
     return result;
 }
+
+fn b32 IsAlive(entity_t *Entity)
+{
+	b32 Result = false;
+	if (Entity)
+	{
+		if (!(Entity->flags & entity_flags_deleted))
+			Result = true;
+	}
+	return Result;
+}

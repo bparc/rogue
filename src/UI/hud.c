@@ -25,7 +25,10 @@ fn void HUD(command_buffer_t *out, game_state_t *state, const client_input_t *in
     BeginInterface(state->interface, state, input, Cons, out, dt);
 
     entity_t *ActiveEntity = GetActive(state->turns);
-    TurnQueue(out, state, state->turns, state->assets, state->cursor);
+    if (state->turns->EncounterModeEnabled)
+    {
+        TurnQueue(out, state, state->turns, state->assets, state->cursor);
+    }
 
     interface_t *In = state->interface;
     if (IsPlayer(ActiveEntity))

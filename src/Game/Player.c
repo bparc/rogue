@@ -71,12 +71,14 @@ fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_
 	}
 
 	// NOTE(): Move
-	b32 AllowedToMove = IsActionQueueCompleted(queue) /* Can't move when skill animations are playing! */ &&
-		(BlockInputs == false) && (queue->movement_points > 0);
+	b32 MovementPointsSufficient = ((queue->movement_points > 0) || !queue->EncounterModeEnabled);
+	b32 AllowedToMove =
+		IsActionQueueCompleted(queue) /* Can't move when skill animations are playing! */ &&
+		((BlockInputs == false) && MovementPointsSufficient);
 	if (DirInput.Inputed && AllowedToMove)
 	{
 		b32 Moved = MakeMove(queue, Entity, DirInput.Direction);
-		if (Moved && GodModeDisabled(queue))
+		if (Moved && GodModeDisabled(queue) && queue->EncounterModeEnabled)
 			ConsumeMovementPoints(queue, 1);
 	}
 
@@ -84,7 +86,7 @@ fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_
 	b32 CantDoAnyAction = (queue->movement_points <= 0 && queue->action_points == 0);
 	b32 TurnForcefullySkipped = WentDown(cons->EndTurn);
 	b32 EndTurn = TurnForcefullySkipped || CantDoAnyAction;
-	if (EndTurn)
+	if (EndTurn && queue->EncounterModeEnabled)
 	{
 		if (TurnForcefullySkipped)
 		{

@@ -144,8 +144,13 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 		}
 	}
 
+	//
 	ResolveAsynchronousActionQueue(queue, ActiveEntity, out, dt, assets, state);
+	// ...
 	GarbageCollect(state, queue, dt);
+
+	if ((queue->Events & system_any_evicted))
+		CheckEncounterModeStatus(queue);
 
 	EndTurnSystem(queue, state);
 }

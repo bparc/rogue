@@ -34,6 +34,11 @@ typedef struct
 	f32 time_remaining;
 } evicted_entity_t;
 
+typedef enum
+{
+	system_any_evicted  = 1 << 1,
+} system_event_t;
+
 typedef struct
 {
 	// context
@@ -43,11 +48,20 @@ typedef struct
 	map_t 			 *map;
 	entity_id_t 	 player;
 
-	// queue
-	s32 QueueSize;
-	entity_id_t Queue[64]; // // NOTE(): Stores the turns as an list of entity ids in a *reverse* order (the last turn in the queue will be executed first).
+	system_event_t Events;
+	b32 EncounterModeEnabled;
 
-	// turn state
+	
+	// phase
+	#define MAX_PER_PHASE 64
+	s32 PhaseSize;
+	s32 QueueSize;
+	entity_id_t Queue[MAX_PER_PHASE]; // // NOTE(): Stores the turns as an list of entity ids in a *reverse* order (the last turn in the queue will be executed first).
+	entity_id_t Phase[MAX_PER_PHASE];
+
+	#undef MAX_PER_PHASE
+
+	// turn
 	s32 turn_inited;
 	s32 action_points, initial_action_points;
 	s32 movement_points;
