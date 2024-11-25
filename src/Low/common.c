@@ -140,6 +140,12 @@ fn f32 MaxF32(f32 a, f32 b)
 	return result;
 }
 
+fn f32 Sign(f32 Value)
+{
+	f32 Result = Value >= 0.0f ? 1.0f : -1.0f;
+	return Result;
+}
+
 static file_t OpenSystemFile(const char *path)
 {
 	file_t result={0};
