@@ -6,7 +6,11 @@ typedef struct
 	v2s PrevChunk;
 	s32 Index;
 
-	v2s Doors[1];
+	s32 DoorCount;
+	v2s Doors[4];
+
+	u64 VisitedTimestamp;
+	b32 Visited;
 } room_t;
 
 typedef struct
@@ -24,6 +28,10 @@ typedef struct
 	v2s ChunkSize;
 	v2s ChunkSizeHalf;
 } map_layout_t;
+
+fn room_t *RoomFromChunkIndex(map_layout_t *Layout, v2s Index);
+fn room_t *RoomFromPosition(map_layout_t *Layout, v2s Pos);
+fn room_t *RoomFromIndex(map_layout_t *Layout, s32 Index);
 
 fn void SetupGenerator(map_layout_t *Gen)
 {

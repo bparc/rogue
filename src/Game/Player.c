@@ -78,6 +78,13 @@ fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_
 	if (DirInput.Inputed && AllowedToMove)
 	{
 		b32 Moved = MakeMove(queue, Entity, DirInput.Direction);
+		if (Moved)
+		{
+			room_t *Room = RoomFromPosition(state->layout, Entity->p);
+			if (Room)
+				Room->Visited = true;
+		}
+
 		if (Moved && GodModeDisabled(queue) && queue->EncounterModeEnabled)
 			ConsumeMovementPoints(queue, 1);
 	}

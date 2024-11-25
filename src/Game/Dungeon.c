@@ -116,9 +116,9 @@ fn void CreateRoomInterior(game_state_t *Scene, room_t room, v2s chunk_size)
     char *Data = Dungeon_RoomPresets[RandomRoomIndex];
 
     v2s min = Mul32(room.ChunkAt, chunk_size);
-    for (s32 y = 1; y < Y - 1; y++)
+    for (s32 y = 2; y < Y - 1; y++)
     {
-        for (s32 x = 1; x < X - 1; x++)
+        for (s32 x = 2; x < X - 1; x++)
         {
             v2s TileIndex = {x, y};
             TileIndex = Add32(min, TileIndex);
@@ -152,10 +152,11 @@ fn void CreateDungeon(game_state_t *Scene, map_layout_t *Layout)
     // 
     if (Layout->PlacedRoomCount)
     {
-        const room_t *StartingRoom = &Layout->PlacedRooms[0];
+        room_t *StartingRoom = &Layout->PlacedRooms[0];
 
         v2s Pos = GetRoomPosition(Layout, StartingRoom);
-        CreatePlayer(Scene, Add32(Pos, V2S(1, 1)));
+        CreatePlayer(Scene, Add32(Pos, V2S(2, 2)));
+        StartingRoom->Visited = true;
         //CreateRandomLoot(Scene, Add32(Pos, V2S(2, 2)));
         //CreateRandomLoot(Scene, Add32(Pos, V2S(2, 5)));
     }

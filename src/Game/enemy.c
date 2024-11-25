@@ -24,7 +24,7 @@ fn void FindPathToEntity(turn_system_t *State, v2s From, entity_t *Entity, path_
 fn s32 BeginEnemyTurn(turn_system_t *State, entity_t *entity, memory_t Memory)
 {
 	s32 movement_point_count = 6;
-	FindPathToEntity(State, entity->p, FindClosestPlayer(State->storage, entity->p), &State->path, 6, Memory);
+	FindPathToEntity(State, entity->p, FindClosestPlayer(State->storage, entity->p), &State->path, 16, Memory);
 
 	entity->DEBUG_step_count = 0;
 	return (movement_point_count);
@@ -40,7 +40,7 @@ fn s32 Decide(turn_system_t *System, entity_t *entity)
 	}
 	else
 	{
-		System->movement_points = 0; // Stop
+		System->action_points = 0; // Stop
 	}
 	return 1;
 }

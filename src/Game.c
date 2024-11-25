@@ -51,7 +51,7 @@ typedef struct
 #include "Game/Camera.c"
 #include "Game/TurnSystem.c"
 
-#include "Renderer/Render.c"
+#include "Render.c"
 
 #include "UI/hud_inventory.c"
 #include "UI/hud_minimap.c"
@@ -82,10 +82,11 @@ fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *asset
 	SetupItemDataTable(memory, assets);
 	SetupActionDataTable(memory, assets);
 	SetupCamera(state->camera, V2(1600.0f, 900.0f));
+	state->camera->zoom = 3.0f;
 
 	DefaultActionBar(&state->slot_bar,  assets);
 
-	GenerateDungeon(state->layout, 12, *state->memory);
+	GenerateDungeon(state->layout, 8, *state->memory);
 	CreateDungeon(state, state->layout);
 
 	DebugLog("used memory %i/%i KB", memory->offset / 1024, memory->size / 1024);
@@ -118,7 +119,7 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 			if (IsHostile(ActiveEntity))
 				MovementPointCount = BeginEnemyTurn(queue, ActiveEntity, *state->memory);
 
-			SetupTurn(queue, MovementPointCount, 4);
+			SetupTurn(queue, MovementPointCount, 16);
 			ProcessStatusEffects(ActiveEntity);
 		}
 
