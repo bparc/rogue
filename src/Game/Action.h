@@ -72,7 +72,10 @@ typedef struct
 typedef struct
 {
 	action_type_t type;
-	const action_params_t *params;
+	union {
+		const action_params_t *params;
+		const item_params_t *item_params;
+	};
 	bitmap_t *icon;
 } action_t;
 

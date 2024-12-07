@@ -22,7 +22,7 @@ typedef enum {
 
 typedef struct
 {
-    action_type_t action;
+    //action_type_t action;
     item_type_t type;
     item_categories_t category;
     const char *name;
@@ -44,7 +44,7 @@ typedef struct
     v2s size;
 
     v2s area; // (1, 1) if not specified
-    target_flags_t target; // A list of valid targets. "Any" if not specified.
+    //target_flags_t target; // A list of valid targets. "Any" if not specified.
 
     const char *description;
 

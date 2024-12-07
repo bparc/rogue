@@ -200,6 +200,7 @@ fn void Brace(turn_system_t *System, entity_t *entity)
 	}
 }
 
+/*
 fn void UseItem(turn_system_t *State, entity_t *Entity, inventory_t *Eq, item_t Item)
 {
 	action_type_t Action = Item.params->action;
@@ -209,6 +210,7 @@ fn void UseItem(turn_system_t *State, entity_t *Entity, inventory_t *Eq, item_t 
 		Eq_RemoveItem(Eq, Item.ID);
 	}
 }
+*/
 
 fn void ResolveAsynchronousActionQueue(turn_system_t *System, entity_t *user, command_buffer_t *out, f32 dt, assets_t *assets, game_state_t *state)
 {

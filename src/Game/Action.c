@@ -7,7 +7,9 @@ fn action_t GetEquippedAction(const slot_bar_t *menu, entity_t *user)
     return result;
 }
 
-fn inline void SetMenuShortcut(slot_bar_t *menu, assets_t *assets, s32 index, action_type_t type)
+// todo add condition block for when it's an item
+fn inline void SetMenuShortcut(slot_bar_t *menu, assets_t *assets, s32 index,
+                                action_type_t type, const item_params_t *item_params)
 {
     action_t *shortcut = &(menu->slots[index].action);
 #define Icons assets->CombatUI.action_bar_icons
@@ -16,7 +18,10 @@ fn inline void SetMenuShortcut(slot_bar_t *menu, assets_t *assets, s32 index, ac
     else
         shortcut->icon = NULL;
 #undef Icons
-    shortcut->params = GetParameters(type);
+    if (!item_params) {
+        shortcut->params = GetParameters(type);
+    } else shortcut->item_params = item_params;
+
     shortcut->type = type;
 }
 
@@ -31,13 +36,13 @@ fn void DefaultActionBar(slot_bar_t *bar, assets_t *assets)
     }
 
     s32 Index = 0;
-    SetMenuShortcut(bar, assets, Index++, action_melee_attack);
-    SetMenuShortcut(bar, assets, Index++, action_ranged_attack);
-    SetMenuShortcut(bar, assets, Index++, action_heal);
-    SetMenuShortcut(bar, assets, Index++, action_throw);
-    SetMenuShortcut(bar, assets, Index++, action_push);
-    SetMenuShortcut(bar, 0, Index++, action_slash);
-    SetMenuShortcut(bar, 0, Index++, action_dash);
+    //SetMenuShortcut(bar, assets, Index++, action_melee_attack);
+    //SetMenuShortcut(bar, assets, Index++, action_ranged_attack);
+    //SetMenuShortcut(bar, assets, Index++, action_heal);
+    //SetMenuShortcut(bar, assets, Index++, action_throw);
+    //SetMenuShortcut(bar, assets, Index++, action_push);
+    //SetMenuShortcut(bar, 0, Index++, action_slash);
+    //SetMenuShortcut(bar, 0, Index++, action_dash);
 }
 
 fn inline s32 CalculateHitChance(const entity_t *user, const entity_t *target, action_type_t action_type)

@@ -121,11 +121,11 @@ fn void ContextMenu(interface_t *In, inventory_layout_t Layout, command_buffer_t
     item_t *Item = Eq_GetItem(Eq, ItemID);
     if (Item)
     {
-        if (Item->params->action != action_none)
-        {
-            if (ContextMenuItem(&Layout, "Use"))
-                UseItem(TurnSystem, User, Eq, *Item);
-        }
+        //if (Item->params->action != action_none)
+        //{
+        //    if (ContextMenuItem(&Layout, "Use"))
+        //        UseItem(TurnSystem, User, Eq, *Item);
+        //}
 
         if (ContextMenuItem(&Layout, "Examine"))
             DebugLog("Examine...");

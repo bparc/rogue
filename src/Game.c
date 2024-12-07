@@ -10,14 +10,13 @@
 // NOTE(): Game/
 #include "Game/particle.c"
 
-#include "Game/Action.h"
 #include "Game/items.h"
+#include "Game/Action.h"
 #include "Game/inventory.h"
-#include "Game/inventory.c"
-
 #include "Game/entity.h"
 #include "Game/entity.c"
 #include "Game/Action.c"
+#include "Game/inventory.c"
 
 #include "Game/TurnSystem.h"
 #include "Game/cursor.h"

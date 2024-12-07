@@ -44,6 +44,7 @@ fn void SetupInventory(inventory_t *inventory)
 fn item_id_t Eq_AllocateID(inventory_t *inventory);
 
 fn void Eq_MoveItem(inventory_t *Eq, item_t Source, v2s Dest);
+fn void Eq_AssignItemToSlotbar(slot_bar_t *Slotbar, item_t Source, s8 slot_index);
 fn item_t *Eq_GetItem(inventory_t *inventory, item_id_t ID);
 fn item_t *Eq_AddItem(inventory_t *inventory, item_type_t type);
 fn b32 Eq_RemoveItem(inventory_t *inventory, s32 item_id);
