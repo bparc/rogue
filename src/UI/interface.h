@@ -11,6 +11,7 @@ typedef struct
     b32 InventoryOpened;
     
     inventory_t *DraggedContainer;
+	slot_bar_t SlotBar;
     item_t DraggedItem;
     s32 OriginalX;
     s32 OriginalY;

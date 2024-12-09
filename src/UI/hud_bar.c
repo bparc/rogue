@@ -1,4 +1,5 @@
-fn void ActionMenu(entity_t *user, game_state_t *state, command_buffer_t *out, assets_t *assets, const client_input_t *input, turn_system_t *queue) {
+fn void ActionMenu(entity_t *user, game_state_t *state, command_buffer_t *out, assets_t *assets,
+                    const client_input_t *input, turn_system_t *queue, interface_t *In) {
     v2 action_bar_size = V2(540.0f, 60.0f);
     v2 slot_size = V2(50.0f, 50.0f);
     
@@ -21,7 +22,8 @@ fn void ActionMenu(entity_t *user, game_state_t *state, command_buffer_t *out, a
     {
         slot_t *slot = &Bar->slots[i];
         action_t *action = &slot->action;
-        const action_params_t *params = GetParameters(action->type);
+        const action_params_t *action_params = GetParameters(action->type);
+        const item_params_t *item_params = action->item_params;
 
         v2 slot_offset = V2(i * (slot_size.x + padding), 0.0f);
         v2 slot_p = Add(slot_start_pos, slot_offset);
@@ -39,8 +41,26 @@ fn void ActionMenu(entity_t *user, game_state_t *state, command_buffer_t *out, a
         }
         else
         {
-            if (params->name)
-                DrawText(out, assets->Font, Add(slot_p, V2(4, 2)), params->name, White());
+            if (action_params && action_params->name && action_params->type != action_none) {
+                DrawText(out, assets->Font, Add(slot_p, V2(4, 2)), action_params->name, White());
+            }
+            if (action_params->type == action_none && item_params && item_params->name) {
+                DrawText(out, assets->Font, Add(slot_p, V2(4, 2)), item_params->name, White());
+            }
+        }
+
+        if (In->DraggedItemID) {
+            bb_t slotBoundaryBox = RectToBounds(slot_p, slot_size);
+            if (IsPointInBounds(slotBoundaryBox, In->Cursor)) {
+                DrawRectOutline(out, slot_p, slot_size, Yellow());
+
+                if (!In->Buttons[0]) {
+                    DebugLog("Assigning item to slot %d", i);
+                    Eq_AssignItemToSlotbar(&In->SlotBar, In->DraggedItem, (s8)i);
+                    In->DraggedItemID = 0;
+                }
+            }
+
         }
 
         if (IsKeyPressed(input, key_code_1 + (u8)i))

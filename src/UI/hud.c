@@ -6,6 +6,7 @@ fn void BeginInterface(interface_t *In, game_state_t *GameState, const client_in
     In->Font = GameState->assets->Font;
     In->TurnSystem = GameState->turns;
     In->DeltaTime = dt;
+    In->SlotBar = GameState->slot_bar;
 
     In->Cursor = GetCursorOffset(Input);
     In->Interact[0] = (!In->Buttons[0] && Input->mouse_buttons[0]);
@@ -46,7 +47,7 @@ fn void HUD(command_buffer_t *out, game_state_t *state, const client_input_t *in
             }
         }
 
-        ActionMenu(ActiveEntity, state, out, state->assets, input, state->turns);
+        ActionMenu(ActiveEntity, state, out, state->assets, input, state->turns, state->interface);
     }
     
     EndInterface(state->interface);

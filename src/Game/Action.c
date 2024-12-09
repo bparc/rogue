@@ -7,7 +7,6 @@ fn action_t GetEquippedAction(const slot_bar_t *menu, entity_t *user)
     return result;
 }
 
-// todo add condition block for when it's an item
 fn inline void SetMenuShortcut(slot_bar_t *menu, assets_t *assets, s32 index,
                                 action_type_t type, const item_params_t *item_params)
 {
