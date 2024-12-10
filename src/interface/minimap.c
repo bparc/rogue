@@ -4,7 +4,7 @@ fn void MiniMap(command_buffer_t *out, map_layout_t *Gen, v2s PlayerP, assets_t 
     v2 ChunkHalfSz = Scale(ChunkSz, 0.5f);
     v2 GlobalOffset = V2(1325.0f, 10.0f);
 
-    v2s PlayerChunkAt = Div32(PlayerP, V2S(20, 20));
+    v2s PlayerChunkAt = IntDiv(PlayerP, V2S(20, 20));
 
 #if 1
     for (s32 y = 0; y < Gen->ChunkCountY; y++)
@@ -17,12 +17,12 @@ fn void MiniMap(command_buffer_t *out, map_layout_t *Gen, v2s PlayerP, assets_t 
             p = Mul(p, ChunkSz);
             p = Add(p, GlobalOffset);
 
-            bb_t Bounds = RectToBounds(p, ChunkSz);
+            bb_t Bounds = RectBounds(p, ChunkSz);
 
             v4 color = White();
 
             DrawRect(out, Bounds.min, Sub(Bounds.max, Bounds.min), Black());
-            Bounds = Shrink(Bounds, 4.0f);
+            Bounds = ShrinkBounds(Bounds, 4.0f);
             DrawRectOutline(out, Bounds.min, Sub(Bounds.max, Bounds.min), White());
         }
     }
@@ -38,10 +38,10 @@ fn void MiniMap(command_buffer_t *out, map_layout_t *Gen, v2s PlayerP, assets_t 
         p = Mul(p, ChunkSz);
         p = Add(p, GlobalOffset);
 
-        bb_t Bounds = RectToBounds(p, ChunkSz);
-        Bounds = Shrink(Bounds, 2.0f);
+        bb_t Bounds = RectBounds(p, ChunkSz);
+        Bounds = ShrinkBounds(Bounds, 2.0f);
         v4 color = Blue();
-        if (CompareVectors(PlayerChunkAt, Chunk))
+        if (CompareInts(PlayerChunkAt, Chunk))
             color = Green();
 
         DrawRect(out, Bounds.min, Sub(Bounds.max, Bounds.min), color);

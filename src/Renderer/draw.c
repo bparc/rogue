@@ -47,31 +47,31 @@ fn void RenderIsoCubeFilled(command_buffer_t *out, v2 p, v2 sz, f32 height, v4 c
     }
 }
 
-fn void RenderIsoTile(command_buffer_t *out, map_t *map, v2s offset, v4 color, s32 Filled, f32 height)
+fn void RenderIsoTile(command_buffer_t *out, map_t *Map, v2s offset, v4 color, s32 Filled, f32 height)
 {
-    v2 p = MapToScreen(map, offset);
+    v2 p = MapToScreen(Map, offset);
     p = ScreenToIso(p);
     if (Filled)
-        RenderIsoCubeFilled(out, p, map->tile_sz, height, color);
+        RenderIsoCubeFilled(out, p, Map->tile_sz, height, color);
     else
-        RenderIsoCube(out, p, map->tile_sz, height, color);
+        RenderIsoCube(out, p, Map->tile_sz, height, color);
 }
 
-fn void RenderIsoTile32(command_buffer_t *out, map_t *map, s32 x, s32 y, v4 color)
+fn void RenderIsoTile32(command_buffer_t *out, map_t *Map, s32 x, s32 y, v4 color)
 {
-    RenderIsoTile(out, map, V2S(x, y), color, true, 0);
+    RenderIsoTile(out, Map, V2S(x, y), color, true, 0);
 }
 
-fn void RenderIsoTileArea(command_buffer_t *out, map_t *map, v2s min, v2s max, v4 color)
+fn void RenderIsoTileArea(command_buffer_t *out, map_t *Map, v2s min, v2s max, v4 color)
 {
     for (int y = min.y; y < max.y; y++)
     {
         for (int x = min.x; x < max.x; x++)
-            RenderIsoTile(out, map, V2S(x,y), color, true, 0);
+            RenderIsoTile(out, Map, V2S(x,y), color, true, 0);
     }
 }
 
-fn void RenderRange(command_buffer_t *out, map_t *map,v2s center, int radius, v4 color)
+fn void RenderRange(command_buffer_t *out, map_t *Map,v2s center, int radius, v4 color)
 {
     for (s32 y = center.y - radius; y <= center.y + radius; ++y)
     {
@@ -80,9 +80,9 @@ fn void RenderRange(command_buffer_t *out, map_t *map,v2s center, int radius, v4
             v2s target = V2S(x, y);
 
             if (IsInsideCircle(target, V2S(1,1), center, radius)) {
-                if (GetTile(map, x, y) != 0 && IsTraversable(map, target)) { // this doesn't work, its supposed to not draw range area over grids where floor isnt placed
-                    if (IsLineOfSight(map, center, target)) {
-                        RenderIsoTile(out, map, V2S(x,y), A(color, 0.5f), true, 0);
+                if (GetTile(Map, x, y) != 0 && IsTraversable(Map, target)) { // this doesn't work, its supposed to not draw range area over grids where floor isnt placed
+                    if (IsLineOfSight(Map, center, target)) {
+                        RenderIsoTile(out, Map, V2S(x,y), A(color, 0.5f), true, 0);
                     }
                 }
             }
@@ -101,15 +101,15 @@ fn void RenderRangedAnimation(command_buffer_t *out, v2 from, v2 to, const bitma
     DrawBitmap(out, bitmap_p, bitmap_sz,  PureWhite(), bitmap);
 }
 
-fn void RenderTileAlignedBitmap(command_buffer_t *out, map_t *map, v2s offset, bitmap_t *bitmap, v4 color)
+fn void RenderTileAlignedBitmap(command_buffer_t *out, map_t *Map, v2s offset, bitmap_t *bitmap, v4 color)
 {
-	v2 p = MapToScreen(map, offset);
+	v2 p = MapToScreen(Map, offset);
 	p = ScreenToIso(p);
 	p = Sub(p, Scale(bitmap->scale, 0.5f));
 	DrawBitmap(out, p, bitmap->scale, color, bitmap);
 }
 
-fn void RenderHP(command_buffer_t *out, v2 p, assets_t *assets, entity_t *entity)
+fn void RenderHealthPoints(command_buffer_t *out, v2 p, assets_t *assets, entity_t *entity)
 {
     // todo: Add animation when chunk of health is lost, add art asset
     f32 health_percentage = (f32)entity->health / entity->max_health;
@@ -137,4 +137,39 @@ fn void RenderDiegeticText(const camera_t *Camera, const bmfont_t *Font, v2 p, v
     v2 screen_p = CameraToScreen(Camera, p);
     screen_p = Add(screen_p, offset);
     DrawText(out, Font, screen_p, string, color);
+}
+
+fn void RenderPath(command_buffer_t *out, map_t *Map, path_t *Path, v4 Color)
+{
+    for (int32_t Index = 0; Index < Path->length; Index++)
+    {
+        v2s TileIndex = Path->tiles[Index].p;
+        RenderIsoTile(out, Map, TileIndex, Color, true, 0);
+    }
+}
+
+fn void RenderRangeMap(command_buffer_t *out, map_t *TileMap, range_map_t *Map)
+{
+    v2s Min = Map->Min;
+    v2s Max = IntAdd(Min, Map->Size);
+
+    for (s32 Y = Min.y; Y <= Max.y; Y++)
+    {
+        for (s32 X = Min.x; X <= Max.x; X++)
+        {
+            v2s Index = V2S(X, Y);
+            range_map_cell_t *Cell = GetRangeMapCell(Map, Index);
+            if (Cell)
+            {
+                if (Cell->Filled)
+                {
+                    RenderIsoTile(out, TileMap, Index, W(Orange(), 0.5f), true, 0);
+                }
+
+                RenderIsoTile(out, TileMap, Index, Red(), false, 0);
+            }
+        }
+    }
+
+    RenderIsoTile(out, TileMap, Map->From, Yellow(), true, 0);
 }

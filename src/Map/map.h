@@ -40,49 +40,49 @@ typedef struct
 } map_t;
 
 fn map_t *AllocateMap(s32 x, s32 y, memory_t *memory, f32 tile_height);
-fn void ClearMap(map_t *map);
+fn void ClearMap(map_t *Map);
 
 // NOTE(): Accessors
-fn s32 GetTileIndex32(const map_t *map, s32 x, s32 y);
-fn s32 GetTileIndex(const map_t *map, v2s p);
-fn s32 InMapBounds(const map_t *map, v2s p);
+fn s32 GetTileIndex32(const map_t *Map, s32 x, s32 y);
+fn s32 GetTileIndex(const map_t *Map, v2s p);
+fn s32 InMapBounds(const map_t *Map, v2s p);
 
-fn tile_t *GetTile(map_t *map, s32 x, s32 y);
+fn tile_t *GetTile(map_t *Map, s32 x, s32 y);
 
-fn void SetTileValueI(map_t *map, s32 x, s32 y, u8 value);
-fn void SetTileValue(map_t *map, v2s p, u8 value);
-fn void SetTileTrapType(map_t *map, v2s p, trap_type_t type);
+fn void SetTileValueI(map_t *Map, s32 x, s32 y, u8 value);
+fn void SetTileValue(map_t *Map, v2s p, u8 value);
+fn void SetTileTrapType(map_t *Map, v2s p, trap_type_t type);
 
-fn u8 GetTileValue(const map_t *map, s32 x, s32 y);
-fn trap_type_t GetTileTrapType(const map_t *map, s32 x, s32 y);
+fn u8 GetTileValue(const map_t *Map, s32 x, s32 y);
+fn trap_type_t GetTileTrapType(const map_t *Map, s32 x, s32 y);
 
 // NOTE(): Tile Type Queries
-fn b32 IsTraversable(const map_t *map, v2s p);
-fn b32 IsEmpty(const map_t *map, v2s p);
+fn b32 IsTraversable(const map_t *Map, v2s p);
+fn b32 IsEmpty(const map_t *Map, v2s p);
 
-fn b32 IsDoor(const map_t *map, v2s Index);
-fn b32 IsWall(const map_t *map, v2s p);
-fn s32 IsCorner(const map_t *map, v2s offset, s32 Index);
-fn s32 IsEdge(const map_t *map, v2s offset, s32 Index);
-fn s32 DetectCorner(const map_t *map, v2s offset);
-fn s32 DetectEdge(const map_t *map, v2s offset);
+fn b32 IsDoor(const map_t *Map, v2s Index);
+fn b32 IsWall(const map_t *Map, v2s p);
+fn s32 IsCorner(const map_t *Map, v2s offset, s32 Index);
+fn s32 IsEdge(const map_t *Map, v2s offset, s32 Index);
+fn s32 DetectCorner(const map_t *Map, v2s offset);
+fn s32 DetectEdge(const map_t *Map, v2s offset);
 
 // NOTE(): Geometric Queries
-fn v2s ScreenToMap(const map_t *map, v2 p);
-fn v2  MapToScreen(const map_t *map, v2s p);
+fn v2s ScreenToMap(const map_t *Map, v2 p);
+fn v2  MapToScreen(const map_t *Map, v2s p);
 
-fn bb_t GetTileBounds(const map_t *map, s32 x, s32 y);
-fn v2 GetTileCenter(const map_t *map, v2s p);
-fn void RayCast(const map_t *map, v2s from, v2s to);
+fn bb_t GetTileBounds1(const map_t *Map, s32 x, s32 y);
+fn v2 GetTileCenter(const map_t *Map, v2s p);
+fn void RayCast(const map_t *Map, v2s from, v2s to);
 
 // NOTE(): Assets
-fn bitmap_t *PickTileBitmap(const map_t* map, s32 x, s32 y, assets_t *assets);
+fn bitmap_t *PickTileBitmap(const map_t* Map, s32 x, s32 y, assets_t *assets);
 
 // NOTE(): Iterators
 
 typedef struct
 {
-	const map_t *map;
+	const map_t *Map;
 	v2s from;
 	v2s to;
 
@@ -94,7 +94,7 @@ typedef struct
 	v2 distance_to_edge;
 } dda_line_t;
 
-fn dda_line_t BeginDDALine(const map_t *map, v2s from, v2s to);
+fn dda_line_t BeginDDALine(const map_t *Map, v2s from, v2s to);
 fn b32 ContinueDDALine(dda_line_t *it);
 
 typedef enum
@@ -103,4 +103,4 @@ typedef enum
     low_velocity
 } hit_velocity_t;
 
-fn void BloodSplatter(map_t *map, v2s shooter_position, v2s hit_position, blood_type_t blood_type, hit_velocity_t hit_velocity);
+fn void BloodSplatter(map_t *Map, v2s shooter_position, v2s hit_position, blood_type_t blood_type, hit_velocity_t hit_velocity);

@@ -1,6 +1,5 @@
 #define MAX_STATUS_EFFECTS 3
 
-
 typedef enum
 {
 	entity_flags_controllable = 1 << 0,
@@ -30,7 +29,7 @@ typedef struct
 
 	inventory_t *inventory;
 
-	v2s p; // A position on the tile map.
+	v2s p; // A position on the tile Map.
 	v2 deferred_p;
 
 	v2s size; //size in squares, 1x1, 2x1, 1x2, etc
@@ -51,13 +50,12 @@ typedef struct
 
 	// NOTE(): AI stuff
 	b32 Alerted;
-	s32 DEBUG_step_count;
 } entity_t;
 
 typedef struct
 {
 	u8 flags;
-	v2s p; // A position on the tile map.
+	v2s p; // A position on the tile Map.
 	//wont move
 	v2s size; //size in squares, 1x1, 2x1, 1x2, etc
 
@@ -80,7 +78,7 @@ typedef struct
 fn container_t *PushContainer(entity_storage_t *Storage);
 
 // NOTE(): Lifetime Management
-fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *map, u16 max_health_points, s32 accuracy, s32 evasion, s32 remaining_action_points, s32 remaining_movement_points, f32 hitchance_boost_multiplier);
+fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *Map, u16 max_health_points, s32 accuracy, s32 evasion, s32 remaining_action_points, s32 remaining_movement_points, f32 hitchance_boost_multiplier);
 fn static_entity_t *CreateStaticEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, status_effect_t status_effects[MAX_STATUS_EFFECTS]);
 fn b32 IsAlive(entity_t *Entity);
 

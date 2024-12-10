@@ -16,7 +16,7 @@ fn void ActionMenu(entity_t *user, game_state_t *state, command_buffer_t *out, a
 
     v2 slot_start_pos = Add(action_bar_pos, V2(5.0f, 5.0f)); // (535, 835)
 
-    slot_bar_t *Bar = &state->slot_bar;
+    slot_bar_t *Bar = &state->Bar;
 
     for (s32 i = 0; i < ArraySize(Bar->slots); i++)
     {
@@ -50,8 +50,8 @@ fn void ActionMenu(entity_t *user, game_state_t *state, command_buffer_t *out, a
         }
 
         if (In->DraggedItemID) {
-            bb_t slotBoundaryBox = RectToBounds(slot_p, slot_size);
-            if (IsPointInBounds(slotBoundaryBox, In->Cursor)) {
+            bb_t slotBoundaryBox = RectBounds(slot_p, slot_size);
+            if (BoundsContains(slotBoundaryBox, In->Cursor)) {
                 DrawRectOutline(out, slot_p, slot_size, Yellow());
 
                 if (!In->Buttons[0]) {

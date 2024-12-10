@@ -4,17 +4,12 @@ fn v2 V2(f32 x, f32 y)
 	return result;
 }
 
-fn v2 SV2(s32 x, s32 y)
-{
-	return V2((f32)x, (f32)y);
-}
-
-fn v2 SignedToFloat(v2s v)
+fn v2 ToFloat(v2s v)
 {
 	return (v2) {(f32)v.x, (f32)v.y};
 }
 
-fn v2s FloatToSigned(v2 v)
+fn v2s ToInt(v2 v)
 {
 	return (v2s) {(s32)v.x, (s32)v.y};
 }
@@ -79,10 +74,16 @@ fn f32 Distance(v2 a, v2 b)
 	return result;
 }
 
-fn f32 DistanceV2S(v2s a, v2s b)
+fn f32 IntDistance(v2s a, v2s b)
 {
-	v2s delta = Sub32(a, b);
+	v2s delta = IntSub(a, b);
 	return sqrtf((f32)(delta.x * delta.x + delta.y * delta.y));
+}
+
+fn s32 ManhattanDistance(v2s a, v2s b)
+{
+	s32 Result = abs(b.x - a.x) + abs(b.y - a.y);
+	return Result;
 }
 
 fn v2 Invert(v2 v)
@@ -109,11 +110,11 @@ fn v2 GetDirection(v2 a, v2 b)
 	return result;
 }
 
-fn v2s Sign2(v2 v)
+fn v2 Sign2(v2 v)
 {
-	v2s result = {0};
-	result.x = v.x >= 0 ? 1 : -1;
-	result.y = v.y >= 0 ? 1 : -1;
+	v2 result = {0};
+	result.x = v.x >= 0.0f ? 1.0f : -1.0f;
+	result.y = v.y >= 0.0f ? 1.0f : -1.0f;
 	return result;
 }
 
@@ -160,7 +161,7 @@ fn v2 EaseOut2(v2 a, v2 b, f32  t)
 	return result;
 }
 
-fn v2 EaseInThenOut(f32 min, f32 max, f32 mid, f32 t)
+fn v2 Ease2(f32 min, f32 max, f32 mid, f32 t)
 {
 	v2 result = {0};
 
@@ -189,7 +190,7 @@ fn v4 Lerp4(v4 a, v4 b, f32 t)
 	return result;
 }
 
-fn b32 CompareVectors(v2s a, v2s b)
+fn b32 CompareInts(v2s a, v2s b)
 {
 	b32 result = (a.x == b.x) && (a.y == b.y);
 	return result;
@@ -207,20 +208,20 @@ fn bb_t BB(v2 min, v2 max)
 	return result;
 }
 
-fn bb_t RectToBounds(v2 p, v2 sz)
+fn bb_t RectBounds(v2 p, v2 sz)
 {
 	bb_t result = BB(p, Add(p, sz));
 	return result;
 }
 
-fn v2 GetCenter(bb_t bb)
+fn v2 BoundsCenter(bb_t bb)
 {
 	v2 sz = Sub(bb.max, bb.min);
 	v2 result = Add(bb.min, Scale(sz, 0.5f));
 	return result;
 }
 
-fn bb_t Stretch(bb_t bb, f32 amount)
+fn bb_t StretchBounds(bb_t bb, f32 amount)
 {
 	bb.min.x -= amount;
 	bb.min.y -= amount;
@@ -229,7 +230,7 @@ fn bb_t Stretch(bb_t bb, f32 amount)
 	return bb;
 }
 
-fn bb_t Shrink(bb_t bb, f32 amount)
+fn bb_t ShrinkBounds(bb_t bb, f32 amount)
 {
 	bb.min.x += amount;
 	bb.min.y += amount;
@@ -238,25 +239,33 @@ fn bb_t Shrink(bb_t bb, f32 amount)
 	return bb;
 }
 
-fn v2s Add32(v2s a, v2s b)
+fn v2s IntAdd(v2s a, v2s b)
 {
 	v2s result = {a.x + b.x, a.y + b.y};
 	return result;
 }
 
-fn v2s Mul32(v2s a, v2s b)
+fn v2s IntMul(v2s a, v2s b)
 {
 	v2s result = {a.x * b.x, a.y * b.y};
 	return result;
 }
 
-fn v2s Div32(v2s a, v2s b)
+fn v2s IntDiv(v2s a, v2s b)
 {
 	v2s result = {a.x / b.x, a.y / b.y};
 	return result;
 }
 
-fn v2s Sub32(v2s a, v2s b)
+fn v2s IntHalf(v2s a)
+{
+	v2s Result = a;
+	Result.x /= 2;
+	Result.y /= 2;
+	return Result;
+}
+
+fn v2s IntSub(v2s a, v2s b)
 {
 	v2s result = {a.x - b.x, a.y - b.y};
 	return result;
@@ -267,12 +276,6 @@ fn v2s Abs2S(v2s v)
 	v2s result = {0};
 	result.x = abs(v.x);
 	result.y = abs(v.y);
-	return result;
-}
-
-fn v2 Perp(v2 v)
-{
-	v2 result = {v.y, -v.x};
 	return result;
 }
 
@@ -288,39 +291,12 @@ fn v2s RotateSigned(v2s v)
 	return result;
 }
 
-fn v2 ClampLength(v2 v, float max)
-{
-	v2 result = v;
-	if (Length(result) >= max)
-		result = Scale(Normalize(v), max);
-	return result;
-}
-
-fn v2s ClampVector32(v2s v, v2s min, v2s max)
+fn v2s IntClamp2(v2s v, v2s min, v2s max)
 {
 	v2s result = v;
-	result.x = Clamp32(result.x, min.x, max.x);
-	result.y = Clamp32(result.y, min.y, max.y);
+	result.x = Clamp(result.x, min.x, max.x);
+	result.y = Clamp(result.y, min.y, max.y);
 	return result;
-}
-
-fn v2 ClampToLine(v2 a, v2 b, v2 p)
-{
-	v2 v = Sub(b, a);
-	v2 n = Normalize(v);
-	f32 dot = Dot(Sub(p, a), n);
-	f32 t = dot / Length(v);
-	if (t <= 0.0f)
-		p = a;
-	else
-	if ( t >= 1.0f)
-		p = b;
-	else
-	{
-		p = Scale(n, dot);
-		p = Add(a, p);
-	}
-	return (p);
 }
 
 fn v2s Up(void)
@@ -392,7 +368,7 @@ fn v2 GreaterThanEqual(v2 a, v2 b)
 	return result;
 }
 
-fn bb_t Bb(v2 min, v2 max)
+fn bb_t Bounds(v2 min, v2 max)
 {
 	bb_t result = {min, max};
 	return result;
@@ -429,7 +405,7 @@ fn v2 Ratio(v2 sides, float ratio)
     return result;
 }
 
-fn s32 IsPointInBounds(bb_t bb, v2 p)
+fn s32 BoundsContains(bb_t bb, v2 p)
 {
 	s32 result =
 		(p.x >= bb.min.x && p.x < bb.max.x) &&
@@ -452,4 +428,44 @@ fn s32 DoBoundingBoxesOverlap(bb_t bb1, bb_t bb2) {
 
     // Return true only if they overlap without full containment
     return basicOverlap;
+}
+
+
+fn b32 IsZero(v2s x)
+{
+	b32 result = (x.x == 0 && x.y == 0);
+	return result;
+}
+
+fn v2s FloatSign(v2 a)
+{
+	v2s result = {0};
+	result.x = a.x >= 0.0f ? 1 : -1;
+	result.y = a.y >= 0.0f ? 1 : -1;
+	return result;
+}
+
+fn v2s IntSign(v2s a)
+{
+	v2s result = {0};
+	result.x = a.x >= 0 ? 1 : -1;
+	result.y = a.y >= 0 ? 1 : -1;
+	return result;
+}
+
+static float fclampf(float a, float min, float max)
+{
+	float Result = a;
+	if (a <= min)
+		Result = min;
+	if (a >= max)
+		Result = max;
+	return Result;
+}
+
+static float step(float edge0, float edge1, float t)
+{
+	float Result = 0.0f;
+	Result = fclampf((t - edge0) / (edge1 - edge0), 0.0f, 1.0f);
+	return Result;
 }

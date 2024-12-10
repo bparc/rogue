@@ -15,7 +15,7 @@ fn void ClearTurnQueue(turn_system_t *System)
 	System->PhaseSize = 0;
 }
 
-fn entity_t *PullUntilActive(turn_system_t *System)
+fn entity_t *Pull(turn_system_t *System)
 {
 	entity_t *result = 0;
 	if (System->QueueSize > 0)
@@ -58,19 +58,18 @@ fn entity_t *PeekNextTurn(turn_system_t *System, entity_storage_t *storage)
 
 fn void AcceptTurn(turn_system_t *System, entity_t *entity)
 {
-	DebugAssert(System->turn_inited == true); // NOTE(): Propably a bug?
+	if (System->turn_inited)
+	{
+		System->prev_turn_entity = entity->id;
+		System->seconds_elapsed = 0.0f;
 
-	Assert(System->QueueSize > 0);
-	System->QueueSize--;
-	System->turn_inited = false;
-	System->prev_turn_entity = entity->id;
-	System->seconds_elapsed = 0.0f;
-}
+		if (System->QueueSize > 0)
+		{
+			System->QueueSize--;
+		}
 
-fn s32 ConsumeMovementPoints(turn_system_t *System, s32 count)
-{
-	System->movement_points -= count;
-	return true;
+		System->turn_inited = false;
+	}
 }
 
 fn s32 ConsumeActionPoints(turn_system_t *System, s32 count)
@@ -104,43 +103,13 @@ fn void ControlPanel(turn_system_t *System, const virtual_controls_t *cons, enti
 		System->break_mode_enabled = !System->break_mode_enabled;
 	if (WentDown(cons->debug[2])) // Toggle
 		System->god_mode_enabled = !System->god_mode_enabled;
-	if (WentDown(cons->debug[3])) // Toggle
-		System->free_camera_mode_enabled = !System->free_camera_mode_enabled;
 
 	DebugPrint(
-		"ACT %i | MOV %i | BRK (F1): %s%s%s | GOD (F3): %s | FREE (F4): %s | BATTLE: %s | EXIT (F12)",
+		"ACT %i | BRK (F1): %s | GOD (F3): %s | BATTLE: %s | EXIT (F12)",
 		(System->action_points),
-		(System->movement_points),
 		(System->break_mode_enabled ? "ON" : "OFF"),
-		(System->interp_state == interp_wait_for_input) ? " | STEP (F2) -> " : "",
-		(System->interp_state == interp_wait_for_input) ? interpolator_state_t_names[System->requested_state] : "",
 		(System->god_mode_enabled ? "ON" : "OFF"),
-		(System->free_camera_mode_enabled ? "ON" : "OFF"),
 		(System->EncounterModeEnabled ? "ON" : "OFF"));
-}
-
-fn inline s32 ChangeQueueState(turn_system_t *System, interpolator_state_t state)
-{
-	s32 result = false;
-	System->time = 0.0f;
-
-	#if _DEBUG
-	result = (System->break_mode_enabled == false);
-	if (result)
-	{
-		System->interp_state = state;
-	}
-	else
-	{
-		System->interp_state = interp_wait_for_input;
-		System->requested_state = state;
-		System->request_step = false;
-	}
-	#else
-	System->interp_state = state;
-	result = true;
-	#endif
-	return result;
 }
 
 fn evicted_entity_t *GetEvictedEntity(turn_system_t *System, entity_id_t ID)
@@ -187,14 +156,14 @@ fn void GarbageCollect(game_state_t *Game, turn_system_t *System, f32 dt)
 
 fn void Brace(turn_system_t *System, entity_t *entity)
 {
-	if (System->movement_points >= 2 && ((entity->hitchance_boost_multiplier + 0.1f) <= 2.0f))
+	if (System->action_points >= 2 && ((entity->hitchance_boost_multiplier + 0.1f) <= 2.0f))
 	{
 		entity->has_hitchance_boost = true;
-		System->movement_points -= 2;
+		System->action_points -= 2;
 		entity->hitchance_boost_multiplier += 0.1f;
 		DebugLog("Used 2 movement points to brace for a hit chance bonus. Hit chance multiplied by %g for next attack.", entity->hitchance_boost_multiplier);
 	}
-	else if (System->movement_points >= 2 && entity->hitchance_boost_multiplier + 0.1f > 2.0f)
+	else if (System->action_points >= 2 && entity->hitchance_boost_multiplier + 0.1f > 2.0f)
 	{
 		DebugLog("Brace invalid. Your hit chance multiplier for next attack is %g which is maximum.", entity->hitchance_boost_multiplier);
 	}
@@ -214,7 +183,7 @@ fn void UseItem(turn_system_t *State, entity_t *Entity, inventory_t *Eq, item_t 
 
 fn void ResolveAsynchronousActionQueue(turn_system_t *System, entity_t *user, command_buffer_t *out, f32 dt, assets_t *assets, game_state_t *state)
 {
-	const map_t *map = state->map;
+	const map_t *Map = state->Map;
 
 	for (s32 index = 0; index < System->action_count; index++)
 	{
@@ -231,7 +200,7 @@ fn void ResolveAsynchronousActionQueue(turn_system_t *System, entity_t *user, co
 
 			// NOTE(): The duration is proportional to the distance.
 
-			v2 From = GetTileCenter(map, action->target_p);
+			v2 From = GetTileCenter(Map, action->target_p);
 			v2 To = user->deferred_p;
 			f32 time = action->elapsed / (Distance(From, To) * 0.005f);
 			finished = (time >= 1.0f);
@@ -241,9 +210,9 @@ fn void ResolveAsynchronousActionQueue(turn_system_t *System, entity_t *user, co
 		if (params->flags & action_display_move_name)
 		{
 			f32 time = action->elapsed;
-			v2 X = EaseInThenOut(40.0f, 60.0f, 15.0f, time);
+			v2 X = Ease2(40.0f, 60.0f, 15.0f, time);
 			f32 alpha = 1.0f - X.y;
-			RenderDiegeticText(state->camera, state->assets->Font, user->deferred_p, V2((-20.0f + X.x), -80.0f), A(White(), alpha), params->name);
+			RenderDiegeticText(state->Camera, state->assets->Font, user->deferred_p, V2((-20.0f + X.x), -80.0f), A(White(), alpha), params->name);
 			finished =  (time >= 1.0f);
 		}
 
@@ -251,100 +220,96 @@ fn void ResolveAsynchronousActionQueue(turn_system_t *System, entity_t *user, co
 		if (finished)
 		{
 			System->actions[index--] = System->actions[--System->action_count];
-			CommitAction(state->turns, user, GetEntity(System->storage, action->target_id), &action->action_type, action->target_p);
+			CommitAction(state->System, user, GetEntity(System->storage, action->target_id), &action->action_type, action->target_p);
 		}
 
 		action->elapsed += dt * 1.0f;
 	}
 }
 
-fn void AI(game_state_t *state, f32 dt, command_buffer_t *out, virtual_controls_t cons, entity_t *entity)
+fn void AI(turn_system_t *State, command_buffer_t *Out, entity_t *Entity)
 {
-	assets_t *assets = state->assets;
-	map_t *map = state->map;
-	turn_system_t *System = state->turns;
-	entity_storage_t *storage = state->storage;
-	log_t *log = state->log;
-
-	RenderRange(out, map, entity->p, ENEMY_DEBUG_RANGE, Green());
-
-	switch(System->interp_state)
+	if (!State->EnemyInited)
 	{
-	case interp_wait_for_input:
+		range_map_t *Range = &State->EffectiveRange;
+		if (Range->FilledCount)
 		{
-			if (WentDown(cons.debug[1]))
-			{
-				System->interp_state = System->requested_state;
-				System->time = 0.0f;
-			}
-		} break;
-	Request:
-	case interp_request:
-		{
-			System->starting_p = entity->p;
-			s32 cost = Decide(System, entity);
-			System->action_points -= cost;
-			
-			if (!ChangeQueueState(System, interp_transit))
-				break;
-			System->time = dt;
-		}; // NOTE(): Intentional fall-through. We want to start handling transit immediatly, instead of waiting an addidional frame.
-	case interp_transit:
-		{
-			v2 From = GetTileCenter(map, System->starting_p);
-			v2 To = GetTileCenter(map, entity->p);
-			entity->deferred_p = Lerp2(From, To, System->time);
+			range_map_cell_t RandomCell = Range->Filled[rand() % Range->FilledCount];
+			v2s Target = RandomCell.Cell;
 
-			if ((System->time >= 1.0f))
+			entity_t *Player = FindClosestPlayer(State->storage, Entity->p);
+			if (Player)
 			{
-			 	if (System->action_points > 0)
-			 	{
-			 		if (ChangeQueueState(System, interp_request))
-			 			goto Request;
-			 	}
-			 	else
-			 	{
-			 		ScheduleEnemyAction(state, entity, ENEMY_DEBUG_RANGE);
-
-			 		if ((IsActionQueueCompleted(System) == false))
-						ChangeQueueState(System, interp_action);
-					else
-						ChangeQueueState(System, interp_accept);
-			 	}
+				if (CheckRange(&State->EffectiveRange, Player->p))
+				{
+					Target = Player->p;
+				}
 			}
-		} break;
-	case interp_action:
-		{
-			// NOTE(): Stall until all action are completed.
-			if ((IsActionQueueCompleted(System) == false))
-				System->time = 0.0f;
 
-			if (System->time >= 3.0f)
-				ChangeQueueState(System, interp_accept);
-		} break;
-	case interp_accept:
+			FindPath(State->Map, Entity->p, Target, &State->EnemyPath, *State->Memory);
+		}
+		State->EnemyInited = true;
+	}
+
+	b32 End = true;
+
+	path_t *Path = &State->EnemyPath;
+	if (Path->length)
+	{
+		End = false;
+
+		f32 Speed = 4.0f;
+		f32 Edge = 1.0f / (f32)Path->length;
+		f32 T = State->EnemyAnimationTime * Edge * Speed;
+		T = fclampf(T, 0.0f, 1.0f);
+		int32_t Offset = (int32_t)(T * (f32)Path->length);
+		Offset = Clamp(Offset, 0, Path->length - 1);
+
+		v2 From = GetTileCenter(State->Map, GetPathTile(Path, Offset));
+		v2 To = GetTileCenter(State->Map, GetPathTile(Path, Offset + 1));
+
+		f32 Edge1 = Edge * (float)Offset;
+		f32 Edge2 = Edge1 + Edge;
+
+		f32 Step = step(Edge1, Edge2, T);
+		v2 Position = Lerp2(From, To, Step);
+
+		Entity->deferred_p = Position;
+
+		if (T >= 1.0f)
 		{
-			if (System->time > 0.1f)
-			{
-				#if ENABLE_TURN_SYSTEM_DEBUG_LOGS
-				DebugLog("turn finished in %.2f seconds", System->seconds_elapsed);
-				#endif
-				AcceptTurn(System, entity);
-			}
-		} break;
-	}	
+			End = true;
+		}
+	}
+
+	RenderPath(Out, State->Map, Path, W(Red(), 0.5f));
+	RenderRangeMap(Out, State->Map, &State->EffectiveRange);
+
+	if (End)
+	{
+		for (int32_t Index = 0; Index < Path->length; Index++)
+		{
+			ChangeCell(State, Entity, Path->tiles[Index].p);
+		}
+
+		if (IsActionQueueCompleted(State))
+		{
+			AcceptTurn(State, Entity);
+		}
+	}
 }
 
 fn void BeginTurnSystem(turn_system_t *Queue, game_state_t *Game, f32 dt)
 {
 	Queue->player 		= Game->player;
-	Queue->map 			= Game->map;
+	Queue->Map 			= Game->Map;
 	Queue->storage 		= Game->storage;
 	Queue->particles 	= Game->particles;
 	Queue->log 			= Game->log;
-	
+	Queue->Memory 		= Game->memory;
+
 	Queue->seconds_elapsed += dt;
-	Queue->time += (dt * 4.0f);
+	Queue->EnemyAnimationTime += dt;
 }
 
 fn void EndTurnSystem(turn_system_t *Queue, game_state_t *Game)
@@ -361,7 +326,7 @@ fn void InteruptTurn(turn_system_t *Queue, entity_t *Entity)
 
 fn inline s32 CheckEnemyAlertStates(game_state_t *state, entity_t *ActiveEntity)
 {
-	turn_system_t *System = state->turns;
+	turn_system_t *System = state->System;
 	s32 Interupted = false;
 
 	entity_storage_t *storage = System->storage;
@@ -370,7 +335,7 @@ fn inline s32 CheckEnemyAlertStates(game_state_t *state, entity_t *ActiveEntity)
 		entity_t *Entity = &storage->entities[Index];
 		if (IsHostile(Entity) && (!Entity->Alerted))
 		{
-			if (IsLineOfSight(state->map, Entity->p, ActiveEntity->p))
+			if (IsLineOfSight(state->Map, Entity->p, ActiveEntity->p))
 			{
 				CreateCombatText(state->particles, Entity->deferred_p, combat_text_alerted);
 				Entity->Alerted = true;
@@ -391,21 +356,26 @@ fn b32 IsCellEmpty(turn_system_t *System, v2s p)
 
 	if (collidingEntity == NULL)
     {
-		return IsTraversable(System->map, p);
+		return IsTraversable(System->Map, p);
 	}
 
 	return false;
 }
 
-fn b32 MakeMove(turn_system_t *System, entity_t *entity, v2s offset)
+fn b32 ChangeCell(turn_system_t *State, entity_t *Entity, v2s NewCell)
 {
-	v2s NextCell = Add32(entity->p, offset);
-	b32 Moved = IsCellEmpty(System, NextCell);
+	b32 Moved = IsCellEmpty(State, NewCell);
 	if (Moved)
 	{
-		StepOnTile(System->map, entity);
-		entity->p = NextCell;
+		StepOnTile(State->Map, Entity);
+		Entity->p = NewCell;
 	}
+	return Moved;
+}
+
+fn b32 MakeMove(turn_system_t *System, entity_t *entity, v2s offset)
+{
+	b32 Moved = ChangeCell(System, entity, IntAdd(entity->p, offset));
 	return (Moved);
 }
 
@@ -487,7 +457,7 @@ fn int MoveFitsWithSize(turn_system_t* System, entity_t *requestee, v2s requeste
 
 fn b32 Launch(turn_system_t *System, v2s source, entity_t *target, u8 push_distance, s32 strength)
 {
-    v2s direction = Sub32(target->p, source);
+    v2s direction = IntSub(target->p, source);
 
     if (direction.x != 0) direction.x = (direction.x > 0) ? 1 : -1;
     if (direction.y != 0) direction.y = (direction.y > 0) ? 1 : -1;
@@ -496,14 +466,14 @@ fn b32 Launch(turn_system_t *System, v2s source, entity_t *target, u8 push_dista
     s32 total_damage = 0;
 
     for (s32 i = 0; i < push_distance; ++i) { // todo: make strength affect push_distance somewhat
-        v2s next_pos = Add32(target->p, direction); // Slime is moved through each tile on the way
+        v2s next_pos = IntAdd(target->p, direction); // Slime is moved through each tile on the way
 
         if (!MoveFitsWithSize(System, target, next_pos)) {
             TakeHP(target, (s16)damage_per_tile);
             break;
         } else {
             target->p = next_pos;
-            StepOnTile(System->map, target);
+            StepOnTile(System->Map, target);
         }
     }
 
@@ -536,7 +506,7 @@ fn void DoDamage(turn_system_t *game, entity_t *user, entity_t *target, s32 dama
     if ((rand() / (float)RAND_MAX) < 20) {
         blood_type_t blood_type = (target->enemy_type == 0) ? blood_red : blood_green;
         hit_velocity_t hit_velocity = (rand() % 2 == 0) ? high_velocity : low_velocity; // Just a temporary thing until we add ammo types
-        BloodSplatter(game->map, user->p, target->p, blood_type, hit_velocity);
+        BloodSplatter(game->Map, user->p, target->p, blood_type, hit_velocity);
     }
 }
 
@@ -553,7 +523,7 @@ fn inline void AOE(turn_system_t *state, entity_t *user, entity_t *target, const
     for (s32 i = 0; i < storage->EntityCount; i++)
     {
         entity_t *entity = &storage->entities[i];
-        f32 distance = DistanceV2S(explosion_center, entity->p);
+        f32 distance = IntDistance(explosion_center, entity->p);
         
         if (distance <= radius_inner) {
             DoDamage(state, user, entity, damage, prefix);

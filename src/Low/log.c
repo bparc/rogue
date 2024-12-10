@@ -38,7 +38,7 @@ fn void MessageLog(command_buffer_t *out, const bmfont_t *font, v2 p, log_t *Log
 		if (seconds_elapsed <= lifetime)
 		{
 			f32 t0 = seconds_elapsed / lifetime;
-			v2 ease = EaseInThenOut(20.0f, 10.0f, 0.0f, t0);
+			v2 ease = Ease2(20.0f, 10.0f, 0.0f, t0);
 			f32 x = (17.0f + ease.x);
 			v4 color = A(White(), 1.0f - ease.y);
 

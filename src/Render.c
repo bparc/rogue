@@ -1,15 +1,15 @@
 fn v2s ViewportToMap(const game_state_t *World, v2 p)
 {
-	p = Sub(p, World->camera->p);
+	p = Sub(p, World->Camera->p);
 	p = IsoToScreen(p);
-	p = Div(p, World->map->tile_sz);
+	p = Div(p, World->Map->tile_sz);
 	v2s result = {0};
 	result.x = (s32)p.x;
 	result.y = (s32)p.y;
 	return result;
 }
 
-fn inline void RenderEntity(command_buffer_t *out, const entity_t *entity, f32 alpha, assets_t *assets, const map_t *map)
+fn inline void RenderEntity(command_buffer_t *out, const entity_t *entity, f32 alpha, assets_t *assets, const map_t *Map)
 {
 	v2 p = entity->deferred_p;
 	bitmap_t *bitmap = IsHostile(entity) ? &assets->Slime : &assets->Player[0];
@@ -19,8 +19,8 @@ fn inline void RenderEntity(command_buffer_t *out, const entity_t *entity, f32 a
 	if ((entity->size.x == 2) && (entity->size.y == 2))
 	{
 		bitmap = &assets->SlimeBig;
-		bitmap_p = Add(bitmap_p, Scale(map->tile_sz, 0.5f));
-		p = Add(p, Scale(map->tile_sz, 0.5f));
+		bitmap_p = Add(bitmap_p, Scale(Map->tile_sz, 0.5f));
+		p = Add(p, Scale(Map->tile_sz, 0.5f));
 		cube_bb_sz = V2(64.0f, 64.0f);
 	}
 	// NOTE(): Bitmap
@@ -47,40 +47,40 @@ fn inline void RenderEntity(command_buffer_t *out, const entity_t *entity, f32 a
 	RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
 }
 
-fn inline void RenderTile(command_buffer_t *out, map_t *map, s32 x, s32 y, assets_t *assets, game_state_t *World)
+fn inline void RenderTile(command_buffer_t *out, map_t *Map, s32 x, s32 y, assets_t *assets, game_state_t *World)
 {
 	v2s at = {x, y};
-	if (!IsEmpty(map, at))
+	if (!IsEmpty(Map, at))
 	{
-		const tile_t *Tile = GetTile(map, x, y);
-		RenderIsoTile(out, map, at, White(), false, 0);
+		const tile_t *Tile = GetTile(Map, x, y);
+		RenderIsoTile(out, Map, at, White(), false, 0);
 
-		if (IsTraversable(map, at))
+		if (IsTraversable(Map, at))
 		{
-			bitmap_t *bitmap = PickTileBitmap(map, x, y, assets);
-			RenderTileAlignedBitmap(out, map, at, bitmap, PureWhite());
+			bitmap_t *bitmap = PickTileBitmap(Map, x, y, assets);
+			RenderTileAlignedBitmap(out, Map, at, bitmap, PureWhite());
 			
 			// Draw temporary blood overlay
 			if (Tile->blood)
 			{
 				v4 color = (Tile->blood == blood_red) ? Red() : Green();
-				RenderTileAlignedBitmap(out, map, at, bitmap, A(color, 0.8f));
+				RenderTileAlignedBitmap(out, Map, at, bitmap, A(color, 0.8f));
 			}
 		}
-		if (IsWall(map, at))
-			RenderIsoTile(out, map, at, White(), true, 15);
-		if (GetTileValue(map, at.x, at.y) == tile_door)
-			RenderIsoTile(out, map, at, Red(), true, 25);
+		if (IsWall(Map, at))
+			RenderIsoTile(out, Map, at, White(), true, 15);
+		if (GetTileValue(Map, at.x, at.y) == tile_door)
+			RenderIsoTile(out, Map, at, Red(), true, 25);
 
 		if ((GetContainer(World, at) != NULL))
-			RenderIsoTile(out, map, at, Green(), true, 20);
+			RenderIsoTile(out, Map, at, Green(), true, 20);
 
 		if ((Tile->trap_type != trap_type_none))
-			RenderTileAlignedBitmap(out, map, at, &assets->Traps[(Tile->trap_type - 1)], PureWhite());	
+			RenderTileAlignedBitmap(out, Map, at, &assets->Traps[(Tile->trap_type - 1)], PureWhite());	
 	}
 }
 
-fn inline void Render_ClipToViewport(game_state_t *World, map_t *map, bb_t clipplane, command_buffer_t *out)
+fn inline void Render_ClipToViewport(game_state_t *World, map_t *Map, bb_t clipplane, command_buffer_t *out)
 {
 	v2 viewport = Sub(clipplane.max, clipplane.min);
 	assets_t *assets = World->assets;
@@ -131,19 +131,19 @@ fn inline void Render_ClipToViewport(game_state_t *World, map_t *map, bb_t clipp
     v2s corner = top_corner;
     for(s32 y = 0; y < min.y - corner.y; y++)
     for(s32 x = -y; x <= y; x++)
-            RenderTile(out,map,corner.x+x,corner.y+y,assets,World);
+            RenderTile(out,Map,corner.x+x,corner.y+y,assets,World);
     // NOTE(): Parallelogram
     if(min1.y<min2.y)
     {
         for(s32 y = 0; y <= min2.y - min.y; y++)
         for(s32 x = 0; x <= max.x-min.x;x++)
-        	RenderTile(out, map,min.x+x+y,min.y+y,assets,World);
+        	RenderTile(out, Map,min.x+x+y,min.y+y,assets,World);
     }
     else
     {
         for(s32 y = 0; y <= min1.y - min.y; y++)
         for(s32 x = 0; x <= max.x-min.x;x++)
-           RenderTile(out,map,(min.x+x)-y,min.y+y,assets,World);
+           RenderTile(out,Map,(min.x+x)-y,min.y+y,assets,World);
     }
     // NOTE(): Bot triangle
     min = bot_min;
@@ -151,26 +151,26 @@ fn inline void Render_ClipToViewport(game_state_t *World, map_t *map, bb_t clipp
     corner = bot_corner;
     for(s32 y = 1; y < (corner.y - max.y); y++)
     for(s32 x = y; x < (max.x - min.x)-y; x++)
-    	RenderTile(out,map,min.x+x,min.y+y,assets,World);
+    	RenderTile(out,Map,min.x+x,min.y+y,assets,World);
 }
 
 fn void Render_DrawFrame(game_state_t *state, command_buffer_t *out, f32 dt, assets_t *assets, v2 viewport)
 {
-	map_t *map = state->map;
+	map_t *Map = state->Map;
 	entity_storage_t *storage = state->storage;
 	entity_t *player = DEBUGGetPlayer(storage);
 	particles_t *particles = state->particles;
 	command_buffer_t *out_top = Debug.out;
-	turn_system_t *queue = state->turns;
+	turn_system_t *queue = state->System;
 
 	//DrawRect(out, V2(0.0f, 0.0f), V2(1000.0f, 1000.0f), SKY_COLOR); // NOTE(): Background
 
 	bb_t view = {0.0f};
 	view.min = V2(0.0f, 0.0f);
 	view.max = Add(view.min, viewport);
-	view = Shrink(view, 64.0f * 3.0f);
+	view = ShrinkBounds(view, 64.0f * 3.0f);
 
-	Render_ClipToViewport(state, map, view, out);
+	Render_ClipToViewport(state, Map, view, out);
 
 	// NOTE(): Entities
 	for (s32 index = 0; index < storage->EntityCount; index++)
@@ -180,23 +180,23 @@ fn void Render_DrawFrame(game_state_t *state, command_buffer_t *out, f32 dt, ass
 		// NOTE(): The "deferred_p"s of the 'active' no-player entities are
 		// animated directly in TurnKernel() to allow for
 		// more explicit controls over the entity animation in that section of the code-base.
-		if ((entity->flags & entity_flags_controllable) || (IsActive(state->turns, entity->id) == false))
+		if ((entity->flags & entity_flags_controllable) || (IsActive(state->System, entity->id) == false))
 		{
-			entity->deferred_p = Lerp2(entity->deferred_p, GetTileCenter(state->map, entity->p), 10.0f * dt);
+			entity->deferred_p = Lerp2(entity->deferred_p, GetTileCenter(state->Map, entity->p), 10.0f * dt);
 		}
 		entity->blink_time = MaxF32(entity->blink_time - (dt * 1.5f), 0.0f);
 
-		RenderEntity(out, entity, 1.0f, assets, map);
+		RenderEntity(out, entity, 1.0f, assets, Map);
 
-		v2 screen_p = CameraToScreen(state->camera, Sub(entity->deferred_p, V2(60.0f, 60.0f)));
+		v2 screen_p = CameraToScreen(state->Camera, Sub(entity->deferred_p, V2(60.0f, 60.0f)));
 		screen_p.x -= 25.0f;
-		RenderHP(out_top, screen_p, assets, entity);
+		RenderHealthPoints(out_top, screen_p, assets, entity);
 	}
 	for (s32 index = 0; index < queue->num_evicted_entities; index++)
 	{
 		evicted_entity_t *entity = &queue->evicted_entities[index];
 		entity->deferred_p = Sub(entity->deferred_p, Scale(V2(10.0f, 10.0f), dt));
-		RenderEntity(out, &entity->entity, entity->time_remaining, assets, map);
+		RenderEntity(out, &entity->entity, entity->time_remaining, assets, Map);
 	}
  	// NOTE(): Particles
 	for (s32 index = 0; index < particles->num; index++)
@@ -208,7 +208,7 @@ fn void Render_DrawFrame(game_state_t *state, command_buffer_t *out, f32 dt, ass
 			f32 t = particle->t;
 			v4 color = White();
 			color.w = (1.0f - Smoothstep(t, 0.5f));
-			v2 p = CameraToScreen(state->camera, particle->p);
+			v2 p = CameraToScreen(state->Camera, particle->p);
 			p.y -= ((50.0f * t) + (t * t * t) * 20.0f);
 			p.x += (Sine(t) * 2.0f - 1.0f) * 2.0f;
 

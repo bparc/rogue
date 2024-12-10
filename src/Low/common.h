@@ -82,4 +82,4 @@ fn b32 RandomChance(s32 percentange);
 fn s32 RandomInt(void);
 fn u16 Min16U(u16 a, u16 b);
 fn s32 Min32(s32 a, s32 b);
-fn s32 Clamp32(s32 value, s32 min, s32 max);
+fn s32 Clamp(s32 value, s32 min, s32 max);

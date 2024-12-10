@@ -1,28 +1,27 @@
 // NOTE(): Map/
-#include "Levels.h"
-#include "Map/map.h"
-#include "Map/map.c"
+#include "Map/Map.h"
+#include "Map/Map.c"
 #include "Map/generator.h"
 #include "Map/generator.c"
 #include "Map/pathfinding.h"
 #include "Map/pathfinding.c"
 
 // NOTE(): Game/
-#include "Game/particle.c"
+#include "game/particle.c"
 
-#include "Game/items.h"
-#include "Game/Action.h"
-#include "Game/inventory.h"
-#include "Game/entity.h"
-#include "Game/entity.c"
-#include "Game/Action.c"
-#include "Game/inventory.c"
+#include "game/items.h"
+#include "game/action.h"
+#include "game/inventory.h"
+#include "game/entity.h"
+#include "game/entity.c"
+#include "game/action.c"
+#include "game/inventory.c"
 
-#include "Game/TurnSystem.h"
-#include "Game/cursor.h"
+#include "game/turnbased.h"
+#include "game/cursor.h"
 
-#include "UI/interface.h"
-#include "GameMenu.c"
+#include "interface/interface.h"
+#include "menu.c"
 
 typedef struct
 {
@@ -33,32 +32,31 @@ typedef struct
 	entity_storage_t 	*storage;
 	particles_t 		*particles;
 	interface_t 		*interface;
-	slot_bar_t 			slot_bar;
-	turn_system_t 		*turns;
-	map_t 				*map;
-	camera_t 			*camera;
+	slot_bar_t 			Bar;
+	turn_system_t 		*System;
+	map_t 				*Map;
+	camera_t 			*Camera;
 	memory_t 			*memory;
 	map_layout_t 		*layout;   
 } game_state_t;
 
-#include "Game/Dungeon.c"
-#include "Renderer/Draw.c"
+#include "data.c"
+#include "game/dungeon.c"
+#include "renderer/draw.c"
 
-#include "Game/cursor.c"
-#include "Game/enemy.c"
-#include "Game/Player.c"
-#include "Game/Camera.c"
-#include "Game/TurnSystem.c"
+#include "game/cursor.c"
+#include "game/enemy.c"
+#include "game/player.c"
+#include "game/Camera.c"
+#include "game/turnbased.c"
 
-#include "Render.c"
+#include "render.c"
 
-#include "UI/hud_inventory.c"
-#include "UI/hud_minimap.c"
-#include "UI/hud_bar.c"
-#include "UI/hud_queue.c"
-#include "UI/hud.c"
-
-#include "GameData.h"
+#include "interface/inventory.c"
+#include "interface/minimap.c"
+#include "interface/bar.c"
+#include "interface/queue.c"
+#include "interface/hud.c"
 
 fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *assets)
 {
@@ -69,21 +67,21 @@ fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *asset
 	state->memory = memory;
 	state->assets = assets;
 	state->log = log;
-	state->camera 		= PushStruct(camera_t, memory);
+	state->Camera 		= PushStruct(camera_t, memory);
 	state->cursor 		= PushStruct(cursor_t, memory);
-	state->turns  		= PushStruct(turn_system_t, memory);
+	state->System  		= PushStruct(turn_system_t, memory);
 	state->storage 		= PushStruct(entity_storage_t, memory);
 	state->particles 	= PushStruct(particles_t, memory);
 	state->interface 	= PushStruct(interface_t, memory);
 	state->layout       = PushStruct(map_layout_t, memory);
-	state->map = AllocateMap(1024, 1024, memory, TILE_PIXEL_SIZE);
+	state->Map = AllocateMap(1024, 1024, memory, TILE_PIXEL_SIZE);
 	
 	SetupItemDataTable(memory, assets);
 	SetupActionDataTable(memory, assets);
-	SetupCamera(state->camera, V2(1600.0f, 900.0f));
-	state->camera->zoom = 3.0f;
+	SetupCamera(state->Camera, V2(1600.0f, 900.0f));
+	state->Camera->zoom = 3.0f;
 
-	DefaultActionBar(&state->slot_bar,  assets);
+	DefaultActionBar(&state->Bar,  assets);
 
 	GenerateDungeon(state->layout, 8, *state->memory);
 	CreateDungeon(state, state->layout);
@@ -91,20 +89,19 @@ fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *asset
 	DebugLog("used memory %i/%i KB", memory->offset / 1024, memory->size / 1024);
 }
 
-fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, turn_system_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
+fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *Map, turn_system_t *queue, f32 dt, client_input_t *input, virtual_controls_t cons, log_t *log, command_buffer_t *out, assets_t *assets)
 {
 	entity_t *ActiveEntity = NULL;
-	ControlPanel(state->turns, &cons, state->storage);
+	ControlPanel(state->System, &cons, state->storage);
 
 	BeginTurnSystem(queue, state, dt);
-	ActiveEntity = PullUntilActive(queue);
+	ActiveEntity = Pull(queue);
 
 	b32 TurnHasEnded = (ActiveEntity == NULL);
 	if (TurnHasEnded)
 	{
 		ClearTurnQueue(queue);
 		EstablishTurnOrder(queue);
-		ActiveEntity = PullUntilActive(queue);
 	}
 
 	if (ActiveEntity)
@@ -114,12 +111,13 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 			CloseCursor(state->cursor);
 			CloseInventory(state->interface);			
 
-			s32 MovementPointCount = MAX_PLAYER_MOVEMENT_POINTS;
 			if (IsHostile(ActiveEntity))
-				MovementPointCount = BeginEnemyTurn(queue, ActiveEntity, *state->memory);
+				BeginEnemyTurn(queue, ActiveEntity, *state->memory);
 
-			SetupTurn(queue, MovementPointCount, 16);
+			SetupTurn(queue, 16);
 			ProcessStatusEffects(ActiveEntity);
+
+			IntegrateRange(&queue->EffectiveRange, queue->Map, ActiveEntity->p, *state->memory);
 		}
 
 		Camera(state, ActiveEntity, input, dt);
@@ -140,7 +138,7 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 		}
 		else
 		{
-			AI(state, dt, out, cons, ActiveEntity);
+			AI(queue, out, ActiveEntity);
 		}
 	}
 
@@ -157,7 +155,7 @@ fn void TurnSystem(game_state_t *state, entity_storage_t *storage, map_t *map, t
 
 fn void Tick(game_state_t *state, f32 dt, client_input_t input, virtual_controls_t cons, command_buffer_t *Layer0, command_buffer_t *Layer1)
 {
-	TurnSystem(state, state->storage, state->map, state->turns, dt, &input, cons, state->log, Layer1, state->assets);	
+	TurnSystem(state, state->storage, state->Map, state->System, dt, &input, cons, state->log, Layer1, state->assets);	
 	HUD(Debug.out, state, &input, &cons, dt);
 	Render_DrawFrame(state, Layer0, dt, state->assets, V2(input.viewport[0], input.viewport[1]));
 }

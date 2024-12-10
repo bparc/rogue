@@ -11,7 +11,7 @@ fn entity_t *CreatePlayer(game_state_t *state, v2s p)
         s32 player_accuracy = 75; // Applying this value for both melee and ranged accuracy
         s32 player_evasion = 20;
         result = CreateEntity(state->storage, p, V2S(1, 1), entity_flags_controllable,
-            player_health, attack_dmg, state->map, player_max_health, player_accuracy, player_evasion,
+            player_health, attack_dmg, state->Map, player_max_health, player_accuracy, player_evasion,
             MAX_PLAYER_ACTION_POINTS, MAX_PLAYER_MOVEMENT_POINTS, 1);
         
 	    result->inventory = PushStruct(inventory_t, state->memory);
@@ -34,7 +34,7 @@ fn entity_t *CreateSlime(game_state_t *state, v2s p)
 	u16 slime_attack_dmg = 6;
 	s32 slime_accuracy = 30; // Applying this value for both melee and ranged accuracy
 	s32 slime_evasion = 80;
-	entity_t *result = CreateEntity(state->storage, p, V2S(1, 1),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map,
+	entity_t *result = CreateEntity(state->storage, p, V2S(1, 1),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->Map,
 	slime_max_hp, slime_accuracy, slime_evasion, MAX_SLIME_ACTION_POINTS, MAX_SLIME_MOVEMENT_POINTS, 1);
     result->enemy_type = enemy_slime;
     return result;
@@ -47,7 +47,7 @@ fn entity_t *CreateBigSlime(game_state_t *state, v2s p)
 	u16 slime_attack_dmg = 25;
 	s32 slime_accuracy = 45; // Applying this value for both melee and ranged accuracy
 	s32 slime_evasion = 40;
-	entity_t *result = CreateEntity(state->storage, p, V2S(2, 2),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->map,
+	entity_t *result = CreateEntity(state->storage, p, V2S(2, 2),  entity_flags_hostile, slime_hp, slime_attack_dmg, state->Map,
 	slime_max_hp, slime_accuracy, slime_evasion, MAX_SLIME_ACTION_POINTS, MAX_SLIME_MOVEMENT_POINTS, 1);
     result->enemy_type = enemy_slime_large;
     return result;
@@ -69,13 +69,13 @@ fn void CreatePoisonTrap(game_state_t *state, v2s p)
 fn void CreateRandomLoot(game_state_t *state, v2s position)
 {
     b32 Result = false;
-    if (InMapBounds(state->map, position))
+    if (InMapBounds(state->Map, position))
     {
-        s32 Index = GetTileIndex(state->map, position);
+        s32 Index = GetTileIndex(state->Map, position);
         container_t *Container = PushContainer(state->storage);
         if (Container)
         {
-            state->map->container_ids[Index] = Container->ID;
+            state->Map->container_ids[Index] = Container->ID;
             SetupInventory(&Container->inventory);
 
             // randomize loot
@@ -91,12 +91,12 @@ fn void CreateRandomLoot(game_state_t *state, v2s position)
 fn container_t *GetContainer(game_state_t *state, v2s position)
 {
     entity_storage_t *Storage = state->storage;
-    map_t *Map = state->map;
+    map_t *Map = state->Map;
 
     container_t *Result = 0;
-    if (InMapBounds(state->map, position))
+    if (InMapBounds(state->Map, position))
     {
-        s32 TileIndex = GetTileIndex(state->map, position);
+        s32 TileIndex = GetTileIndex(state->Map, position);
         s32 ContainerIndex = (Map->container_ids[TileIndex] - 1);
         if ((ContainerIndex >= 0) && (ContainerIndex < Storage->ContainerCount))
             Result = &Storage->Containers[ContainerIndex];
@@ -106,7 +106,7 @@ fn container_t *GetContainer(game_state_t *state, v2s position)
 
 fn void CreateRoomInterior(game_state_t *Scene, room_t room, v2s chunk_size)
 {
-    map_t *Map = Scene->map;
+    map_t *Map = Scene->Map;
     entity_storage_t *Storage = Scene->storage;
 
 #define X DUNGEON_ROOM_SIZE_Y
@@ -115,13 +115,13 @@ fn void CreateRoomInterior(game_state_t *Scene, room_t room, v2s chunk_size)
     s32 RandomRoomIndex = rand() % ArraySize(Dungeon_RoomPresets);
     char *Data = Dungeon_RoomPresets[RandomRoomIndex];
 
-    v2s min = Mul32(room.ChunkAt, chunk_size);
+    v2s min = IntMul(room.ChunkAt, chunk_size);
     for (s32 y = 2; y < Y - 1; y++)
     {
         for (s32 x = 2; x < X - 1; x++)
         {
             v2s TileIndex = {x, y};
-            TileIndex = Add32(min, TileIndex);
+            TileIndex = IntAdd(min, TileIndex);
 
             u8 value = tile_floor;
             switch (Data[y * X + x])
@@ -140,7 +140,7 @@ fn void CreateRoomInterior(game_state_t *Scene, room_t room, v2s chunk_size)
 
 fn void CreateDungeon(game_state_t *Scene, map_layout_t *Layout)
 {   
-    CreateMapFromLayout(Scene->map, Layout);
+    CreateMapFromLayout(Scene->Map, Layout);
 
     for (s32 Index = 1; Index < Layout->PlacedRoomCount; Index++)
     {
@@ -155,9 +155,9 @@ fn void CreateDungeon(game_state_t *Scene, map_layout_t *Layout)
         room_t *StartingRoom = &Layout->PlacedRooms[0];
 
         v2s Pos = GetRoomPosition(Layout, StartingRoom);
-        CreatePlayer(Scene, Add32(Pos, V2S(2, 2)));
+        CreatePlayer(Scene, IntAdd(Pos, V2S(2, 2)));
         StartingRoom->Visited = true;
-        //CreateRandomLoot(Scene, Add32(Pos, V2S(2, 2)));
-        //CreateRandomLoot(Scene, Add32(Pos, V2S(2, 5)));
+        //CreateRandomLoot(Scene, IntAdd(Pos, V2S(2, 2)));
+        //CreateRandomLoot(Scene, IntAdd(Pos, V2S(2, 5)));
     }
 }

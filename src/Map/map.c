@@ -1,83 +1,89 @@
-fn s32 GetTileIndex32(const map_t *map, s32 x, s32 y)
+fn s32 GetTileIndex32(const map_t *Map, s32 x, s32 y)
 {
-	s32 result = (y * map->x + x);
+	s32 result = (y * Map->x + x);
 	return result;
 }
 
-fn s32 GetTileIndex(const map_t *map, v2s p)
+fn s32 GetTileIndex(const map_t *Map, v2s p)
 {
-	return GetTileIndex32(map, p.x, p.y);
+	return GetTileIndex32(Map, p.x, p.y);
 }
 
-fn s32 InMapBounds(const map_t *map, v2s p)
+fn s32 InMapBounds(const map_t *Map, v2s p)
 {
 	s32 result = p.x >= 0 && p.y >= 0 &&
-	p.x < map->x && p.y < map->y;
+	p.x < Map->x && p.y < Map->y;
 	return result;
 }
 
-fn tile_t *GetTile(map_t *map, s32 x, s32 y)
+fn tile_t *GetTile(map_t *Map, s32 x, s32 y)
 {
 	tile_t *result = 0;
-	if ((x >= 0 && y >= 0) && (x < map->x && y < map->y))
-		result = (map->tiles + (y * map->x + x));
+	if ((x >= 0 && y >= 0) && (x < Map->x && y < Map->y))
+		result = (Map->tiles + (y * Map->x + x));
 	return result;
 }
 
-fn u8 GetTileValue(const map_t *map, s32 x, s32 y)
+fn u8 GetTileValue(const map_t *Map, s32 x, s32 y)
 {
-	tile_t *tile = GetTile((map_t *)map, x, y);
+	tile_t *tile = GetTile((map_t *)Map, x, y);
 	return (tile ? tile->value : 0);
 }
 
-fn trap_type_t GetTileTrapType(const map_t *map, s32 x, s32 y)
+fn trap_type_t GetTileTrapType(const map_t *Map, s32 x, s32 y)
 {
-	tile_t *result = GetTile((map_t *)map, x, y);
+	tile_t *result = GetTile((map_t *)Map, x, y);
 	return (result ? result->trap_type : trap_type_none);
 }
 
-fn b32 IsTraversable(const map_t *map, v2s p)
+fn b32 IsTraversable(const map_t *Map, v2s p)
 {
-	b32 result = (GetTileValue(map, p.x, p.y) == 1);
+	b32 result = (GetTileValue(Map, p.x, p.y) == 1);
 	return result;
 }
 
-fn b32 IsEmpty(const map_t *map, v2s p)
+fn b32 IsEmpty(const map_t *Map, v2s p)
 {
-	b32 result = (GetTileValue(map, p.x, p.y) == 0);
+	b32 result = (GetTileValue(Map, p.x, p.y) == 0);
 	return result;
 }
 
-fn void SetTileValueI(map_t *map, s32 x, s32 y, u8 value)
+fn void SetTileValueI(map_t *Map, s32 x, s32 y, u8 value)
 {
-	tile_t *tile= GetTile(map, x, y);
+	tile_t *tile= GetTile(Map, x, y);
 	if (tile)
 		tile->value = value;
 }
 
-fn void SetTileValue(map_t *map, v2s p, u8 value)
+fn void SetTileValue(map_t *Map, v2s p, u8 value)
 {
-	SetTileValueI(map, p.x, p.y, value);
+	SetTileValueI(Map, p.x, p.y, value);
 }
 
-fn void SetTileTrapType (map_t *map, v2s p, trap_type_t type)
+fn void SetTileTrapType (map_t *Map, v2s p, trap_type_t type)
 {
-	tile_t *tile = GetTile(map, p.x, p.y);
+	tile_t *tile = GetTile(Map, p.x, p.y);
 	if (tile)
 		tile->trap_type = type;
 }
 
 
-fn bb_t GetTileBounds(const map_t *map, s32 x, s32 y)
+fn bb_t GetTileBounds1(const map_t *Map, s32 x, s32 y)
 {
-	v2 min = SV2(x, y);
-	min = Mul(min, map->tile_sz);
-	return RectToBounds(min, map->tile_sz);
+	v2 min = {(f32)x, (f32)y};
+	min = Mul(min, Map->tile_sz);
+	return RectBounds(min, Map->tile_sz);
 }
 
-fn v2 GetTileCenter(const map_t *map, v2s p)
+fn bb_t GetTileBounds2(const map_t *Map, v2s TileIndex)
 {
-	v2 result = GetCenter(GetTileBounds(map, p.x, p.y));
+	bb_t Result = GetTileBounds1(Map, TileIndex.x, TileIndex.y);
+	return Result;
+}
+
+fn v2 GetTileCenter(const map_t *Map, v2s p)
+{
+	v2 result = BoundsCenter(GetTileBounds1(Map, p.x, p.y));
 	return result;
 }
 
@@ -96,70 +102,70 @@ fn map_t *AllocateMap(s32 x, s32 y, memory_t *memory, f32 tile_height)
 	return result;
 }
 
-fn void ClearMap(map_t *map)
+fn void ClearMap(map_t *Map)
 {
-	for (s32 index = 0; index < map->x * map->y; index++)
-		ZeroStruct(&map->tiles[index]);
+	for (s32 index = 0; index < Map->x * Map->y; index++)
+		ZeroStruct(&Map->tiles[index]);
 }
 
-fn s32 IsCorner(const map_t *map, v2s offset, s32 Index)
+fn s32 IsCorner(const map_t *Map, v2s offset, s32 Index)
 {
 	v2s direction = diagonal_directions[Index];
 	s32 result = (
-		IsEmpty(map, V2S(offset.x + direction.x, offset.y + direction.y)) &&
-		IsEmpty(map, V2S(offset.x + direction.x, offset.y)) &&
-		IsEmpty(map, V2S(offset.x, offset.y + direction.y)));
+		IsEmpty(Map, V2S(offset.x + direction.x, offset.y + direction.y)) &&
+		IsEmpty(Map, V2S(offset.x + direction.x, offset.y)) &&
+		IsEmpty(Map, V2S(offset.x, offset.y + direction.y)));
 	return result;
 }
 
-fn s32 IsEdge(const map_t *map, v2s offset, s32 Index)
+fn s32 IsEdge(const map_t *Map, v2s offset, s32 Index)
 {
 	v2s direction = cardinal_directions[Index];
 	s32 result = (
-		 IsEmpty(map, V2S(offset.x + direction.x, offset.y + direction.y)) &&
-		!IsEmpty(map, V2S(offset.x + direction.y, offset.y + direction.x)) &&
-		!IsEmpty(map, V2S(offset.x - direction.y, offset.y - direction.x)));
+		 IsEmpty(Map, V2S(offset.x + direction.x, offset.y + direction.y)) &&
+		!IsEmpty(Map, V2S(offset.x + direction.y, offset.y + direction.x)) &&
+		!IsEmpty(Map, V2S(offset.x - direction.y, offset.y - direction.x)));
 	return result;
 }
 
-fn s32 DetectCorner(const map_t *map, v2s offset)
+fn s32 DetectCorner(const map_t *Map, v2s offset)
 {
 	for (s32 index = 0; index < 4; index++)
-		if (IsCorner(map, offset, index))
+		if (IsCorner(Map, offset, index))
 			return index;
 	return -1;
 }
 
-fn s32 DetectEdge(const map_t *map, v2s offset)
+fn s32 DetectEdge(const map_t *Map, v2s offset)
 {
 	for (s32 index = 0; index < 4; index++)
-		if (IsEdge(map, offset, index))
+		if (IsEdge(Map, offset, index))
 			return index;
 	return -1;
 }
 
-fn v2s ScreenToMap(const map_t *map, v2 p)
+fn v2s ScreenToMap(const map_t *Map, v2 p)
 {
 	v2s result = {0};
-	result.x = (s32)(p.x / map->tile_sz.x);
-	result.y = (s32)(p.y / map->tile_sz.y);
+	result.x = (s32)(p.x / Map->tile_sz.x);
+	result.y = (s32)(p.y / Map->tile_sz.y);
 	return result;
 }
 
-fn v2 MapToScreen(const map_t *map, v2s p)
+fn v2 MapToScreen(const map_t *Map, v2s p)
 {
-	v2 result = SV2(p.x, p.y);
-	result = Mul(result, map->tile_sz);
+	v2 result = {(f32)p.x, (f32)p.y};
+	result = Mul(result, Map->tile_sz);
 	return (result);
 }
 
-fn u8 PickTileBitmapType(const map_t *map, s32 x, s32 y)
+fn u8 PickTileBitmapType(const map_t *Map, s32 x, s32 y)
 {
 	// check if top is a tile etc
-    u8 top = !IsEmpty(map, V2S(x, y - 1));
-    u8 bottom = !IsEmpty(map, V2S(x, y + 1));
-    u8 left = !IsEmpty(map, V2S(x - 1, y));
-    u8 right = !IsEmpty(map, V2S(x + 1, y));
+    u8 top = !IsEmpty(Map, V2S(x, y - 1));
+    u8 bottom = !IsEmpty(Map, V2S(x, y + 1));
+    u8 left = !IsEmpty(Map, V2S(x - 1, y));
+    u8 right = !IsEmpty(Map, V2S(x + 1, y));
 
      //borders: connected on three sides
     if (!top && left && right && bottom) {
@@ -220,48 +226,48 @@ fn u8 PickTileBitmapType(const map_t *map, s32 x, s32 y)
     return tile_center;
 }
 
-fn bitmap_t *PickTileBitmap(const map_t* map, s32 x, s32 y, assets_t *assets)
+fn bitmap_t *PickTileBitmap(const map_t* Map, s32 x, s32 y, assets_t *assets)
 {
-	u8 ID = PickTileBitmapType(map, x, y);
+	u8 ID = PickTileBitmapType(Map, x, y);
 	return (&assets->Tilesets[0].LowTiles[ID][0]);
 }
 
-fn b32 IsDoor(const map_t *map, v2s Index)
+fn b32 IsDoor(const map_t *Map, v2s Index)
 {
-	b32 result = (GetTileValue(map, Index.x, Index.y) == tile_door);
+	b32 result = (GetTileValue(Map, Index.x, Index.y) == tile_door);
 	return result;
 }
 
-fn b32 IsWall(const map_t *map, v2s p)
+fn b32 IsWall(const map_t *Map, v2s p)
 {
-	b32 result = GetTileValue(map, p.x, p.y) == 2;
+	b32 result = GetTileValue(Map, p.x, p.y) == 2;
 	return result;
 }
 
-fn dda_line_t BeginDDALine(const map_t *map, v2s from, v2s to)
+fn dda_line_t BeginDDALine(const map_t *Map, v2s from, v2s to)
 {
 	dda_line_t result = {0};
 	result.at = from;
 	result.from = result.at;
 	result.to = to;
-	result.map = map;
+	result.Map = Map;
 
-	result.ray = Sub(SignedToFloat(to), SignedToFloat(from));
-	result.distance_to_edge = SignedToFloat(Sign2(result.ray));
-	result.delta = Sign2(result.ray);
+	result.ray = Sub(ToFloat(to), ToFloat(from));
+	result.distance_to_edge = Sign2(result.ray);
+	result.delta = FloatSign(result.ray);
 
 	return result;
 }
 
 fn b32 ContinueDDALine(dda_line_t *it)
 {
-	b32 result = (InMapBounds(it->map, it->at) && !CompareVectors(it->at, it->to));
+	b32 result = (InMapBounds(it->Map, it->at) && !CompareInts(it->at, it->to));
 
 	if (result)
 	{
-		v2 ray_p = SignedToFloat(it->from);
+		v2 ray_p = ToFloat(it->from);
 	
-		v2 edge = Add(SignedToFloat(it->at), it->distance_to_edge);
+		v2 edge = Add(ToFloat(it->at), it->distance_to_edge);
 		v2 dt = Sub(edge, ray_p);
 		dt = Div(dt, it->ray);
 
@@ -280,29 +286,29 @@ fn b32 ContinueDDALine(dda_line_t *it)
 	return result;
 }
 
-fn b32 IsLineOfSight(const map_t *map, v2s from, v2s to)
+fn b32 IsLineOfSight(const map_t *Map, v2s from, v2s to)
 {
-	dda_line_t dda = BeginDDALine(map, from, to);
+	dda_line_t dda = BeginDDALine(Map, from, to);
 
 	while (ContinueDDALine(&dda)) {
-		if (CompareVectors(dda.at, from))
+		if (CompareInts(dda.at, from))
 			continue;
-		if (IsWall(map, dda.at) || IsDoor(map, dda.at))
+		if (IsWall(Map, dda.at) || IsDoor(Map, dda.at))
 			return false;
 	}
 
 	return true;
 }
 
-fn void BloodSplatter(map_t *map, v2s shooter_position, v2s hit_position, blood_type_t blood_type, hit_velocity_t hit_velocity)
+fn void BloodSplatter(map_t *Map, v2s shooter_position, v2s hit_position, blood_type_t blood_type, hit_velocity_t hit_velocity)
 { 
-    tile_t *initial_tile = GetTile(map, hit_position.x, hit_position.y);
-    if (initial_tile && IsTraversable(map, hit_position)) {
+    tile_t *initial_tile = GetTile(Map, hit_position.x, hit_position.y);
+    if (initial_tile && IsTraversable(Map, hit_position)) {
         initial_tile->blood = blood_type;
     }
 
-    v2s extended_position = Add32(hit_position, Sub32(hit_position, shooter_position));
-    dda_line_t dda = BeginDDALine(map, hit_position, extended_position);
+    v2s extended_position = IntAdd(hit_position, IntSub(hit_position, shooter_position));
+    dda_line_t dda = BeginDDALine(Map, hit_position, extended_position);
 
     int splatter_length;
     if (hit_velocity == high_velocity) {
@@ -313,8 +319,8 @@ fn void BloodSplatter(map_t *map, v2s shooter_position, v2s hit_position, blood_
     int trail_count = 0;
 
     while(ContinueDDALine(&dda) && trail_count < splatter_length) {
-        if (IsTraversable(map, dda.at)) {
-            tile_t *tile = GetTile(map, dda.at.x, dda.at.y);
+        if (IsTraversable(Map, dda.at)) {
+            tile_t *tile = GetTile(Map, dda.at.x, dda.at.y);
             if (tile) {
                 tile->blood = blood_type;
                 trail_count++;
@@ -331,8 +337,8 @@ fn void BloodSplatter(map_t *map, v2s shooter_position, v2s hit_position, blood_
                     continue;
                 }
                 v2s splatter_pos = V2S(hit_position.x + dx, hit_position.y + dy);
-                if (IsTraversable(map, splatter_pos)) {
-                    tile_t *tile = GetTile(map, splatter_pos.x, splatter_pos.y);
+                if (IsTraversable(Map, splatter_pos)) {
+                    tile_t *tile = GetTile(Map, splatter_pos.x, splatter_pos.y);
                     if (tile) {
                         tile->blood = blood_type;
                     }

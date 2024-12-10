@@ -39,7 +39,7 @@ fn void SetupGenerator(map_layout_t *Gen)
 	Gen->ChunkCountY = ArraySize(Gen->OccupiedChunks);
 	Gen->ChunkCountX = ArraySize(Gen->OccupiedChunks[0]);
 	Gen->ChunkSize = V2S(20, 20);
-	Gen->ChunkSizeHalf = Div32(Gen->ChunkSize, V2S(2, 2));
+	Gen->ChunkSizeHalf = IntDiv(Gen->ChunkSize, V2S(2, 2));
 }
 
 fn void OpenEveryDoor(map_t *Map, const room_t *Room);

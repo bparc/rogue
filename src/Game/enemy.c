@@ -2,7 +2,7 @@ fn void FindPathToEntity(turn_system_t *State, v2s From, entity_t *Entity, path_
 {
 	if (Entity)
 	{
-		FindPath(State->map, From, Entity->p, Path, Memory);
+		FindPath(State->Map, From, Entity->p, Path, Memory);
 		Path->length = Min32(Path->length, MaxLength);
 
 		// truncate to the closest unoccupied point to the entity
@@ -24,30 +24,12 @@ fn void FindPathToEntity(turn_system_t *State, v2s From, entity_t *Entity, path_
 fn s32 BeginEnemyTurn(turn_system_t *State, entity_t *entity, memory_t Memory)
 {
 	s32 movement_point_count = 6;
-	FindPathToEntity(State, entity->p, FindClosestPlayer(State->storage, entity->p), &State->path, 16, Memory);
-
-	entity->DEBUG_step_count = 0;
 	return (movement_point_count);
-}
-
-fn s32 Decide(turn_system_t *System, entity_t *entity)
-{
-	path_t *path = &System->path;
-	s32 CurrentNode = entity->DEBUG_step_count++;
-	if (CurrentNode < path->length)
-	{
-		entity->p = path->tiles[CurrentNode].p;
-	}
-	else
-	{
-		System->action_points = 0; // Stop
-	}
-	return 1;
 }
 
 fn inline void SubdivideLargeSlime(game_state_t *game, entity_t *entity, s32 x, s32 y)
 {
-    entity_t *result = CreateSlime(game, Add32(entity->p, V2S(x, y)));
+    entity_t *result = CreateSlime(game, IntAdd(entity->p, V2S(x, y)));
     if (result)
         result->deferred_p = entity->deferred_p;
 }
@@ -68,7 +50,7 @@ fn void Perish(game_state_t *game, entity_t *entity)
 
 fn b32 ScheduleEnemyAction(game_state_t *World, entity_t *requestee, s32 effective_range)
 {
-	turn_system_t *queue = World->turns;
+	turn_system_t *queue = World->System;
 	entity_id_t result = 0;
 
 	entity_t *target = FindClosestPlayer(World->storage, requestee->p);
@@ -80,7 +62,7 @@ fn b32 ScheduleEnemyAction(game_state_t *World, entity_t *requestee, s32 effecti
 		else
 			action_type = action_slime_ranged;
 		
-		if (IsLineOfSight(World->map, requestee->p, target->p))
+		if (IsLineOfSight(World->Map, requestee->p, target->p))
 		{
 			QueryAsynchronousAction(queue, action_type, target->id, target->p);
 			result = target->id;

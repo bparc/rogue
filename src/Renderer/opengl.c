@@ -10,7 +10,7 @@ fn void OpenGLRenderQuad(v2 min, v2 max, v2 uv_min, v2 uv_max, GLuint texture, v
 	glEnd();
 }
 
-fn void OpenGLDispatchBuffer(const command_buffer_t *buffer, v4 viewport, camera_t camera)
+fn void OpenGLDispatchBuffer(const command_buffer_t *buffer, v4 viewport, camera_t Camera)
 {
 	v2 GlobalOffset = V2(0.0f, 0.0f);
 	glEnable(GL_TEXTURE_2D);
@@ -24,7 +24,7 @@ fn void OpenGLDispatchBuffer(const command_buffer_t *buffer, v4 viewport, camera
 	f32 Y = viewport.w;
 	glOrtho(0.0, X, Y, 0.0, 0.0, 1.0);
 
-	f32 scale_factor = GetCameraScaleFactor(&camera);
+	f32 scale_factor = GetCameraScaleFactor(&Camera);
 	glTranslatef(X * 0.5f, Y * 0.5f, 0.0f);
 	glScalef(scale_factor, scale_factor, 0.0f);
 	glTranslatef(-(X * 0.5f), -(Y * 0.5f), 0.0f);
@@ -35,7 +35,7 @@ fn void OpenGLDispatchBuffer(const command_buffer_t *buffer, v4 viewport, camera
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glPushMatrix();
-		glTranslatef(camera.p.x, camera.p.y, 0.0f);
+		glTranslatef(Camera.p.x, Camera.p.y, 0.0f);
 		switch (command->header.type)
 		{
 		case command_t_rect:

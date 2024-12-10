@@ -40,7 +40,7 @@ fn b32 MenuMode(menu_t *Menu, command_buffer_t *Out, assets_t *Assets, const vir
 	v2 Viewport = V2(1600.0f, 900.0f);
 	v2 BroccoliPos = Scale(Viewport, 0.5f);
 	BroccoliPos.y += 100.0f;
-	GrowBroccoli(Out, BroccoliPos, 0.0f, 1.0f, 0, Time);
+	//GrowBroccoli(Out, BroccoliPos, 0.0f, 1.0f, 0, Time);
 
 	return (RunGame);
 }

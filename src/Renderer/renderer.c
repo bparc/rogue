@@ -205,11 +205,11 @@ fn void DrawQuadv(command_buffer_t *buffer, v2 points[4], v4 color)
 	DrawQuad(buffer, points[0], points[1], points[2], points[3], color);
 }
 
-fn void PushRenderOutput(render_output_t *output, const command_buffer_t buffer, v4 viewport, camera_t camera)
+fn void PushRenderOutput(render_output_t *output, const command_buffer_t buffer, v4 viewport, camera_t Camera)
 {
 	Assert(output->count < ArraySize(output->buffers));
 	output->buffers[output->count] = buffer;
 	output->viewports[output->count] = viewport;
-	output->cameras[output->count] = camera;
+	output->cameras[output->count] = Camera;
 	output->count++;
 }

@@ -11,19 +11,19 @@ fn void RenderHitChance(command_buffer_t *out, assets_t *assets, v2 p, s32 hit_c
     DrawText(out, assets->Font, screen_position, hit_chance_text, White());
 }
 
-fn inline s32 Cursor_DoAction(cursor_t *cursor, map_t *map, entity_t *user, entity_t *target, turn_system_t *queue, const action_params_t *settings)
+fn inline s32 Cursor_DoAction(cursor_t *cursor, map_t *Map, entity_t *user, entity_t *target, turn_system_t *queue, const action_params_t *settings)
 {
 	entity_id_t id = target ? target->id : 0;
 	v2s TargetedCell = target ? target->p : cursor->p;
 
 	b32 TargetValid = true;
     if (IsTargetField(settings->type))
-    	TargetValid = (TargetValid && IsTraversable(map, cursor->p));
+    	TargetValid = (TargetValid && IsTraversable(Map, cursor->p));
     if (IsTargetHostile(settings->type))
     	TargetValid = (TargetValid && IsHostile(target));
 
 	b32 Query = false;
-    if (IsLineOfSight(map, user->p, TargetedCell) && TargetValid)
+    if (IsLineOfSight(Map, user->p, TargetedCell) && TargetValid)
        	Query = ConsumeActionPoints(queue, queue->god_mode_enabled ? 0 : settings->cost);
 
     if (Query)
@@ -35,10 +35,10 @@ fn void DoCursor(game_state_t *Game, command_buffer_t *out, virtual_controls_t c
 	entity_t *user, dir_input_t DirInput)
 {
 	cursor_t *cursor = Game->cursor;
-	slot_bar_t *bar = &Game->slot_bar;
-	map_t *map = Game->map;
+	slot_bar_t *bar = &Game->Bar;
+	map_t *Map = Game->Map;
 	entity_storage_t *storage = Game->storage;
-	turn_system_t *queue = Game->turns;
+	turn_system_t *queue = Game->System;
 
 	// NOTE(): Setup
 	action_t equipped = GetEquippedAction(bar, user);
@@ -51,7 +51,7 @@ fn void DoCursor(game_state_t *Game, command_buffer_t *out, virtual_controls_t c
 	{
 		v2s CursorPos = IsCursorEnabled(cursor) ? cursor->p : user->p;
 		for (s32 Index = 0; Index < ArraySize(DirInput.Dirs); Index++)	
-		RenderIsoTile(out, map, Add32(CursorPos, DirInput.Dirs[Index]), Orange(), true, 0);
+		RenderIsoTile(out, Map, IntAdd(CursorPos, DirInput.Dirs[Index]), Orange(), true, 0);
 	}
 
 	// NOTE(): Open the cursor.
@@ -61,7 +61,7 @@ fn void DoCursor(game_state_t *Game, command_buffer_t *out, virtual_controls_t c
 		// are activated directly from the menu, without opening the cursor.
 		if (IsTargetSelf(equipped.type))
 		{
-			Cursor_DoAction(cursor, map, user, user, queue, settings);
+			Cursor_DoAction(cursor, Map, user, user, queue, settings);
 		}
 		else
 		{
@@ -79,22 +79,22 @@ fn void DoCursor(game_state_t *Game, command_buffer_t *out, virtual_controls_t c
 			cursor->active = false;
 
 		// NOTE(): Draw the maximum range of the cursor.
-		RenderRange(out, map, user->p, range, Pink());
+		RenderRange(out, Map, user->p, range, Pink());
 
 		// NOTE() : Draw the explosion radius.
 		if (equipped.type == action_throw) {
-			RenderRange(out, map, cursor->p, area.x, Red()); // inner
-			RenderRange(out, map, cursor->p, area.x * (s32)2, Red()); // outer
+			RenderRange(out, Map, cursor->p, area.x, Red()); // inner
+			RenderRange(out, Map, cursor->p, area.x * (s32)2, Red()); // outer
 		}
 		// NOTE(): Draw the cursor.
-		RenderIsoTile(out, map, cursor->p, A(Pink(), 0.8f), true, 0);
+		RenderIsoTile(out, Map, cursor->p, A(Pink(), 0.8f), true, 0);
 
 		// NOTE(): Move the cursor.
 		if (DirInput.Inputed)
 		{
-			v2s NewPosition = Add32(cursor->p, DirInput.Direction);
+			v2s NewPosition = IntAdd(cursor->p, DirInput.Direction);
 			if (IsInsideCircle(NewPosition, V2S(1,1), user->p, range) &&
-				IsLineOfSight(map, user->p, NewPosition))
+				IsLineOfSight(Map, user->p, NewPosition))
 			{
 				cursor->p = NewPosition;
 			}
@@ -108,9 +108,9 @@ fn void DoCursor(game_state_t *Game, command_buffer_t *out, virtual_controls_t c
 		// tiles underneath them, then snap to them if the button went down.
 		entity_t *Enemy = FindClosestHostile(storage, cursor->p);
 		if (Enemy && (IsInsideCircle(Enemy->p, Enemy->size, user->p, range) &&
-			IsLineOfSight(map, user->p, Enemy->p)))
+			IsLineOfSight(Map, user->p, Enemy->p)))
 		{
-			RenderIsoTileArea(out, map, Enemy->p, Add32(Enemy->p, Enemy->size), A(Red(), 0.8f)); //render target for all size enemies
+			RenderIsoTileArea(out, Map, Enemy->p, IntAdd(Enemy->p, Enemy->size), A(Red(), 0.8f)); //render target for all size enemies
 			if (WentDown(cons.SnapCursor))
 				cursor->p = Enemy->p;
 		}
@@ -121,13 +121,13 @@ fn void DoCursor(game_state_t *Game, command_buffer_t *out, virtual_controls_t c
 		if (IsHostile(target))
 		{
 			s32 chance = CalculateHitChance(user, target, equipped.type);
-			RenderDiegeticText(Game->camera, Game->assets->Font, target->deferred_p, V2(-20.0f, -85.0f), White(), "%i%%", chance);
+			RenderDiegeticText(Game->Camera, Game->assets->Font, target->deferred_p, V2(-20.0f, -85.0f), White(), "%i%%", chance);
 
 			cursor->Target = target->id;
 		}
 		// NOTE(): Perform an action on the target.
-		b32 not_positioned_on_user = !CompareVectors(cursor->p, user->p);
+		b32 not_positioned_on_user = !CompareInts(cursor->p, user->p);
 		if (WentUp(cons.confirm) && not_positioned_on_user)
-			Cursor_DoAction(cursor, map, user, target, queue, settings);
+			Cursor_DoAction(cursor, Map, user, target, queue, settings);
 	}
 }

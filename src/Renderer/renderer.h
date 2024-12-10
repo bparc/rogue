@@ -29,13 +29,13 @@ fn v2 IsoToScreen(v2 p)
 	return result;
 }
 
-fn float GetCameraScaleFactor(const camera_t *camera)
+fn float GetCameraScaleFactor(const camera_t *Camera)
 {
 	float result = 0.0f;
-	if (camera->zoom >= 0.0f)
-		result = 1.0f + camera->zoom;
+	if (Camera->zoom >= 0.0f)
+		result = 1.0f + Camera->zoom;
 	else
-		result = (1.0f / (1.0f - camera->zoom));
+		result = (1.0f / (1.0f - Camera->zoom));
 	return result;
 }
 
@@ -45,14 +45,14 @@ fn camera_t DefaultCamera(void)
 	return result;
 }
 
-fn v2 CameraToScreen(const camera_t *camera, v2 p)
+fn v2 CameraToScreen(const camera_t *Camera, v2 p)
 {
-    f32 scale = GetCameraScaleFactor(camera);
+    f32 scale = GetCameraScaleFactor(Camera);
 
     p = ScreenToIso(p);
-    p = Add(p, camera->p);
+    p = Add(p, Camera->p);
 
-    v2 viewport = camera->viewport;
+    v2 viewport = Camera->viewport;
     viewport = Scale(viewport, 0.5f);
 
     v2 relative_p = Sub(p, viewport);
@@ -188,4 +188,4 @@ typedef struct
 	#undef COUNT
 } render_output_t;
 
-fn void PushRenderOutput(render_output_t *output, const command_buffer_t buffer, v4 viewport, camera_t camera);
+fn void PushRenderOutput(render_output_t *output, const command_buffer_t buffer, v4 viewport, camera_t Camera);

@@ -1,28 +1,24 @@
 // NOTE(): Low/
-#include "Game/GlobalSettings.h"
+#include "settings.h"
 #include "low/common.h"
 #include "low/common.c"
 #include "low/memory.h"
 #include "low/vec.h"
 #include "low/vec.c"
 #include "low/colors.h"
-#include "Renderer/bitmap.h"
-#include "Renderer/bmfont.h"
-#include "Renderer/bmfont.c"
-#include "Renderer/renderer.h"
-#include "Renderer/renderer.c"
-#include "Renderer/assets.h"
+#include "renderer/bitmap.h"
+#include "renderer/bmfont.h"
+#include "renderer/bmfont.c"
+#include "renderer/renderer.h"
+#include "renderer/renderer.c"
+#include "renderer/assets.h"
 #include "low/log.h"
 #include "low/log.c"
 #include "low/debug.h"
 #include "low/debug.c"
 #include "low/input.h"
 
-#include "Game.c"
-
-// NOTE(): Editor/
-#include "UI/editor.h"
-#include "UI/editor.c"
+#include "game.c"
 
 typedef enum
 {
@@ -43,7 +39,6 @@ typedef struct
 	virtual_controls_t virtual_controls;
 	assets_t assets;
 	bmfont_t font;
-	editor_state_t editor;
 	game_state_t world;
 	command_buffer_t buffers[output_count];
 	log_t *event_log;
@@ -53,7 +48,7 @@ typedef struct
 	b32 inited;
 	f64 timestamp;
 
-	
+	f64 TotalTime;
 	f32 ModeTime;
 	memory_t GameMemory;
 	game_mode_t Mode;
@@ -104,7 +99,6 @@ fn void EndFrame(client_t *state, const client_input_t *input, f32 dt)
 
 fn void GameMode(client_t *state, render_output_t *output, client_input_t input, virtual_controls_t virtual_cons, f32 dt)
 {
-	Editor(&state->editor, &state->world, &state->buffers[output_high], &input, state->event_log, &state->assets, &virtual_cons);
 	Tick(&state->world, dt, input, virtual_cons, &state->buffers[output_low], &state->buffers[output_high]);		
 }
 
@@ -112,7 +106,7 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 {
 	ZeroStruct(output);
 
-	f32 dt = 1.0f / 60.0f;
+	f32 dt = 0.0f;
 	if (state->timestamp > 0.0f)
 		dt = (f32)(input.time - state->timestamp);
 	state->timestamp = input.time;
@@ -120,7 +114,7 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 	virtual_controls_t virtual_cons = MapKeyboardToVirtualCons(&input, state->keys_prev);
 	BeginFrame(state);
 
-	camera_t camera = DefaultCamera();
+	camera_t Camera = DefaultCamera();
 
 	switch (state->Mode)
 	{
@@ -137,7 +131,7 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 				ZeroStruct(&state->Menu);
 			}
 
-			camera = *state->world.camera;
+			Camera = *state->world.Camera;
 		} break;
 	case game_mode_menu:
 		{
@@ -154,8 +148,8 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 	}
 
 	MessageLog(&state->buffers[1], &state->font, V2(10.0f, 650.0f), state->event_log, dt);
-	PushRenderOutput(output, state->buffers[output_low], V4(0, 0, 1600, 900), camera);
-	PushRenderOutput(output, state->buffers[output_high], V4(0, 0, 1600, 900), camera);
+	PushRenderOutput(output, state->buffers[output_low], V4(0, 0, 1600, 900), Camera);
+	PushRenderOutput(output, state->buffers[output_high], V4(0, 0, 1600, 900), Camera);
 	PushRenderOutput(output, state->buffers[output_mid], V4(0, 0, 1600, 900), DefaultCamera()); // NOTE(): Debug.
 
 	EndFrame(state, &input, dt);

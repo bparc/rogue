@@ -47,7 +47,7 @@ fn void DefaultActionBar(slot_bar_t *bar, assets_t *assets)
 fn inline s32 CalculateHitChance(const entity_t *user, const entity_t *target, action_type_t action_type)
 {
     s32 final_hit_chance;
-    f32 distance = DistanceV2S(user->p, target->p);
+    f32 distance = IntDistance(user->p, target->p);
 
     if (action_type != action_melee_attack) {
         final_hit_chance = user->ranged_accuracy - target->evasion + BASE_HIT_CHANCE;
@@ -67,7 +67,7 @@ fn inline s32 CalculateHitChance(const entity_t *user, const entity_t *target, a
         }
     }
 
-    final_hit_chance = Clamp32(final_hit_chance, 0, 100);
+    final_hit_chance = Clamp(final_hit_chance, 0, 100);
 
     return final_hit_chance;
 }

@@ -101,7 +101,7 @@ fn b32 RandomChance(s32 percentange)
 #define MIN(a, b) (a < b ? a : b) 
 #define MAX(a, b) (a > b ? a : b)
 
-fn s32 Clamp32(s32 value, s32 min, s32 max)
+fn s32 Clamp(s32 value, s32 min, s32 max)
 {
 	if (value < min)
 		value = min;

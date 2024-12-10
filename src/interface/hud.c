@@ -4,9 +4,9 @@ fn void BeginInterface(interface_t *In, game_state_t *GameState, const client_in
     In->Input = Input;
     In->Out = Out;
     In->Font = GameState->assets->Font;
-    In->TurnSystem = GameState->turns;
+    In->TurnSystem = GameState->System;
     In->DeltaTime = dt;
-    In->SlotBar = GameState->slot_bar;
+    In->SlotBar = GameState->Bar;
 
     In->Cursor = GetCursorOffset(Input);
     In->Interact[0] = (!In->Buttons[0] && Input->mouse_buttons[0]);
@@ -25,10 +25,10 @@ fn void HUD(command_buffer_t *out, game_state_t *state, const client_input_t *in
 {
     BeginInterface(state->interface, state, input, Cons, out, dt);
 
-    entity_t *ActiveEntity = GetActive(state->turns);
-    if (state->turns->EncounterModeEnabled)
+    entity_t *ActiveEntity = GetActive(state->System);
+    if (state->System->EncounterModeEnabled)
     {
-        TurnQueue(out, state, state->turns, state->assets, state->cursor);
+        TurnQueue(out, state, state->System, state->assets, state->cursor);
     }
 
     interface_t *In = state->interface;
@@ -47,7 +47,7 @@ fn void HUD(command_buffer_t *out, game_state_t *state, const client_input_t *in
             }
         }
 
-        ActionMenu(ActiveEntity, state, out, state->assets, input, state->turns, state->interface);
+        ActionMenu(ActiveEntity, state, out, state->assets, input, state->System, state->interface);
     }
     
     EndInterface(state->interface);

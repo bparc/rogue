@@ -54,16 +54,16 @@ fn v2 GetInventoryCellPosition(const inventory_layout_t *Layout, const item_t *I
 
 fn bb_t GetItemBox(const inventory_layout_t *Layout, const item_t *Item)
 {
-    v2 ItemSz = SignedToFloat(Item->size);
+    v2 ItemSz = ToFloat(Item->size);
     ItemSz = Mul(ItemSz, Layout->CellSize);
-    return RectToBounds(V2(0.0f, 0.0f), ItemSz);
+    return RectBounds(V2(0.0f, 0.0f), ItemSz);
 }
 
 fn bb_t ItemBoxFromIndex(const inventory_layout_t *Layout, const item_t *Item, v2s Index)
 {
     bb_t result = GetItemBox(Layout, Item);
 
-    v2 position = Mul(SignedToFloat(Index), Layout->CellSize);
+    v2 position = Mul(ToFloat(Index), Layout->CellSize);
     position = Add(position, Layout->Min);
     
     result.min = Add(result.min, position);
@@ -76,17 +76,17 @@ fn v2s InventoryCellFromOffset(const inventory_layout_t *Layout, v2 offset)
     offset = Sub(offset, Layout->Min);
     offset = Div(offset, Layout->CellSize);
 
-    v2s result = FloatToSigned(offset);
+    v2s result = ToInt(offset);
     return result;
 }
 
 fn b32 ContextMenuItem(inventory_layout_t *Layout, const char *Text)
 {
     b32 Result = 0;
-    bb_t Bounds = RectToBounds(Layout->At, V2(Layout->ContextMenuItemWidth, Layout->LineHeight));
+    bb_t Bounds = RectBounds(Layout->At, V2(Layout->ContextMenuItemWidth, Layout->LineHeight));
 
     v4 Background = Red();
-    if (IsPointInBounds(Bounds, Layout->GUI->Cursor) && (!Layout->GUI->CloseContextMenu))
+    if (BoundsContains(Bounds, Layout->GUI->Cursor) && (!Layout->GUI->CloseContextMenu))
     {
         Background = Pink();
         if (Layout->GUI->Interact[0])
@@ -169,7 +169,7 @@ fn void Inventory(interface_t *In, v2 EqMin, inventory_t *Eq, entity_t *User, co
     v2 CellSz = {32.0f, 32.0f};
     v2 GridSz = {Eq->x * CellSz.x, Eq->y * CellSz.y};
     v2 FullInventorySz = {GridSz.x, GridSz.y};
-    bb_t GridBounds = RectToBounds(EqMin, GridSz);
+    bb_t GridBounds = RectBounds(EqMin, GridSz);
     if (DrawUserInfo)
         FullInventorySz.x += 180.0f;
 
@@ -215,8 +215,8 @@ fn void Inventory(interface_t *In, v2 EqMin, inventory_t *Eq, entity_t *User, co
         // Interact
         b32 NoWidgetActive = (In->DraggedItemID == 0) && (!In->ContextMenuOpened);
         if (NoWidgetActive &&
-            (IsPointInBounds(ItemBounds, Cursor)) &&
-            (IsPointInBounds(GridBounds, Cursor)))
+            (BoundsContains(ItemBounds, Cursor)) &&
+            (BoundsContains(GridBounds, Cursor)))
         {
             Tooltip = Item->params->name;
             if (In->Interact[0])
@@ -230,8 +230,8 @@ fn void Inventory(interface_t *In, v2 EqMin, inventory_t *Eq, entity_t *User, co
         {
             const v4 ItemColors[4] = { Red(), Blue(), Yellow(), Green() };
             v4 Color = ItemColors[Item->params->type % ArraySize(ItemColors)];
-            DrawBounds(Out, Shrink(ItemBounds, 5.0f), Color);
-            DrawFormat(Out, Font, GetCenter(ItemBounds), White(), "#%i", Item->ID);
+            DrawBounds(Out, ShrinkBounds(ItemBounds, 5.0f), Color);
+            DrawFormat(Out, Font, BoundsCenter(ItemBounds), White(), "#%i", Item->ID);
         }
     }
 
@@ -239,13 +239,13 @@ fn void Inventory(interface_t *In, v2 EqMin, inventory_t *Eq, entity_t *User, co
         DrawText(Out, Font, Add(Cursor, V2(15,23)), Tooltip, Yellow());
 
     // Dragging
-    if (In->DraggedItemID && (IsPointInBounds(GridBounds, Cursor)))
+    if (In->DraggedItemID && (BoundsContains(GridBounds, Cursor)))
     {
         v2s Index = InventoryCellFromOffset(&Layout, Cursor);
 
         {
-            v2s MaxIndex = Sub32(Eq->size, In->DraggedItem.size);
-            Index = ClampVector32(Index, V2S(0, 0), MaxIndex);
+            v2s MaxIndex = IntSub(Eq->size, In->DraggedItem.size);
+            Index = IntClamp2(Index, V2S(0, 0), MaxIndex);
         }
 
         // Render
@@ -253,7 +253,7 @@ fn void Inventory(interface_t *In, v2 EqMin, inventory_t *Eq, entity_t *User, co
             item_t *DraggedItem = &In->DraggedItem;
             bb_t ItemBounds = ItemBoxFromIndex(&Layout, DraggedItem, Index);
             b32 CanBePlaced = Eq_IsSpaceFree_Exclude(Eq, Index, DraggedItem->size, DraggedItem->ID);
-            DrawBoundsOutline(Out, Shrink(ItemBounds, 4.0f), CanBePlaced ? Blue() : Red());
+            DrawBoundsOutline(Out, ShrinkBounds(ItemBounds, 4.0f), CanBePlaced ? Blue() : Red());
         }
 
         if (!In->Buttons[0]) // Place
@@ -291,7 +291,7 @@ fn void Inventory(interface_t *In, v2 EqMin, inventory_t *Eq, entity_t *User, co
         DrawBoundsOutline(Out, Bounds, Black());
 
         b32 ClickedOutsideBounds = (In->Interact[0] || In->Interact[1]) &&
-        (IsPointInBounds(Bounds, Cursor) == false);
+        (BoundsContains(Bounds, Cursor) == false);
 
         if (ClickedOutsideBounds)
             In->ContextMenuOpened = false;

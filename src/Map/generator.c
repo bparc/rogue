@@ -1,6 +1,6 @@
 fn v2s GetRoomPosition(const map_layout_t *Layout, const room_t *Room)
 {
-	v2s result = Mul32(Room->ChunkAt, Layout->ChunkSize);
+	v2s result = IntMul(Room->ChunkAt, Layout->ChunkSize);
 	return result;
 }
 
@@ -22,7 +22,7 @@ fn s32 FindRandomAdjacentChunk(map_layout_t *Gen, v2s At, v2s *Chunk)
 	for (s32 DirIndex = random_dir; DirIndex <= (random_dir + 4); DirIndex++)
 	{
 		v2s Dir = cardinal_directions[DirIndex % 4];
-		v2s attempted_chunk = Add32(At, Dir);
+		v2s attempted_chunk = IntAdd(At, Dir);
 		if (IsChunkFree(Gen, attempted_chunk))
 		{
 			*Chunk = attempted_chunk;
@@ -38,7 +38,7 @@ fn s32 HasAnyFreeRoomLink(const map_layout_t *Gen, v2s At)
 	for (s32 DirIndex = 0; DirIndex < 4; DirIndex++)
 	{
 		v2s Dir = cardinal_directions[DirIndex];
-		if (IsChunkFree(Gen, Add32(At, Dir)))
+		if (IsChunkFree(Gen, IntAdd(At, Dir)))
 			return true;
 	}
 	return false;
@@ -75,7 +75,7 @@ fn void PushDoor(room_t *Room, v2s ChunkTo)
 	{
 		if (Room->DoorCount < ArraySize(Room->Doors))
 		{
-			v2s DoorDir = Sub32(ChunkTo, Room->ChunkAt);
+			v2s DoorDir = IntSub(ChunkTo, Room->ChunkAt);
 			Room->Doors[Room->DoorCount++] = DoorDir;
 		}
 	}
@@ -90,8 +90,8 @@ fn room_t *PlaceRoom(map_layout_t *Gen, v2s At, v2s PrevChunk)
 		result->ChunkAt = At;
 		result->PrevChunk = PrevChunk;
 		result->Index = Gen->PlacedRoomCount;
-		result->min = Mul32(result->ChunkAt, Gen->ChunkSize);	
-		result->max = Add32(result->min, Gen->ChunkSize);
+		result->min = IntMul(result->ChunkAt, Gen->ChunkSize);	
+		result->max = IntAdd(result->min, Gen->ChunkSize);
 
 		room_t *PrevRoom = RoomFromChunkIndex(Gen, PrevChunk);
 		if (PrevRoom)
@@ -157,7 +157,7 @@ fn v2s GenerateDoorPos(map_layout_t *Layout, v2s ChunkAt, v2s Dir)
 {
 	v2s chunk_size = Layout->ChunkSize;
 	v2s chunk_size_half = Layout->ChunkSizeHalf;
-	v2s min = Mul32(ChunkAt, Layout->ChunkSize);
+	v2s min = IntMul(ChunkAt, Layout->ChunkSize);
 
 	v2s edge_offset = {0};
 	edge_offset.x = Dir.x < 0 ? 2 : 0;
@@ -177,7 +177,7 @@ fn v2s GenerateDoorPos(map_layout_t *Layout, v2s ChunkAt, v2s Dir)
 		if ((door_dir.y == +1))
 			door_relative_offset.y = chunk_size.y - edge_offset.y;
 	}
-	v2s Result = Add32(min, door_relative_offset);
+	v2s Result = IntAdd(min, door_relative_offset);
 	return Result;
 }
 
@@ -185,11 +185,11 @@ fn void LayoutRoom(map_t *Map, room_t room, const b32 PlaceDoors, map_layout_t *
 {
 	v2s chunk_size = Layout->ChunkSize;
 	v2s chunk_size_half = Layout->ChunkSizeHalf;
-	v2s min = Mul32(room.ChunkAt, chunk_size);
-	v2s max = Add32(min, chunk_size);
+	v2s min = IntMul(room.ChunkAt, chunk_size);
+	v2s max = IntAdd(min, chunk_size);
 
-	min = Add32(min, V2S(1, 1));
-	max = Sub32(max, V2S(1, 1));
+	min = IntAdd(min, V2S(1, 1));
+	max = IntSub(max, V2S(1, 1));
 
 	if (!PlaceDoors)
 	{
@@ -222,12 +222,12 @@ fn void LayoutRoom(map_t *Map, room_t room, const b32 PlaceDoors, map_layout_t *
 			v2s Pos = GenerateDoorPos(Layout, room.ChunkAt, Dir);
 
 			SetTileValue(Map, Pos, tile_floor);
-			SetTileValue(Map, Add32(Pos, Dir), tile_door);
-			SetTileValue(Map, Sub32(Pos, Dir), tile_door);
+			SetTileValue(Map, IntAdd(Pos, Dir), tile_door);
+			SetTileValue(Map, IntSub(Pos, Dir), tile_door);
 
 			v2s PerpDir = {Dir.y, -Dir.x};
-			SetTileValue(Map, Add32(Pos, PerpDir), tile_wall);
-			SetTileValue(Map, Sub32(Pos, PerpDir), tile_wall);
+			SetTileValue(Map, IntAdd(Pos, PerpDir), tile_wall);
+			SetTileValue(Map, IntSub(Pos, PerpDir), tile_wall);
 		}
 	}
 }
@@ -278,7 +278,7 @@ fn room_t *RoomFromPosition(map_layout_t *Layout, v2s Pos)
 {
 	room_t *Result = 0;
 
-	v2s Index = Div32(Pos, Layout->ChunkSize);
+	v2s Index = IntDiv(Pos, Layout->ChunkSize);
 	if (IsMapLayoutIndexValid(Layout, Index))
 	{
 		s32 RoomIndex = Layout->RoomIndexes[Index.y][Index.x];	

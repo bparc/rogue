@@ -49,22 +49,28 @@ fn void AssemblePath(path_t *out, path_tile_t *top)
 	}
 }
 
-fn void _Flood(const map_t *map, u8 *visited, min_queue_t *queue, min_queue_entry_t min, s32 x, s32 y, memory_t *memory)
+fn void _Flood(const map_t *Map, u8 *visited, min_queue_t *queue, min_queue_entry_t min, s32 x, s32 y, memory_t *memory)
 {
-	v2s position = Add32(min.data->p, V2S(x, y));
-	s32 index = GetTileIndex(map, position);
-	if (IsTraversable(map, position) && !visited[index])
+	v2s position = IntAdd(min.data->p, V2S(x, y));
+	s32 index = GetTileIndex(Map, position);
+	if (IsTraversable(Map, position) && !visited[index])
 	{
 		InsertMin(queue, (min.priority + 1), position, PushStruct(path_tile_t, memory), min.data);
 		visited[index] = true;
 	}
 }
 
-fn s32 FindPath(const map_t *map, v2s source, v2s dest, path_t *out, memory_t memory)
+fn v2s GetPathTile(const path_t *Path, s32 Index)
+{
+	v2s Result = (Path->tiles[Clamp(Index, 0, Path->length - 1)].p);
+	return Result;
+}
+
+fn s32 FindPath(const map_t *Map, v2s source, v2s dest, path_t *out, memory_t memory)
 {
 	DebugLog("requesting a path from %i, %i to %i, %i", source.x, source.y, dest.x, dest.y);
-	u8 *visited = PushArray(u8, &memory, map->x * map->y);
-	memset(visited, 0, map->x * map->y);
+	u8 *visited = PushArray(u8, &memory, Map->x * Map->y);
+	memset(visited, 0, Map->x * Map->y);
 
 	min_queue_t *queue = PushStruct(min_queue_t, &memory);
 	queue->count = 0;
@@ -78,17 +84,17 @@ fn s32 FindPath(const map_t *map, v2s source, v2s dest, path_t *out, memory_t me
 		while (queue->count > 0)
 		{
 			min = ExtractMin(queue);
-			if (CompareVectors(min.data->p, source))
+			if (CompareInts(min.data->p, source))
 			{
 				succeeded = true;
 				break;
 			}
 			else
 			{
-				_Flood(map, visited, queue, min, +1, +0, &memory);
-				_Flood(map, visited, queue, min, +0, +1, &memory);
-				_Flood(map, visited, queue, min, -1, +0, &memory);
-				_Flood(map, visited, queue, min, +0, -1, &memory);
+				_Flood(Map, visited, queue, min, +1, +0, &memory);
+				_Flood(Map, visited, queue, min, +0, +1, &memory);
+				_Flood(Map, visited, queue, min, -1, +0, &memory);
+				_Flood(Map, visited, queue, min, +0, -1, &memory);
 			}
 		}
 
@@ -98,4 +104,82 @@ fn s32 FindPath(const map_t *map, v2s source, v2s dest, path_t *out, memory_t me
 
 
 	return (succeeded );
+}
+
+fn range_map_cell_t *GetRangeMapCell(range_map_t *Map, v2s Cell)
+{
+	range_map_cell_t *Result = NULL;
+
+	v2s RelativeCell = IntSub(Cell, Map->Min);
+	Cell = RelativeCell;
+
+	if ((Cell.x >= 0) && (Cell.y >= 0) && (Cell.x < Map->Size.x) && (Cell.y < Map->Size.y))
+	{
+		Result = &Map->Cells[Cell.y][Cell.x];
+	}
+
+	return Result;
+}
+
+fn void ExpandRange(range_map_t *Map, const map_t *Obstacles, min_queue_t *Queue, memory_t *Mem, min_queue_entry_t Parent, s32 X, s32 Y) 
+{
+	v2s CellIndex = IntAdd(Parent.data->p, V2S(X, Y));
+	range_map_cell_t *Cell = GetRangeMapCell(Map, CellIndex);
+
+	if (Cell && IsTraversable(Obstacles, CellIndex))
+	{
+		if ((ManhattanDistance(Map->From, CellIndex) < Map->MaxRange) && !Cell->Filled)
+		{
+			InsertMin(Queue, (Parent.priority + 1), CellIndex, PushStruct(path_tile_t, Mem), Parent.data);
+			Cell->Filled = true;
+		}
+	}
+}
+
+fn void IntegrateRange(range_map_t *Map, const map_t *Obstacles, v2s From, memory_t Memory)
+{
+	ZeroStruct(Map);
+	Map->Size = V2S(ArraySize(Map->Cells[0]), ArraySize(Map->Cells));
+
+	Map->From = From;
+	Map->Min = IntSub(Map->From, IntHalf(Map->Size));
+
+	Map->MaxRange = 6;
+
+	min_queue_t *Queue = PushStruct(min_queue_t, &Memory);
+	Queue->count = 0;
+
+	if (Queue)
+	{
+		InsertMin(Queue, 0, Map->From, PushStruct(path_tile_t, &Memory), NULL);
+		while (Queue->count)
+		{
+			min_queue_entry_t Min = ExtractMin(Queue);
+
+			if (Map->FilledCount < ArraySize(Map->Filled))
+			{
+				range_map_cell_t *Filled = &Map->Filled[Map->FilledCount++];
+				Filled->Filled = true;
+				Filled->Cell = Min.data->p;
+			}
+
+			ExpandRange(Map, Obstacles, Queue, &Memory, Min, +1, +0);
+			ExpandRange(Map, Obstacles, Queue, &Memory, Min, -1, +0);
+			ExpandRange(Map, Obstacles, Queue, &Memory, Min, +0, +1);
+			ExpandRange(Map, Obstacles, Queue, &Memory, Min, +0, -1);
+		}
+	}
+
+	DebugLog("From: %i, %i | Range: %i", From.x, From.y, Map->MaxRange);
+}
+
+fn int32_t CheckRange(range_map_t *Map, v2s CellIndex)
+{
+	int32_t Result = 0;
+	range_map_cell_t *Cell = GetRangeMapCell(Map, CellIndex);
+	if (Cell)
+	{
+		Result = Cell->Filled;
+	}
+	return Result;
 }
