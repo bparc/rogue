@@ -37,6 +37,7 @@ fn void SetupItemDataTable(memory_t *memory, const assets_t *assets)
 
     ITM(assault_rifle)
     {
+        .action = action_ranged_attack,
         .size = V2S(5, 2),
         .name = "T-17 Assault Rifle",
         .category = rifle,
