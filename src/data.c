@@ -32,6 +32,7 @@ fn void SetupItemDataTable(memory_t *memory, const assets_t *assets)
     {
         .name = "Green Herb",
         .size = V2S(1, 1),
+        .action = action_heal,
     };
 
     ITM(assault_rifle)

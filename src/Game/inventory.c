@@ -194,27 +194,6 @@ fn void Eq_MoveItem(inventory_t *Eq, item_t Source, v2s Dest)
     }
 }
 
-fn void Eq_AssignItemToSlotbar(slot_bar_t *Slotbar, item_t Source, s8 slot_index) {
-    if (slot_index >= 0 && slot_index < ArraySize(Slotbar->slots)) {
-        action_type_t action_type;
-        switch (Source.params->type) {
-            case 1:
-            case 2:
-            case 3:
-                action_type = action_ranged_attack;
-                break;
-            case 4:
-                action_type = action_throw;
-                break;
-            default:
-                DebugLog("Can't assign this item to the slotbar.");
-                return;
-
-        }
-        SetMenuShortcut(Slotbar, 0, slot_index, action_type, Source.params); // todo: load asset for the item
-    }
-}
-
 // Use an item from a menu inside inventory. todo: For consumables it will consume the item;
 // todo: for weapons and armor it will equip/deequip the item
 #if 0

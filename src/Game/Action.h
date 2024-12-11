@@ -72,10 +72,8 @@ typedef struct
 typedef struct
 {
 	action_type_t type;
-	union {
-		const action_params_t *params;
-		const item_params_t *item_params;
-	};
+	const action_params_t *params;
+	
 	bitmap_t *icon;
 } action_t;
 
@@ -87,6 +85,7 @@ typedef struct {
 
 typedef struct {
 	action_t action;
+	item_id_t AssignedItem;
 } slot_t;
 
 #define MAX_SLOTS 9
@@ -95,6 +94,7 @@ typedef struct {
 	s32 selected_slot;
 } slot_bar_t;
 
+fn slot_t *GetSlot(slot_bar_t *Bar, s32 Index);
 static action_params_t _Global_Action_Data[action_type_count];
 
 static inline const action_params_t *GetParameters(action_type_t type)

@@ -1,5 +1,45 @@
+fn slot_t *GetSlot(slot_bar_t *Bar, s32 Index)
+{
+    slot_t *Result = 0;
+    if ((Index >= 0) && (Index < ArraySize(Bar->slots)))
+    {
+        Result = &Bar->slots[Index];
+    }
+    return Result;
+}
+
+fn inline void AssignItem(slot_bar_t *Bar, s32 ItemID, s8 Index)
+{
+    #if 0
+    if (slot_index >= 0 && slot_index < ArraySize(Slotbar->slots)) {
+        action_type_t action_type;
+        switch (Source.params->type) {
+            case 1:
+            case 2:
+            case 3:
+                action_type = action_ranged_attack;
+                break;
+            case 4:
+                action_type = action_throw;
+                break;
+            default:
+                DebugLog("Can't assign this item to the slotbar.");
+                return;
+
+        }
+        SetMenuShortcut(Slotbar, 0, slot_index, action_type, Source.params); // todo: load asset for the item
+    }
+    #endif
+    slot_t *Slot = GetSlot(Bar, Index);
+    if (Slot)
+    {
+        Slot->AssignedItem = ItemID;
+        DebugLog("assigning item to slot %i", Index);
+    }
+}
+
 fn void ActionMenu(entity_t *user, game_state_t *state, command_buffer_t *out, assets_t *assets,
-                    const client_input_t *input, turn_system_t *queue, interface_t *In) {
+                    const client_input_t *input, turn_system_t *queue, interface_t *In, entity_t *User) {
     v2 action_bar_size = V2(540.0f, 60.0f);
     v2 slot_size = V2(50.0f, 50.0f);
     
@@ -18,12 +58,13 @@ fn void ActionMenu(entity_t *user, game_state_t *state, command_buffer_t *out, a
 
     slot_bar_t *Bar = &state->Bar;
 
+    const char *TooltipText = NULL;
+
     for (s32 i = 0; i < ArraySize(Bar->slots); i++)
     {
         slot_t *slot = &Bar->slots[i];
         action_t *action = &slot->action;
         const action_params_t *action_params = GetParameters(action->type);
-        const item_params_t *item_params = action->item_params;
 
         v2 slot_offset = V2(i * (slot_size.x + padding), 0.0f);
         v2 slot_p = Add(slot_start_pos, slot_offset);
@@ -31,6 +72,7 @@ fn void ActionMenu(entity_t *user, game_state_t *state, command_buffer_t *out, a
         v4 border_color = (Bar->selected_slot == (i + 1)) ? Blue() : Black();
         DrawRectOutline(out, slot_p, slot_size, border_color);
 
+        #if 0
         if (action->icon)
         {
             v4 color = PureWhite();
@@ -48,22 +90,38 @@ fn void ActionMenu(entity_t *user, game_state_t *state, command_buffer_t *out, a
                 DrawText(out, assets->Font, Add(slot_p, V2(4, 2)), item_params->name, White());
             }
         }
+        #endif
 
-        if (In->DraggedItemID) {
-            bb_t slotBoundaryBox = RectBounds(slot_p, slot_size);
-            if (BoundsContains(slotBoundaryBox, In->Cursor)) {
+        const char *Tooltip = "";
+        item_t *Item = Eq_GetItem(User->inventory, slot->AssignedItem);
+        if (Item)
+        {
+            DrawRect(out, slot_p, slot_size, Red());
+            Tooltip = Item->params->name;
+        }
+
+        if (BoundsContains(RectBounds(slot_p, slot_size), In->Cursor))
+        {
+            TooltipText = Tooltip;
+
+            if (In->DraggedItemID)
+            {
                 DrawRectOutline(out, slot_p, slot_size, Yellow());
 
-                if (!In->Buttons[0]) {
-                    DebugLog("Assigning item to slot %d", i);
-                    Eq_AssignItemToSlotbar(&In->SlotBar, In->DraggedItem, (s8)i);
+                if (!In->Buttons[0])
+                {
+                    AssignItem(Bar, In->DraggedItemID, (s8)i);
                     In->DraggedItemID = 0;
                 }
             }
-
         }
 
         if (IsKeyPressed(input, key_code_1 + (u8)i))
             Bar->selected_slot = i + 1;
+    }
+
+    if (TooltipText)
+    {
+        DrawText(out, assets->Font, GetCursorOffset(input), TooltipText, White());
     }
 }

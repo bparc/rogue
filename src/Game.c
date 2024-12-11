@@ -9,9 +9,11 @@
 // NOTE(): Game/
 #include "game/particle.c"
 
-#include "game/items.h"
 #include "game/action.h"
+#include "game/items.h"
 #include "game/inventory.h"
+
+
 #include "game/entity.h"
 #include "game/entity.c"
 #include "game/action.c"
@@ -81,7 +83,7 @@ fn void Setup(game_state_t *state, memory_t *memory, log_t *log, assets_t *asset
 	SetupCamera(state->Camera, V2(1600.0f, 900.0f));
 	state->Camera->zoom = 3.0f;
 
-	DefaultActionBar(&state->Bar,  assets);
+	DefaultActionBar(&state->Bar, assets);
 
 	GenerateDungeon(state->layout, 8, *state->memory);
 	CreateDungeon(state, state->layout);

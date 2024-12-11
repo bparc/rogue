@@ -1,15 +1,8 @@
-fn action_t GetEquippedAction(const slot_bar_t *menu, entity_t *user)
-{
-    action_t result = { .type = action_none };
-    s32 index = (menu->selected_slot - 1);
-    if ((index >= 0) && (index < ArraySize(menu->slots)))
-        result = menu->slots[index].action;
-    return result;
-}
-
 fn inline void SetMenuShortcut(slot_bar_t *menu, assets_t *assets, s32 index,
                                 action_type_t type, const item_params_t *item_params)
 {
+    Assert(0);
+    #if 0
     action_t *shortcut = &(menu->slots[index].action);
 #define Icons assets->CombatUI.action_bar_icons
     if (assets && (type < ArraySize(Icons)))
@@ -22,6 +15,23 @@ fn inline void SetMenuShortcut(slot_bar_t *menu, assets_t *assets, s32 index,
     } else shortcut->item_params = item_params;
 
     shortcut->type = type;
+    #endif
+}
+
+fn action_t GetEquippedAction(const slot_bar_t *menu, entity_t *user)
+{
+    action_t Result = { .type = action_none };
+
+    const slot_t *Slot = GetSlot((slot_bar_t *)menu, (s32)(menu->selected_slot - 1));
+    if (Slot)
+    {
+        item_t *Item = Eq_GetItem(user->inventory, Slot->AssignedItem);
+        if (Item)
+        {
+            Result = ActionFromType(Item->params->action);
+        }
+    }
+    return Result;
 }
 
 fn void DefaultActionBar(slot_bar_t *bar, assets_t *assets)

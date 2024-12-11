@@ -22,7 +22,7 @@ typedef enum {
 
 typedef struct
 {
-    //action_type_t action;
+    action_type_t action;
     item_type_t type;
     item_categories_t category;
     const char *name;
@@ -54,8 +54,6 @@ typedef struct
     const bitmap_t *animation_ranged;
     //const bitmap_t *animation;
 } item_params_t;
-
-typedef enum s32 item_id_t;
 
 typedef struct {
     const item_params_t *params;
