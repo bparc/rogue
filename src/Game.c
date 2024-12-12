@@ -1,3 +1,50 @@
+fn entity_t *CreateEntity(game_state_t *State, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *Map, u16 max_health_points, s32 accuracy, s32 evasion, s32 remaining_action_points, s32 remaining_movement_points, f32 hitchance_boost_multiplier)
+{
+	entity_storage_t *storage = &State->Units;
+	entity_t *result = 0;
+	if (storage->EntityCount < ArraySize(storage->entities))
+		result = &storage->entities[storage->EntityCount++];
+	if (result)
+	{
+		ZeroStruct(result); //memset macro
+		result->p = p;
+		result->deferred_p = GetTileCenter(Map, result->p);
+
+		result->size = size;
+
+		result->id = (0xff + (storage->IDPool++));
+		result->flags = flags;
+		result->health = health_points;
+		result->attack_dmg = attack_dmg;
+		result->max_health = max_health_points;
+		result->melee_accuracy = accuracy;
+		result->ranged_accuracy = accuracy;
+		result->evasion = evasion;
+		result->hitchance_boost_multiplier = hitchance_boost_multiplier;
+
+		// Initializing status effects to status_effect_none (which is 1)
+		for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
+			result->status_effects[i].type = status_effect_none;
+			result->status_effects[i].remaining_turns = 0;
+		}
+	}
+	
+	return result;
+}
+
+fn container_t *CreateContainer(game_state_t *State)
+{
+	entity_storage_t *Storage = &State->Units;
+    container_t *result = 0;
+    if (Storage->ContainerCount < ArraySize(Storage->Containers))
+    {
+        result = &Storage->Containers[Storage->ContainerCount++];
+        ZeroStruct(result);
+        result->ID = Storage->ContainerCount;
+    }
+    return result;
+}
+
 fn void PushTurn(game_state_t *State, entity_t *entity)
 {
 	if ((State->QueueSize < ArraySize(State->Queue)) && entity)
@@ -56,7 +103,7 @@ fn entity_t *PeekNextTurn(game_state_t *State, entity_storage_t *storage)
 	return result;
 }
 
-fn void AcceptTurn(game_state_t *State, entity_t *entity)
+fn void EndTurn(game_state_t *State, entity_t *entity)
 {
 	if (State->TurnInited)
 	{
@@ -115,8 +162,15 @@ fn evicted_entity_t *GetEvictedEntity(game_state_t *State, entity_id_t ID)
 	return NULL;
 }
 
-fn void GarbageCollect(game_state_t *Game, game_state_t *State, f32 dt)
+typedef struct
 {
+	int32_t DeletedEntityCount;
+} garbage_collect_result_t;
+
+fn garbage_collect_result_t GarbageCollect(game_state_t *Game, game_state_t *State, f32 dt)
+{
+	garbage_collect_result_t Result = {0};
+
 	entity_storage_t *storage = &State->Units;
 	for (s32 index = 0; index < storage->EntityCount; index++)
 	{
@@ -133,7 +187,8 @@ fn void GarbageCollect(game_state_t *Game, game_state_t *State, f32 dt)
 			}
 
 			storage->entities[index--] = storage->entities[--storage->EntityCount];
-			State->Events |= system_any_evicted;
+
+			Result.DeletedEntityCount++;
 		}
 	}
 
@@ -144,6 +199,8 @@ fn void GarbageCollect(game_state_t *Game, game_state_t *State, f32 dt)
 		if (entity->time_remaining <= 0.0f)
 			State->EvictedEntities[index--] = State->EvictedEntities[--State->EvictedEntityCount];
 	}
+
+	return Result;
 }
 
 fn void Brace(game_state_t *State, entity_t *entity)
@@ -182,7 +239,7 @@ fn void UpdateAsynchronousActionQueue(game_state_t *State, entity_t *user, f32 d
 		async_action_t *action = &State->Actions[index];
 		const action_params_t *params = GetParameters(action->action_type.type);
 
-		b32 finished = true;
+		b32 Commit = true;
 
 		// animate
 		if (params->animation_ranged)
@@ -195,7 +252,7 @@ fn void UpdateAsynchronousActionQueue(game_state_t *State, entity_t *user, f32 d
 			v2 From = GetTileCenter(Map, action->target_p);
 			v2 To = user->deferred_p;
 			f32 time = action->elapsed / (Distance(From, To) * 0.005f);
-			finished = (time >= 1.0f);
+			Commit = (time >= 1.0f);
 			RenderRangedAnimation(out, To, From, params->animation_ranged, time);
 		}
 		else
@@ -205,11 +262,10 @@ fn void UpdateAsynchronousActionQueue(game_state_t *State, entity_t *user, f32 d
 			v2 X = Ease2(40.0f, 60.0f, 15.0f, time);
 			f32 alpha = 1.0f - X.y;
 			RenderDiegeticText(&State->Camera, State->Assets->Font, user->deferred_p, V2((-20.0f + X.x), -80.0f), A(White(), alpha), params->name);
-			finished =  (time >= 1.0f);
+			Commit =  (time >= 1.0f);
 		}
 
-		// commit
-		if (finished)
+		if (Commit)
 		{
 			State->Actions[index--] = State->Actions[--State->ActionCount];
 			CommitAction(State, user, GetEntity(&State->Units, action->target_id), &action->action_type, action->target_p);
@@ -252,7 +308,7 @@ fn void AI(game_state_t *State, command_buffer_t *Out, entity_t *Entity)
 
 		f32 Speed = 4.0f;
 		f32 Edge = 1.0f / (f32)Path->length;
-		f32 T = State->EnemyAnimationTime * Edge * Speed;
+		f32 T = State->EnemyLerp * Edge * Speed;
 		T = fclampf(T, 0.0f, 1.0f);
 		int32_t Offset = (int32_t)(T * (f32)Path->length);
 		Offset = Clamp(Offset, 0, Path->length - 1);
@@ -286,7 +342,7 @@ fn void AI(game_state_t *State, command_buffer_t *Out, entity_t *Entity)
 
 		if (IsActionQueueCompleted(State))
 		{
-			AcceptTurn(State, Entity);
+			EndTurn(State, Entity);
 		}
 	}
 }
@@ -309,14 +365,14 @@ fn inline void _PopRemovedUnits(game_state_t *State)
 fn void BeginTurnSystem(game_state_t *State, game_state_t *Game, f32 dt)
 {
 	State->SecondsElapsed += dt;
-	State->EnemyAnimationTime += dt;
+	State->EnemyLerp += dt;
 
 	_PopRemovedUnits(State);
 }
 
 fn void EndTurnSystem(game_state_t *State, game_state_t *Game)
 {
-	State->Events = 0;
+	
 }
 
 fn void InteruptTurn(game_state_t *State, entity_t *Entity)
@@ -353,7 +409,7 @@ fn inline s32 CheckEnemyAlertStates(game_state_t *State, entity_t *ActiveEntity)
 
 fn b32 IsCellEmpty(game_state_t *State, v2s p)
 {
-	entity_t *collidingEntity = GetEntityByPosition(&State->Units, p);
+	entity_t *collidingEntity = GetEntityFromPosition(&State->Units, p);
 
 	if (collidingEntity == NULL)
     {
@@ -599,35 +655,34 @@ fn void CommitAction(game_state_t *State, entity_t *user, entity_t *target, acti
 
 fn void CheckEncounterModeStatus(game_state_t *State)
 {
-	s32 AliveHostiles = 0;
-
 	if (State->EncounterModeEnabled)
 	{
-		DebugLog("checking...");
+		DebugLog("...");
 		
+		s32 HostileCount = 0;
 		for (s32 Index = 0; Index < State->PhaseSize; Index++)
 		{
 			entity_t *Entity = GetEntity(&State->Units, State->Phase[Index]);
 			if (IsAlive(Entity) && IsHostile(Entity))
-				AliveHostiles++;
+				HostileCount++;
 		}
 
-		if (AliveHostiles == 0)
+		if (HostileCount == 0)
 		{
 			State->EncounterModeEnabled = false;
-			DebugLog("disengaging encounter mode...");
+			DebugLog("EncounterModeEnabled = false;");
 		}
 	}
 }
 
-fn void SetupTurn(game_state_t *State, s32 ActionPointCount)
+fn b32 SetupTurn(game_state_t *State, s32 ActionPointCount)
 {
 	State->ActionPoints = ActionPointCount;
 
 	State->SecondsElapsed = 0.0f;
 
-	State->EnemyAnimationTime = 0.0f;
+	State->EnemyLerp = 0.0f;
 	State->EnemyInited = false;
 
-	State->TurnInited = true;
+	return (true);
 }

@@ -57,9 +57,12 @@ fn void RenderIsoTile(command_buffer_t *out, map_t *Map, v2s offset, v4 color, s
         RenderIsoCube(out, p, Map->tile_sz, height, color);
 }
 
-fn void RenderIsoTile32(command_buffer_t *out, map_t *Map, s32 x, s32 y, v4 color)
+fn void RenderIsoTileArray(command_buffer_t *Out, map_t *Map, v2s Center, v2s *Tiles, s32 Count, v4 Color)
 {
-    RenderIsoTile(out, Map, V2S(x, y), color, true, 0);
+    for (int32_t Index = 0; Index < Count; Index++)
+    {
+        RenderIsoTile(Out, Map, IntAdd(Center, Tiles[Index]), Color, true, 0);
+    }
 }
 
 fn void RenderIsoTileArea(command_buffer_t *out, map_t *Map, v2s min, v2s max, v4 color)
@@ -172,4 +175,17 @@ fn void RenderRangeMap(command_buffer_t *out, map_t *TileMap, range_map_t *Map)
     }
 
     RenderIsoTile(out, TileMap, Map->From, Yellow(), true, 0);
+}
+
+fn void RenderHitChance(command_buffer_t *out, assets_t *assets, v2 p, s32 hit_chance)
+{
+    v2 screen_position = ScreenToIso(p);
+
+    char hit_chance_text[16];
+    snprintf(hit_chance_text, sizeof(hit_chance_text), "%d%%", hit_chance);
+
+    screen_position.x += 25;
+    screen_position.y -= 20;
+
+    DrawText(out, assets->Font, screen_position, hit_chance_text, White());
 }

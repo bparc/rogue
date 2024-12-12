@@ -25,7 +25,7 @@
 #include "menu.h"
 #include "menu.c"
 #include "data.c"
-#include "game/dungeon.c"
+#include "dungeon.c"
 
 #include "renderer/draw.c"
 
@@ -67,68 +67,75 @@ fn void Setup(game_state_t *State, memory_t *Memory, log_t *Log, assets_t *Asset
 	DebugLog("used memory %i/%i KB", Memory->offset / 1024, Memory->size / 1024);
 }
 
-fn inline void UpdateCurrentUnit(game_state_t *State, entity_t *Entity, f32 dt, client_input_t *input, virtual_controls_t cons, command_buffer_t *out)
-{
-	if ((State->TurnInited == false))
-	{
-		CloseCursor(&State->Cursor);
-		CloseInventory(&State->GUI);			
-
-		if (IsHostile(Entity))
-			BeginEnemyTurn(State, Entity, *State->Memory);
-
-		SetupTurn(State, 16);
-		ProcessStatusEffects(Entity);
-
-		IntegrateRange(&State->EffectiveRange, &State->Map, Entity->p, *State->Memory);
-	}
-
-	Camera(State, Entity, input, dt);
-
-	if (Entity->flags & entity_flags_controllable)
-	{
-		if (!CheckEnemyAlertStates(State, Entity))
-		{
-			b32 BlockMovementInputs = IsCursorEnabled(&State->Cursor) ? true : false;
-			dir_input_t DirInput = GetDirectionalInput(&cons);
-			DoCursor(State, &State->Camera, &State->Cursor, State->Assets, &State->Bar, out, cons, Entity, DirInput);
-			Player(Entity, &State->GUI, State, input, out, &cons, DirInput, BlockMovementInputs);
-		}
-	}
-	else
-	{
-		AI(State, out, Entity);
-	}
-}
-
 fn void Tick(game_state_t *State, f32 dt, client_input_t input, virtual_controls_t cons, command_buffer_t *Layer0, command_buffer_t *Layer1)
 {
+	entity_t *Entity = NULL;
+
 	BeginTurnSystem(State, State, dt);
-	entity_t *Entity = GetActive(State);
+	Entity = GetActive(State);
 
 	if (Entity == NULL)
 	{
-		ClearTurnQueue(State);
 		EstablishTurnOrder(State);
 	}
 
-	if (Entity)
+	if ((State->TurnInited == false) && Entity)
 	{
-		UpdateCurrentUnit(State, Entity, dt, &input, cons, Layer1);
+		State->TurnInited = true;
+		
+		s32 AP = 16;
+		SetupTurn(State, AP);
+		
+		IntegrateRange(&State->EffectiveRange, &State->Map, Entity->p, *State->Memory);
+		EvaluateStatusEffects(Entity);
+
+		CloseCursor(&State->Cursor);
+		CloseInventory(&State->GUI);			
+	}
+
+	Camera(State, Entity, &input, dt);
+
+	if (Entity && State->TurnInited)
+	{
+		b32 Update = true;
+
+		if (Entity->flags & entity_flags_controllable)
+		{
+			// NOTE(): Skip the update for this frame if any of the enemies was alerted.
+			Update = CheckEnemyAlertStates(State, Entity) ? false : Update;
+		}
+
+		if (Update && (Entity->flags & entity_flags_controllable))
+		{
+			dir_input_t Dir = GetDirectionalInput(&cons);
+			b32 BlockInputs = false;
+			
+			if (IsCursorEnabled(&State->Cursor))
+				BlockInputs = true;
+
+			DoCursor(State, &State->Cursor, Layer1, cons, Entity, Dir);
+			Player(State, Entity, &input, Layer1, &cons, Dir, BlockInputs);
+		}
+
+		if (Update && !(Entity->flags & entity_flags_controllable))
+		{
+			AI(State, Layer1, Entity);
+		}
 	}
 
 	UpdateAsynchronousActionQueue(State, Entity, dt, Layer1);
-	
-	GarbageCollect(State, State, dt);
 
-	if ((State->Events & system_any_evicted))
+	garbage_collect_result_t GarbageCollectResult = GarbageCollect(State, State, dt);
+	if (GarbageCollectResult.DeletedEntityCount > 0)
 	{
 		CheckEncounterModeStatus(State);
 	}
-	EndTurnSystem(State, State);
 
 	ControlPanel(State, &cons);
-
+	
 	HUD(Debug.out, State, &input, &cons, dt);
+
+	EndTurnSystem(State, State);
+
 	Render_DrawFrame(State, Layer0, dt, V2(input.viewport[0], input.viewport[1]));
 }

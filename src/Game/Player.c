@@ -42,33 +42,29 @@ fn b32 GetAdjacentDoor(game_state_t *State, v2s Cell, v2s *DoorCell)
 	return Result;
 }
 
-fn inline void Player(
-	entity_t *Entity,
-	interface_t *interface,
-	game_state_t *State,
-	const client_input_t *input,
-	command_buffer_t *out, 
-	const virtual_controls_t *cons,
-	dir_input_t DirInput,
-	b32 BlockInputs)
+fn inline void Player(game_state_t *State, entity_t *Entity, const client_input_t *input,
+	command_buffer_t *out,  const virtual_controls_t *cons, dir_input_t DirInput, b32 BlockInputs)
 {
-	// NOTE(): Controls		
-	if (WentDown(cons->Inventory))
-		ToggleInventory(interface);
+	// inventory		
 
-	// NOTE(): Check Containers
+	if (WentDown(cons->Inventory))
+		ToggleInventory(&State->GUI);
+
+	// check containers
+
 	container_t *Container = GetAdjacentContainer(State, Entity->p);
 	if (Container)
 	{
-		OpenContainer(interface, Container);
+		OpenContainer(&State->GUI, Container);
 	}
 
-	if(!Container || (interface->OpenedContainer != Container))
+	if(!Container || (State->GUI.OpenedContainer != Container))
 	{
-		CloseContainer(interface);
+		CloseContainer(&State->GUI);
 	}
 
-	// NOTE(): Check Doors
+	// check adjacent doors
+
 	v2s DoorIndex = {0};
 	if (GetAdjacentDoor(State, Entity->p, &DoorIndex))
 	{
@@ -77,7 +73,7 @@ fn inline void Player(
 			SetTileValue(&State->Map, DoorIndex, tile_floor);
 	}
 
-	// NOTE(): Move
+	// move
 
 	b32 AllowedToMove = IsActionQueueCompleted(State)  && // Can't move when skill animations are playing!
 		((BlockInputs == false));
@@ -94,30 +90,19 @@ fn inline void Player(
 	
 	if (DirInput.Inputed && AllowedToMove)
 	{
-		b32 Moved = MakeMove(State, Entity, DirInput.Direction);
-		if (Moved)
-		{
-			room_t *Room = RoomFromPosition(&State->MapLayout, Entity->p);
-			if (Room)
-				Room->Visited = true;
-		}
-
-		//if (Moved && GodModeDisabled(State) && State->EncounterModeEnabled)
-		//{
-			//ConsumeMovementPoints(State, 1);
-		//}
+		MakeMove(State, Entity, DirInput.Direction);
 	}
 
-	// NOTE(): Finish
-	b32 Skipped = WentDown(cons->EndTurn);
-	b32 EndTurn = Skipped || (State->ActionPoints == 0);
-	if (EndTurn && State->EncounterModeEnabled)
+	// end
+
+	b32 Skip = WentDown(cons->EndTurn);
+	if ((Skip || (State->ActionPoints == 0)) && State->EncounterModeEnabled)
 	{
-		if (Skipped)
+		if (Skip)
 		{
 			Brace(State, Entity);
-			CloseInventory(interface);
+			CloseInventory(&State->GUI);
 		}
-		AcceptTurn(State, Entity);
+		EndTurn(State, Entity);
 	}
 }

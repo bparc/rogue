@@ -188,7 +188,6 @@ fn void Inventory(game_state_t *State, interface_t *In, v2 EqMin, inventory_t *E
         InventoryText(&Layout, "Ranged Accuracy: %d", User->ranged_accuracy);
         InventoryText(&Layout, "Melee Accuracy: %d", User->melee_accuracy);
         InventoryText(&Layout, "Evasion: %d", User->evasion);
-        InventoryText(&Layout, "Action Points: %d", User->remaining_action_points);
     }
 
     // Grid

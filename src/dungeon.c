@@ -10,7 +10,7 @@ fn entity_t *CreatePlayer(game_state_t *State, v2s p)
         u16 attack_dmg = 8; // What does this do now?
         s32 player_accuracy = 75; // Applying this value for both melee and ranged accuracy
         s32 player_evasion = 20;
-        result = CreateEntity(&State->Units, p, V2S(1, 1), entity_flags_controllable,
+        result = CreateEntity(State, p, V2S(1, 1), entity_flags_controllable,
             player_health, attack_dmg, &State->Map, player_max_health, player_accuracy, player_evasion,
             MAX_PLAYER_ACTION_POINTS, MAX_PLAYER_MOVEMENT_POINTS, 1);
         
@@ -34,7 +34,7 @@ fn entity_t *CreateSlime(game_state_t*State, v2s p)
 	u16 slime_attack_dmg = 6;
 	s32 slime_accuracy = 30; // Applying this value for both melee and ranged accuracy
 	s32 slime_evasion = 80;
-	entity_t *result = CreateEntity(&State->Units, p, V2S(1, 1),  entity_flags_hostile, slime_hp, slime_attack_dmg, &State->Map,
+	entity_t *result = CreateEntity(State, p, V2S(1, 1),  entity_flags_hostile, slime_hp, slime_attack_dmg, &State->Map,
 	slime_max_hp, slime_accuracy, slime_evasion, MAX_SLIME_ACTION_POINTS, MAX_SLIME_MOVEMENT_POINTS, 1);
     result->enemy_type = enemy_slime;
     return result;
@@ -47,7 +47,7 @@ fn entity_t *CreateBigSlime(game_state_t *State, v2s p)
 	u16 slime_attack_dmg = 25;
 	s32 slime_accuracy = 45; // Applying this value for both melee and ranged accuracy
 	s32 slime_evasion = 40;
-	entity_t *result = CreateEntity(&State->Units, p, V2S(2, 2),  entity_flags_hostile, slime_hp, slime_attack_dmg, &State->Map,
+	entity_t *result = CreateEntity(State, p, V2S(2, 2),  entity_flags_hostile, slime_hp, slime_attack_dmg, &State->Map,
 	slime_max_hp, slime_accuracy, slime_evasion, MAX_SLIME_ACTION_POINTS, MAX_SLIME_MOVEMENT_POINTS, 1);
     result->enemy_type = enemy_slime_large;
     return result;
@@ -69,7 +69,7 @@ fn void CreateRandomLoot(game_state_t *State, v2s position)
     if (InMapBounds(&State->Map, position))
     {
         s32 Index = GetTileIndex(&State->Map, position);
-        container_t *Container = PushContainer(&State->Units);
+        container_t *Container = CreateContainer(State);
         if (Container)
         {
             State->Map.container_ids[Index] = Container->ID;
@@ -152,7 +152,6 @@ fn void CreateDungeon(game_state_t *State, map_layout_t *Layout)
 
         v2s Pos = GetRoomPosition(Layout, StartingRoom);
         CreatePlayer(State, IntAdd(Pos, V2S(2, 2)));
-        StartingRoom->Visited = true;
         //CreateRandomLoot(State, IntAdd(Pos, V2S(2, 2)));
         //CreateRandomLoot(State, IntAdd(Pos, V2S(2, 5)));
     }

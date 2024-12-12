@@ -10,7 +10,6 @@ typedef struct
 	v2s Doors[4];
 
 	u64 VisitedTimestamp;
-	b32 Visited;
 } room_t;
 
 typedef struct

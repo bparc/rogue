@@ -42,7 +42,6 @@ typedef struct
 	s32 ranged_accuracy;
 	s32 melee_accuracy;
 	s32 evasion;
-	s32 remaining_action_points;
 	f32 hitchance_boost_multiplier;
 	b32 has_hitchance_boost;
 
@@ -51,6 +50,13 @@ typedef struct
 	// NOTE(): AI stuff
 	b32 Alerted;
 } entity_t;
+
+fn b32 IsAlive(entity_t *Entity);
+fn b32 IsHostile(const entity_t *entity);
+fn b32 IsPlayer(const entity_t *entity);
+
+fn void TakeHP(entity_t *entity, s16 damage);
+fn void Heal(entity_t *entity, s16 healed_hp);
 
 typedef struct
 {
@@ -62,26 +68,8 @@ typedef struct
 	container_t Containers[64];
 } entity_storage_t;
 
-fn container_t *PushContainer(entity_storage_t *Storage);
-
-// NOTE(): Lifetime Management
-fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *Map, u16 max_health_points, s32 accuracy, s32 evasion, s32 remaining_action_points, s32 remaining_movement_points, f32 hitchance_boost_multiplier);
-fn b32 IsAlive(entity_t *Entity);
-
-fn entity_t *EntityFromIndex(entity_storage_t *storage, s32 index);
 fn entity_t *GetEntity(entity_storage_t *storage, entity_id_t id);
+fn entity_t *GetEntityFromPosition(entity_storage_t *storage, v2s p);
 
-// NOTE(): Spatial
-fn entity_t *GetEntityByPosition(entity_storage_t *storage, v2s p);
 fn entity_t *FindClosestHostile(entity_storage_t *storage, v2s player_pos);
 fn entity_t *FindClosestPlayer(entity_storage_t *storage, v2s p);
-fn v2s GetDirectionToClosestPlayer(entity_storage_t *storage, v2s p);
-
-// NOTE(): Type Queries
-fn b32 IsHostile(const entity_t *entity);
-fn b32 IsPlayer(const entity_t *entity);
-fn entity_t *DEBUGGetPlayer(entity_storage_t *storage);
-
-// NOTE():
-fn void TakeHP(entity_t *entity, s16 damage);
-fn void Heal(entity_t *entity, s16 healed_hp);

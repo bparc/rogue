@@ -143,7 +143,7 @@ typedef union
 
 typedef struct
 {
-	memory_t memory; // NOTE(): A memory pool for storing strings.
+	memory_t memory; 
 	command_t *commands;
 	s32 count;
 	s32 size;

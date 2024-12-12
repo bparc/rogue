@@ -1,39 +1,4 @@
-fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *Map, u16 max_health_points, s32 accuracy, s32 evasion, s32 remaining_action_points, s32 remaining_movement_points, f32 hitchance_boost_multiplier)
-{
-	entity_t *result = 0;
-	if (storage->EntityCount < ArraySize(storage->entities))
-		result = &storage->entities[storage->EntityCount++];
-	if (result)
-	{
-		ZeroStruct(result); //memset macro
-		result->p = p;
-		result->deferred_p = GetTileCenter(Map, result->p);
-
-		result->size = size;
-
-		result->id = (0xff + (storage->IDPool++));
-		result->flags = flags;
-		result->health = health_points;
-		result->attack_dmg = attack_dmg;
-		result->max_health = max_health_points;
-		result->melee_accuracy = accuracy;
-		result->ranged_accuracy = accuracy;
-		result->evasion = evasion;
-		result->remaining_action_points = remaining_action_points;
-		result->remaining_action_points = remaining_movement_points;
-		result->hitchance_boost_multiplier = hitchance_boost_multiplier;
-
-		// Initializing status effects to status_effect_none (which is 1)
-		for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
-			result->status_effects[i].type = status_effect_none;
-			result->status_effects[i].remaining_turns = 0;
-		}
-	}
-	
-	return result;
-}
-
-fn entity_t *GetEntityByPosition(entity_storage_t *storage, v2s p)
+fn entity_t *GetEntityFromPosition(entity_storage_t *storage, v2s p)
 {
 	for (s32 index = 0; index < storage->EntityCount; index++) {
         entity_t *entity = &storage->entities[index];
@@ -93,24 +58,6 @@ fn entity_t *FindClosestPlayer(entity_storage_t *storage, v2s p) {
 	return nearest_player;
 }
 
-fn v2s GetDirectionToClosestPlayer(entity_storage_t *storage, v2s p) {
-	entity_t *nearest_player = FindClosestPlayer(storage, p);
-
-	v2s direction = IntSub(nearest_player->p, p);
-
-	if (direction.x != 0) direction.x = (direction.x > 0) ? 1 : -1;
-	if (direction.y != 0) direction.y = (direction.y > 0) ? 1 : -1;
-
-	return direction;
-}
-
-fn entity_t *EntityFromIndex(entity_storage_t *storage, s32 index)
-{
-	if ((index >= 0) && (index < storage->EntityCount))
-		return &storage->entities[index];
-	return NULL;
-}
-
 fn entity_t *GetEntity(entity_storage_t *storage, entity_id_t id)
 {
 	if (id > 0)
@@ -137,14 +84,6 @@ fn b32 IsPlayer(const entity_t *entity)
 	if (entity)
 		return (entity->flags & entity_flags_controllable);
 	return false;
-}
-
-fn entity_t *DEBUGGetPlayer(entity_storage_t *storage)
-{
-	for (s32 index = 0; index < storage->EntityCount; index++)
-		if (IsPlayer(&storage->entities[index]))
-			return &storage->entities[index];
-	return 0;
 }
 
 fn void TakeHP(entity_t *entity, s16 damage)
@@ -206,7 +145,7 @@ fn void StepOnTile(map_t *Map, entity_t *entity)
 	}
 }
 
-fn void ProcessStatusEffects(entity_t *entity)
+fn void EvaluateStatusEffects(entity_t *entity)
 {
     for (int i = 0; i < MAX_STATUS_EFFECTS; ++i) {
         if (entity->status_effects[i].type != status_effect_none) {
@@ -226,18 +165,6 @@ fn void ProcessStatusEffects(entity_t *entity)
             }
         }
     }
-}
-
-fn container_t *PushContainer(entity_storage_t *Storage)
-{
-    container_t *result = 0;
-    if (Storage->ContainerCount < ArraySize(Storage->Containers))
-    {
-        result = &Storage->Containers[Storage->ContainerCount++];
-        ZeroStruct(result);
-        result->ID = Storage->ContainerCount;
-    }
-    return result;
 }
 
 fn b32 IsAlive(entity_t *Entity)

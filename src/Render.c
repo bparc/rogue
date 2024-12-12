@@ -158,7 +158,7 @@ fn void Render_DrawFrame(game_state_t *State, command_buffer_t *out, f32 dt, v2 
 {
 	map_t *Map = &State->Map;
 	entity_storage_t *Units = &State->Units;
-	entity_t *player = DEBUGGetPlayer(Units);
+	entity_t *player = GetEntity(&State->Units, State->Players[0]);
 	particles_t *particles = &State->ParticleSystem;
 	command_buffer_t *out_top = Debug.out;
 
