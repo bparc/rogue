@@ -22,10 +22,8 @@ fn void DrawTurnQueuePicFadeOut(command_buffer_t *out, f32 x, f32 *y, v2 sz, ent
     *y += y_spacing * t;
 }
 
-fn void TurnQueue(command_buffer_t *out, game_state_t *state, turn_system_t *queue, assets_t *assets, cursor_t *cursor)
+fn void TurnQueue(command_buffer_t *out, game_state_t *State, assets_t *assets, cursor_t *cursor)
 {
-    entity_storage_t *storage = queue->storage;
-
     v2 sz = V2(64.f, 64.f);
     f32 spacing = sz.y + 5.0f;
     f32 top = 100.0f;
@@ -35,18 +33,18 @@ fn void TurnQueue(command_buffer_t *out, game_state_t *state, turn_system_t *que
     f32 y = top;
 
     f32 fade_out_time = 0.5f;
-    if ((queue->prev_turn_entity > 0) &&
-        (queue->seconds_elapsed < fade_out_time))
+    if ((State->PrevTurnEntity > 0) &&
+        (State->SecondsElapsed < fade_out_time))
     {
-        f32 t = 1.0f - (queue->seconds_elapsed / fade_out_time);
-        entity_t *entity = GetEntity(storage, queue->prev_turn_entity);
+        f32 t = 1.0f - (State->SecondsElapsed / fade_out_time);
+        entity_t *entity = GetEntity(&State->Units, State->PrevTurnEntity);
         DrawTurnQueuePicFadeOut(out, x, &y, sz, entity, assets, t, spacing);
     }
 
-    for (s32 index = queue->QueueSize - 1; index >= 0; index--)
+    for (s32 index = State->QueueSize - 1; index >= 0; index--)
     {
-        entity_id_t ID = queue->Queue[index];
-        entity_t *entity = GetEntity(storage, ID);
+        entity_id_t ID = State->Queue[index];
+        entity_t *entity = GetEntity(&State->Units, ID);
         if (entity)
         {
             DrawTurnQueuePic(out, x, y, sz, 1.0f, entity, assets);
@@ -57,7 +55,7 @@ fn void TurnQueue(command_buffer_t *out, game_state_t *state, turn_system_t *que
         }
         else
         {
-            evicted_entity_t *evicted = GetEvictedEntity(queue, ID);
+            evicted_entity_t *evicted = GetEvictedEntity(State, ID);
             if (evicted)
                 DrawTurnQueuePicFadeOut(out, x, &y, sz, &evicted->entity, assets, evicted->time_remaining, spacing);
         }

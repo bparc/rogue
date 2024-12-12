@@ -37,49 +37,56 @@ fn b32 GetAdjacentDoor(game_state_t *State, v2s Cell, v2s *DoorCell)
 	for (s32 DirIndex = 0; (DirIndex < 4) && !Result; DirIndex++)
 	{
 		*DoorCell = IntAdd(Cell, cardinal_directions[DirIndex]);
-		Result = IsDoor(State->Map, *DoorCell);
+		Result = IsDoor(&State->Map, *DoorCell);
 	}
 	return Result;
 }
 
-fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_t *input, command_buffer_t *out, const virtual_controls_t *cons, dir_input_t DirInput, b32 BlockInputs)
+fn inline void Player(
+	entity_t *Entity,
+	interface_t *interface,
+	game_state_t *State,
+	const client_input_t *input,
+	command_buffer_t *out, 
+	const virtual_controls_t *cons,
+	dir_input_t DirInput,
+	b32 BlockInputs)
 {
-	turn_system_t *queue = state->System;
 	// NOTE(): Controls		
 	if (WentDown(cons->Inventory))
-		ToggleInventory(state->interface);
+		ToggleInventory(interface);
 
 	// NOTE(): Check Containers
-	container_t *Container = GetAdjacentContainer(state, Entity->p);
+	container_t *Container = GetAdjacentContainer(State, Entity->p);
 	if (Container)
 	{
-		OpenContainer(state->interface, Container);
+		OpenContainer(interface, Container);
 	}
 
-	if(!Container || (state->interface->OpenedContainer != Container))
+	if(!Container || (interface->OpenedContainer != Container))
 	{
-		CloseContainer(state->interface);
+		CloseContainer(interface);
 	}
 
 	// NOTE(): Check Doors
 	v2s DoorIndex = {0};
-	if (GetAdjacentDoor(state, Entity->p, &DoorIndex))
+	if (GetAdjacentDoor(State, Entity->p, &DoorIndex))
 	{
-		RenderDiegeticText(state->Camera, state->assets->Font, Entity->deferred_p, V2(-10.0f, -50.0f), White(), "Press R to open.");
+		RenderDiegeticText(&State->Camera, State->Assets->Font, Entity->deferred_p, V2(-10.0f, -50.0f), White(), "Press R to open.");
 		if (IsKeyPressed(input, 'R'))
-			SetTileValue(state->Map, DoorIndex, tile_floor);
+			SetTileValue(&State->Map, DoorIndex, tile_floor);
 	}
 
 	// NOTE(): Move
 
-	b32 AllowedToMove = IsActionQueueCompleted(queue)  && // Can't move when skill animations are playing!
+	b32 AllowedToMove = IsActionQueueCompleted(State)  && // Can't move when skill animations are playing!
 		((BlockInputs == false));
 
-	if (queue->EncounterModeEnabled)
+	if (State->EncounterModeEnabled)
 	{
-		RenderRangeMap(out, queue->Map, &queue->EffectiveRange);
+		RenderRangeMap(out, &State->Map, &State->EffectiveRange);
 
-		if (!CheckRange(&queue->EffectiveRange, IntAdd(Entity->p, DirInput.Direction)))
+		if (!CheckRange(&State->EffectiveRange, IntAdd(Entity->p, DirInput.Direction)))
 		{
 			AllowedToMove = false;
 		}
@@ -87,31 +94,30 @@ fn inline void Player(entity_t *Entity, game_state_t *state, const client_input_
 	
 	if (DirInput.Inputed && AllowedToMove)
 	{
-		b32 Moved = MakeMove(queue, Entity, DirInput.Direction);
+		b32 Moved = MakeMove(State, Entity, DirInput.Direction);
 		if (Moved)
 		{
-			room_t *Room = RoomFromPosition(state->layout, Entity->p);
+			room_t *Room = RoomFromPosition(&State->MapLayout, Entity->p);
 			if (Room)
 				Room->Visited = true;
 		}
 
-		//if (Moved && GodModeDisabled(queue) && queue->EncounterModeEnabled)
+		//if (Moved && GodModeDisabled(State) && State->EncounterModeEnabled)
 		//{
-			//ConsumeMovementPoints(queue, 1);
+			//ConsumeMovementPoints(State, 1);
 		//}
 	}
 
 	// NOTE(): Finish
-	b32 CantDoAnyAction = (queue->action_points == 0);
-	b32 TurnForcefullySkipped = WentDown(cons->EndTurn);
-	b32 EndTurn = TurnForcefullySkipped || CantDoAnyAction;
-	if (EndTurn && queue->EncounterModeEnabled)
+	b32 Skipped = WentDown(cons->EndTurn);
+	b32 EndTurn = Skipped || (State->ActionPoints == 0);
+	if (EndTurn && State->EncounterModeEnabled)
 	{
-		if (TurnForcefullySkipped)
+		if (Skipped)
 		{
-			Brace(queue, Entity);
-			CloseInventory(state->interface);
+			Brace(State, Entity);
+			CloseInventory(interface);
 		}
-		AcceptTurn(queue, Entity);
+		AcceptTurn(State, Entity);
 	}
 }

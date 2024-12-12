@@ -1,7 +1,4 @@
-typedef struct
-{
-	s32 Foo;
-} menu_t;
+
 
 fn void GrowBroccoli(command_buffer_t *Out, v2 At, f32 Angle, f32 LeafScale, s32 Depth, f32 Time)
 {

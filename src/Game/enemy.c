@@ -1,8 +1,8 @@
-fn void FindPathToEntity(turn_system_t *State, v2s From, entity_t *Entity, path_t *Path, s32 MaxLength, memory_t Memory)
+fn void FindPathToEntity(game_state_t *State, v2s From, entity_t *Entity, path_t *Path, s32 MaxLength, memory_t Memory)
 {
 	if (Entity)
 	{
-		FindPath(State->Map, From, Entity->p, Path, Memory);
+		FindPath(&State->Map, From, Entity->p, Path, Memory);
 		Path->length = Min32(Path->length, MaxLength);
 
 		// truncate to the closest unoccupied point to the entity
@@ -21,7 +21,7 @@ fn void FindPathToEntity(turn_system_t *State, v2s From, entity_t *Entity, path_
 	}
 }
 
-fn s32 BeginEnemyTurn(turn_system_t *State, entity_t *entity, memory_t Memory)
+fn s32 BeginEnemyTurn(game_state_t *State, entity_t *entity, memory_t Memory)
 {
 	s32 movement_point_count = 6;
 	return (movement_point_count);
@@ -46,27 +46,4 @@ fn void Perish(game_state_t *game, entity_t *entity)
 			SubdivideLargeSlime(game, entity, 0, 1);
 		} break;
 	}
-}
-
-fn b32 ScheduleEnemyAction(game_state_t *World, entity_t *requestee, s32 effective_range)
-{
-	turn_system_t *queue = World->System;
-	entity_id_t result = 0;
-
-	entity_t *target = FindClosestPlayer(World->storage, requestee->p);
-	if (target && IsInsideCircle(target->p, target->size, requestee->p, effective_range))
-	{
-		action_type_t action_type = action_none;
-		if (RandomChance(30))
-			action_type = action_slash;
-		else
-			action_type = action_slime_ranged;
-		
-		if (IsLineOfSight(World->Map, requestee->p, target->p))
-		{
-			QueryAsynchronousAction(queue, action_type, target->id, target->p);
-			result = target->id;
-		}
-	}
-	return true;
 }

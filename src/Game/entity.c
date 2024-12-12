@@ -33,28 +33,6 @@ fn entity_t *CreateEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, 
 	return result;
 }
 
-fn static_entity_t * CreateStaticEntity(entity_storage_t *storage, v2s p, v2s size, u8 flags, status_effect_t status_effects[MAX_STATUS_EFFECTS])
-{
-  	static_entity_t *result = 0;
-	if (storage->StaticEntityCount < ArraySize(storage->static_entities))
-		result = &storage->static_entities[storage->StaticEntityCount++];
-	if (result)
-	{
-		ZeroStruct(result); //memset macro
-		result->p = p;
-
-		result->size = size;
-		result->flags = flags;
-
-		//array cpy im killing myself
-        for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
-            result->status_effects[i] = status_effects[i];
-        }
-	}
-	
-	return result;
-}
-
 fn entity_t *GetEntityByPosition(entity_storage_t *storage, v2s p)
 {
 	for (s32 index = 0; index < storage->EntityCount; index++) {

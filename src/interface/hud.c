@@ -1,10 +1,9 @@
-fn void BeginInterface(interface_t *In, game_state_t *GameState, const client_input_t *Input, const virtual_controls_t *Cons, command_buffer_t *Out, f32 dt)
+fn void BeginInterface(interface_t *In, game_state_t *State, const client_input_t *Input, const virtual_controls_t *Cons, command_buffer_t *Out, f32 dt)
 {
     In->Cons = Cons;
     In->Input = Input;
     In->Out = Out;
-    In->Font = GameState->assets->Font;
-    In->TurnSystem = GameState->System;
+    In->Font = State->Assets->Font;
     In->DeltaTime = dt;
 
     In->Cursor = GetCursorOffset(Input);
@@ -20,34 +19,34 @@ fn void EndInterface(interface_t *In)
 
 }
 
-fn void HUD(command_buffer_t *out, game_state_t *state, const client_input_t *input, const virtual_controls_t *Cons, f32 dt)
+fn void HUD(command_buffer_t *out, game_state_t *State, const client_input_t *input, const virtual_controls_t *Cons, f32 dt)
 {
-    BeginInterface(state->interface, state, input, Cons, out, dt);
+    BeginInterface(&State->GUI, State, input, Cons, out, dt);
 
-    entity_t *ActiveEntity = GetActive(state->System);
-    if (state->System->EncounterModeEnabled)
+    entity_t *ActiveEntity = GetActive(State);
+    if (State->EncounterModeEnabled)
     {
-        TurnQueue(out, state, state->System, state->assets, state->cursor);
+        TurnQueue(out, State, State->Assets, &State->Cursor);
     }
 
-    interface_t *In = state->interface;
+    interface_t *In = &State->GUI;
     if (IsPlayer(ActiveEntity))
     {   
-        MiniMap(Debug.out_top, state->layout, ActiveEntity->p, state->assets);
+        MiniMap(Debug.out_top, &State->MapLayout, ActiveEntity->p, State->Assets);
         
         if (In->InventoryOpened || In->OpenedContainer)
         {
-            Inventory(In, V2(100.0f, 25.0f), ActiveEntity->inventory, ActiveEntity, NULL, true);
+            Inventory(State, In, V2(100.0f, 25.0f), ActiveEntity->inventory, ActiveEntity, NULL, true);
 
             container_t *OpenedContainer = In->OpenedContainer;
             if (In->OpenedContainer)
             {
-                Inventory(In, V2(800.0f, 25.0f), &OpenedContainer->inventory, ActiveEntity, OpenedContainer, false);
+                Inventory(State, In, V2(800.0f, 25.0f), &OpenedContainer->inventory, ActiveEntity, OpenedContainer, false);
             }
         }
 
-        ActionMenu(ActiveEntity, state, out, state->assets, input, state->System, state->interface, ActiveEntity);
+        ActionMenu(ActiveEntity, State, out, State->Assets, input, State, &State->GUI, ActiveEntity);
     }
     
-    EndInterface(state->interface);
+    EndInterface(&State->GUI);
 }

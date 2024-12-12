@@ -11,7 +11,7 @@ fn void RenderHitChance(command_buffer_t *out, assets_t *assets, v2 p, s32 hit_c
     DrawText(out, assets->Font, screen_position, hit_chance_text, White());
 }
 
-fn inline s32 Cursor_DoAction(cursor_t *cursor, map_t *Map, entity_t *user, entity_t *target, turn_system_t *queue, const action_params_t *settings)
+fn inline s32 Cursor_DoAction(cursor_t *cursor, map_t *Map, entity_t *user, entity_t *target, game_state_t *queue, const action_params_t *settings)
 {
 	entity_id_t id = target ? target->id : 0;
 	v2s TargetedCell = target ? target->p : cursor->p;
@@ -24,21 +24,27 @@ fn inline s32 Cursor_DoAction(cursor_t *cursor, map_t *Map, entity_t *user, enti
 
 	b32 Query = false;
     if (IsLineOfSight(Map, user->p, TargetedCell) && TargetValid)
-       	Query = ConsumeActionPoints(queue, queue->god_mode_enabled ? 0 : settings->cost);
+       	Query = ConsumeActionPoints(queue, settings->cost);
 
     if (Query)
 		QueryAsynchronousAction(queue, settings->type, id, TargetedCell);
 	return Query;
 }
 
-fn void DoCursor(game_state_t *Game, command_buffer_t *out, virtual_controls_t cons,
-	entity_t *user, dir_input_t DirInput)
+fn void DoCursor(
+	game_state_t *State,
+	camera_t *Camera,
+	cursor_t *cursor,
+	assets_t *Assets,
+	slot_bar_t *bar,
+	command_buffer_t *out,
+	virtual_controls_t cons,
+	entity_t *user,
+	dir_input_t DirInput)
 {
-	cursor_t *cursor = Game->cursor;
-	slot_bar_t *bar = &Game->Bar;
-	map_t *Map = Game->Map;
-	entity_storage_t *storage = Game->storage;
-	turn_system_t *queue = Game->System;
+	map_t *Map = &State->Map;
+	entity_storage_t *storage = &State->Units;
+	game_state_t *queue = State;
 
 	// NOTE(): Setup
 	action_t equipped = GetEquippedAction(bar, user);
@@ -121,7 +127,7 @@ fn void DoCursor(game_state_t *Game, command_buffer_t *out, virtual_controls_t c
 		if (IsHostile(target))
 		{
 			s32 chance = CalculateHitChance(user, target, equipped.type);
-			RenderDiegeticText(Game->Camera, Game->assets->Font, target->deferred_p, V2(-20.0f, -85.0f), White(), "%i%%", chance);
+			RenderDiegeticText(Camera, Assets->Font, target->deferred_p, V2(-20.0f, -85.0f), White(), "%i%%", chance);
 
 			cursor->Target = target->id;
 		}

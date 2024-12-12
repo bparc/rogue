@@ -87,9 +87,9 @@ fn v2 GetTileCenter(const map_t *Map, v2s p)
 	return result;
 }
 
-fn map_t *AllocateMap(s32 x, s32 y, memory_t *memory, f32 tile_height)
+fn void SetupMap(map_t *result, s32 x, s32 y, memory_t *memory, f32 tile_height)
 {
-	map_t *result = PushStruct(map_t, memory);
+	ZeroStruct(result);
 	result->tile_sz = V2(tile_height, tile_height);
 	result->x = x;
 	result->y = y;
@@ -99,7 +99,6 @@ fn map_t *AllocateMap(s32 x, s32 y, memory_t *memory, f32 tile_height)
 	result->tiles 		  = PushArray(tile_t, memory, TileCount);
 
 	Assert(result->tiles);
-	return result;
 }
 
 fn void ClearMap(map_t *Map)

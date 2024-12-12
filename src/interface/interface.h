@@ -4,7 +4,6 @@ typedef struct
     const client_input_t *Input;
 	command_buffer_t *Out;
     bmfont_t *Font;
-    turn_system_t *TurnSystem;
     f32 DeltaTime;
     
     s32 DraggedItemID;

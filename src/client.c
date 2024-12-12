@@ -18,7 +18,7 @@
 #include "low/debug.c"
 #include "low/input.h"
 
-#include "game.c"
+#include "main.c"
 
 typedef enum
 {
@@ -39,7 +39,7 @@ typedef struct
 	virtual_controls_t virtual_controls;
 	assets_t assets;
 	bmfont_t font;
-	game_state_t world;
+	game_state_t gamestate;
 	command_buffer_t buffers[output_count];
 	log_t *event_log;
 	memory_t memory;
@@ -99,7 +99,7 @@ fn void EndFrame(client_t *state, const client_input_t *input, f32 dt)
 
 fn void GameMode(client_t *state, render_output_t *output, client_input_t input, virtual_controls_t virtual_cons, f32 dt)
 {
-	Tick(&state->world, dt, input, virtual_cons, &state->buffers[output_low], &state->buffers[output_high]);		
+	Tick(&state->gamestate, dt, input, virtual_cons, &state->buffers[output_low], &state->buffers[output_high]);		
 }
 
 fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
@@ -131,7 +131,7 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 				ZeroStruct(&state->Menu);
 			}
 
-			Camera = *state->world.Camera;
+			Camera = state->gamestate.Camera;
 		} break;
 	case game_mode_menu:
 		{
@@ -140,7 +140,7 @@ fn s32 Host(client_t *state, render_output_t *output, client_input_t input)
 			{
 
 				FlushMemory(&state->GameMemory);
-				Setup(&state->world, &state->GameMemory, state->event_log, &state->assets);
+				Setup(&state->gamestate, &state->GameMemory, state->event_log, &state->assets);
 				state->ModeTime = 0.0f;
 				state->Mode = game_mode_game;
 			}

@@ -147,8 +147,6 @@ fn void IntegrateRange(range_map_t *Map, const map_t *Obstacles, v2s From, memor
 	Map->MaxRange = 6;
 
 	min_queue_t *Queue = PushStruct(min_queue_t, &Memory);
-	Queue->count = 0;
-
 	if (Queue)
 	{
 		InsertMin(Queue, 0, Map->From, PushStruct(path_tile_t, &Memory), NULL);
