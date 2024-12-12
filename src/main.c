@@ -45,8 +45,6 @@
 
 fn void Setup(game_state_t *State, memory_t *Memory, log_t *Log, assets_t *Assets)
 {
-	DebugLog("");
-	
 	ZeroStruct(State);
 	
 	State->Memory = Memory;
@@ -57,10 +55,11 @@ fn void Setup(game_state_t *State, memory_t *Memory, log_t *Log, assets_t *Asset
 
 	SetupItemDataTable(Memory, Assets);
 	SetupActionDataTable(Memory, Assets);
+
+	SetupActionBar(&State->Bar, Assets);
+
 	SetupCamera(&State->Camera, V2(1600.0f, 900.0f));
 	State->Camera.zoom = 3.0f;
-
-	DefaultActionBar(&State->Bar, Assets);
 
 	GenerateDungeon(&State->MapLayout, 8, *Memory);
 	CreateDungeon(State, &State->MapLayout);
@@ -88,13 +87,9 @@ fn inline void UpdateCurrentUnit(game_state_t *State, entity_t *Entity, f32 dt, 
 
 	if (Entity->flags & entity_flags_controllable)
 	{
-		s32 Interupted = CheckEnemyAlertStates(State, Entity);
-		if (!Interupted)
+		if (!CheckEnemyAlertStates(State, Entity))
 		{
-			b32 BlockMovementInputs = false;
-			if (IsCursorEnabled(&State->Cursor))
-				BlockMovementInputs = true;
-
+			b32 BlockMovementInputs = IsCursorEnabled(&State->Cursor) ? true : false;
 			dir_input_t DirInput = GetDirectionalInput(&cons);
 			DoCursor(State, &State->Camera, &State->Cursor, State->Assets, &State->Bar, out, cons, Entity, DirInput);
 			Player(Entity, &State->GUI, State, input, out, &cons, DirInput, BlockMovementInputs);

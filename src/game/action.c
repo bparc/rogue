@@ -34,7 +34,7 @@ fn action_t GetEquippedAction(const slot_bar_t *menu, entity_t *user)
     return Result;
 }
 
-fn void DefaultActionBar(slot_bar_t *bar, assets_t *assets)
+fn void SetupActionBar(slot_bar_t *bar, assets_t *assets)
 {
     bar->selected_slot = 1;
 
