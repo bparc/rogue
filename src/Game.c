@@ -32,17 +32,43 @@ fn entity_t *CreateEntity(game_state_t *State, v2s p, v2s size, u8 flags, u16 he
 	return result;
 }
 
-fn container_t *CreateContainer(game_state_t *State)
+fn container_t *CreateContainer(game_state_t *State, v2s Pos)
 {
-	entity_storage_t *Storage = &State->Units;
     container_t *result = 0;
-    if (Storage->ContainerCount < ArraySize(Storage->Containers))
+    if ((State->Units.ContainerCount < ArraySize(State->Units.Containers)) &&
+    	InMapBounds(&State->Map, Pos))
     {
-        result = &Storage->Containers[Storage->ContainerCount++];
+        result = &State->Units.Containers[State->Units.ContainerCount++];
         ZeroStruct(result);
-        result->ID = Storage->ContainerCount;
+        result->ID = State->Units.ContainerCount;
+
+        State->Map.container_ids[GetTileIndex(&State->Map, Pos)] = result->ID;
+        SetupInventory(&result->inventory, &State->GlobalItemCount);
     }
     return result;
+}
+
+fn inventory_t *CreateInventory(game_state_t *State)
+{
+	inventory_t *Result = PushStruct(inventory_t, State->Memory);
+	SetupInventory(Result, &State->GlobalItemCount);
+	return Result;
+}
+
+fn container_t *GetContainer(game_state_t *State, v2s position)
+{
+    entity_storage_t *Storage = &State->Units;
+    map_t *Map = &State->Map;
+
+    container_t *Result = 0;
+    if (InMapBounds(&State->Map, position))
+    {
+        s32 TileIndex = GetTileIndex(&State->Map, position);
+        s32 ContainerIndex = (Map->container_ids[TileIndex] - 1);
+        if ((ContainerIndex >= 0) && (ContainerIndex < Storage->ContainerCount))
+            Result = &Storage->Containers[ContainerIndex];
+    }
+    return Result;
 }
 
 fn void PushTurn(game_state_t *State, entity_t *entity)
@@ -275,7 +301,7 @@ fn void UpdateAsynchronousActionQueue(game_state_t *State, entity_t *user, f32 d
 	}
 }
 
-fn void AI(game_state_t *State, command_buffer_t *Out, entity_t *Entity)
+fn void UpdateAI(game_state_t *State, entity_t *Entity)
 {
 	if (!State->EnemyInited)
 	{
@@ -285,12 +311,12 @@ fn void AI(game_state_t *State, command_buffer_t *Out, entity_t *Entity)
 			range_map_cell_t RandomCell = Range->Filled[rand() % Range->FilledCount];
 			v2s Target = RandomCell.Cell;
 
-			entity_t *Player = FindClosestPlayer(&State->Units, Entity->p);
-			if (Player)
+			entity_t *UpdatePlayer = FindClosestPlayer(&State->Units, Entity->p);
+			if (UpdatePlayer)
 			{
-				if (CheckRange(&State->EffectiveRange, Player->p))
+				if (CheckRange(&State->EffectiveRange, UpdatePlayer->p))
 				{
-					Target = Player->p;
+					Target = UpdatePlayer->p;
 				}
 			}
 
@@ -329,9 +355,6 @@ fn void AI(game_state_t *State, command_buffer_t *Out, entity_t *Entity)
 			End = true;
 		}
 	}
-
-	RenderPath(Out, &State->Map, Path, W(Red(), 0.5f));
-	RenderRangeMap(Out, &State->Map, &State->EffectiveRange);
 
 	if (End)
 	{
@@ -377,7 +400,7 @@ fn void EndTurnSystem(game_state_t *State, game_state_t *Game)
 
 fn void InteruptTurn(game_state_t *State, entity_t *Entity)
 {
-	// NOTE(): Alert/Interupt Player Turn
+	// NOTE(): Alert/Interupt UpdatePlayer Turn
 	PushTurn(State, Entity);
 	State->TurnInited = false;
 }

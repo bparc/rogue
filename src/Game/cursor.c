@@ -18,7 +18,7 @@ fn inline s32 Cursor_DoAction(cursor_t *cursor, map_t *Map, entity_t *user, enti
 	return Query;
 }
 
-fn void DoCursor(game_state_t *State, cursor_t *Cursor, command_buffer_t *out,
+fn void UpdateAndRenderCursor(game_state_t *State, cursor_t *Cursor, command_buffer_t *out,
 	virtual_controls_t cons, entity_t *user, dir_input_t DirInput)
 {
 	// NOTE(): Setup

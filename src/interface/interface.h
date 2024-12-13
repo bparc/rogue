@@ -6,7 +6,7 @@ typedef struct
     bmfont_t *Font;
     f32 DeltaTime;
     
-    s32 DraggedItemID;
+    item_id_t DraggedItemID;
     b32 InventoryOpened;
     
     inventory_t *DraggedContainer;

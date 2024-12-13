@@ -1,6 +1,6 @@
-fn inline void SetupPlayer(game_state_t *World, entity_t *Player)
+fn inline void SetupPlayer(game_state_t *World, entity_t *UpdatePlayer)
 {
-	inventory_t *Inventory = Player->inventory;
+	inventory_t *Inventory = UpdatePlayer->inventory;
     Eq_AddItem(Inventory, item_green_herb);
     Eq_AddItem(Inventory, item_assault_rifle);
     #if 0
@@ -42,8 +42,7 @@ fn b32 GetAdjacentDoor(game_state_t *State, v2s Cell, v2s *DoorCell)
 	return Result;
 }
 
-fn inline void Player(game_state_t *State, entity_t *Entity, const client_input_t *input,
-	command_buffer_t *out,  const virtual_controls_t *cons, dir_input_t DirInput, b32 BlockInputs)
+fn inline void UpdatePlayer(game_state_t *State, entity_t *Entity, const client_input_t *input, const virtual_controls_t *cons, dir_input_t DirInput, b32 BlockInputs)
 {
 	// inventory		
 
@@ -80,8 +79,6 @@ fn inline void Player(game_state_t *State, entity_t *Entity, const client_input_
 
 	if (State->EncounterModeEnabled)
 	{
-		RenderRangeMap(out, &State->Map, &State->EffectiveRange);
-
 		if (!CheckRange(&State->EffectiveRange, IntAdd(Entity->p, DirInput.Direction)))
 		{
 			AllowedToMove = false;

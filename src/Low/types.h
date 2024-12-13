@@ -15,4 +15,4 @@ typedef float f32;
 typedef double f64;
 
 typedef u64 entity_id_t;
-typedef s32 item_id_t;
+typedef u64 item_id_t;

@@ -101,7 +101,7 @@ fn void Tick(game_state_t *State, f32 dt, client_input_t input, virtual_controls
 
 		if (Entity->flags & entity_flags_controllable)
 		{
-			// NOTE(): Skip the update for this frame if any of the enemies was alerted.
+			// NOTE(): Skip the update for this frame if any of the enemies was alerted
 			Update = CheckEnemyAlertStates(State, Entity) ? false : Update;
 		}
 
@@ -113,13 +113,18 @@ fn void Tick(game_state_t *State, f32 dt, client_input_t input, virtual_controls
 			if (IsCursorEnabled(&State->Cursor))
 				BlockInputs = true;
 
-			DoCursor(State, &State->Cursor, Layer1, cons, Entity, Dir);
-			Player(State, Entity, &input, Layer1, &cons, Dir, BlockInputs);
+			UpdateAndRenderCursor(State, &State->Cursor, Layer1, cons, Entity, Dir);
+			UpdatePlayer(State, Entity, &input, &cons, Dir, BlockInputs);
 		}
 
 		if (Update && !(Entity->flags & entity_flags_controllable))
 		{
-			AI(State, Layer1, Entity);
+			UpdateAI(State, Entity);
+		}
+
+		if (State->EncounterModeEnabled)
+		{
+			RenderRangeMap(Layer1, &State->Map, &State->EffectiveRange);
 		}
 	}
 

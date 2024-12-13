@@ -1,4 +1,4 @@
-fn inline void SetupPlayer(game_state_t *World, entity_t *Entity);
+fn inline void SetupPlayer(game_state_t *State, entity_t *Entity);
 
 fn entity_t *CreatePlayer(game_state_t *State, v2s p)
 {
@@ -14,8 +14,7 @@ fn entity_t *CreatePlayer(game_state_t *State, v2s p)
             player_health, attack_dmg, &State->Map, player_max_health, player_accuracy, player_evasion,
             MAX_PLAYER_ACTION_POINTS, MAX_PLAYER_MOVEMENT_POINTS, 1);
         
-	    result->inventory = PushStruct(inventory_t, State->Memory);
-        SetupInventory(result->inventory);
+	    result->inventory = CreateInventory(State); 
         SetupPlayer(State, result);
 
         State->Players[0] = result->id;
@@ -65,40 +64,15 @@ fn void CreatePoisonTrap(game_state_t *State, v2s p)
 
 fn void CreateRandomLoot(game_state_t *State, v2s position)
 {
-    b32 Result = false;
-    if (InMapBounds(&State->Map, position))
+    container_t *Container = CreateContainer(State, position);
+    if (Container)
     {
-        s32 Index = GetTileIndex(&State->Map, position);
-        container_t *Container = CreateContainer(State);
-        if (Container)
+        s32 GreenHerbCount = 1 + (rand() % 4);
+        while (GreenHerbCount--)
         {
-            State->Map.container_ids[Index] = Container->ID;
-            SetupInventory(&Container->inventory);
-
-            // randomize loot
-            s32 GreenHerbCount = 1 + (rand() % 4);
-            while (GreenHerbCount--)
-                Eq_AddItem(&Container->inventory, item_green_herb);
-
-            Result = true;
+            Eq_AddItem(&Container->inventory, item_green_herb);
         }
     }
-}
-
-fn container_t *GetContainer(game_state_t *State, v2s position)
-{
-    entity_storage_t *Storage = &State->Units;
-    map_t *Map = &State->Map;
-
-    container_t *Result = 0;
-    if (InMapBounds(&State->Map, position))
-    {
-        s32 TileIndex = GetTileIndex(&State->Map, position);
-        s32 ContainerIndex = (Map->container_ids[TileIndex] - 1);
-        if ((ContainerIndex >= 0) && (ContainerIndex < Storage->ContainerCount))
-            Result = &Storage->Containers[ContainerIndex];
-    }
-    return Result;
 }
 
 fn void CreateRoomInterior(game_state_t *State, room_t room, v2s chunk_size)

@@ -8,28 +8,8 @@ fn slot_t *GetSlot(slot_bar_t *Bar, s32 Index)
     return Result;
 }
 
-fn inline void AssignItem(slot_bar_t *Bar, s32 ItemID, s8 Index)
+fn inline void AssignItem(slot_bar_t *Bar, item_id_t ItemID, s8 Index)
 {
-    #if 0
-    if (slot_index >= 0 && slot_index < ArraySize(Slotbar->slots)) {
-        action_type_t action_type;
-        switch (Source.params->type) {
-            case 1:
-            case 2:
-            case 3:
-                action_type = action_ranged_attack;
-                break;
-            case 4:
-                action_type = action_throw;
-                break;
-            default:
-                DebugLog("Can't assign this item to the slotbar.");
-                return;
-
-        }
-        SetMenuShortcut(Slotbar, 0, slot_index, action_type, Source.params); // todo: load asset for the item
-    }
-    #endif
     slot_t *Slot = GetSlot(Bar, Index);
     if (Slot)
     {

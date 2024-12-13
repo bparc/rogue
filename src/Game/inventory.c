@@ -108,7 +108,9 @@ fn item_t *Eq_GetItem(inventory_t *inventory, item_id_t ID)
 
 fn item_id_t Eq_AllocateID(inventory_t *inventory)
 {
-    item_id_t result = inventory->next_item_ID++;
+    item_id_t result = (1 + *inventory->GlobalIDGen);
+    *inventory->GlobalIDGen += 1;
+
     return result;
 }
 
@@ -128,14 +130,14 @@ fn void Eq_OccupyItemSpace(inventory_t *Eq, item_t Item)
     Eq_OccupySpace(Eq, Item.index, Item.size, Item.ID);
 }
 
-fn item_t *Eq_StoreItemUnchecked(inventory_t *Eq, item_t Item, v2s At)
+fn item_t *Eq_StoreItemUnchecked(inventory_t *Eq, item_t Item, v2s At, item_id_t ID)
 {
     item_t *Result = Eq_PushItem(Eq);
     if (Result)
     {
         *Result = Item;
         Result->index = At;
-        Result->ID = Eq_AllocateID(Eq);
+        Result->ID = ID;
         Eq_OccupyItemSpace(Eq, *Result);
     }
     return Result;
@@ -148,7 +150,7 @@ fn item_t *Eq_AddItem(inventory_t *inventory, item_type_t type)
     item_t Item = MakeItemFromType(type);
     v2s VacantSpace = {0};
     if (Eq_FindVacantSpace(inventory, &VacantSpace, Item.size))
-        result = Eq_StoreItemUnchecked(inventory, Item, VacantSpace);
+        result = Eq_StoreItemUnchecked(inventory, Item, VacantSpace, Eq_AllocateID(inventory));
 
     return (result);
 }
@@ -173,7 +175,7 @@ fn void Eq_TransferItem(inventory_t *From, inventory_t *To, item_t Source, v2s D
 {
     item_t *Item = NULL;
     if (Eq_IsSpaceFree(To, Dest, Source.size))
-        Item = Eq_StoreItemUnchecked(To, Source, Dest);
+        Item = Eq_StoreItemUnchecked(To, Source, Dest, Source.ID);
     if (Item)
         Eq_RemoveItem(From, Source.ID);   
 }
@@ -193,44 +195,3 @@ fn void Eq_MoveItem(inventory_t *Eq, item_t Source, v2s Dest)
         Item->size = Source.size;
     }
 }
-
-// Use an item from a menu inside inventory. todo: For consumables it will consume the item;
-// todo: for weapons and armor it will equip/deequip the item
-#if 0
-fn void UseItem(entity_t *entity, s32 item_id)
-{
-    inventory_t *inventory = entity->inventory;
-    for (s32 i = 0; i < inventory->item_count; i++) {
-        const item_t item = inventory->items[i];
-        if (item.params->id == item_id) {
-            switch (item.params->category) {
-                case healing:
-                    entity->health += item.params->healing;
-                    if (entity->health > entity->max_health) {
-                        entity->health = entity->max_health;
-                    }
-                    Eq_RemoveItem(entity, item.params->id);
-                    break;
-                case rifle:
-                case pistol:
-                case shotgun:
-                case explosive:
-                    if (inventory->equipped_weapon.type != item_none)
-                        Eq_AddItem(entity, inventory->equipped_weapon.type);
-                    inventory->equipped_weapon = item;
-                    Eq_RemoveItem(entity, item.params->id);
-                    break;
-                case armor:
-                    if (inventory->equipped_armor.type != item_none)
-                        Eq_AddItem(entity, inventory->equipped_armor.type);
-                    inventory->equipped_armor = item;
-                    Eq_RemoveItem(entity, item.params->id);
-                    break;
-                default:
-                    break;
-            }
-            return;
-        }
-    }
-}
-#endif

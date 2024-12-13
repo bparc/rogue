@@ -17,11 +17,6 @@ typedef struct
 	f32 time_remaining;
 } evicted_entity_t;
 
-typedef enum
-{
-	system_any_evicted  = 1 << 1,
-} system_event_t;
-
 typedef struct
 {
 	memory_t *Memory;
@@ -30,6 +25,7 @@ typedef struct
 
 	particles_t ParticleSystem;
 	
+	u64 GlobalItemCount;
 	interface_t GUI;
 	slot_bar_t Bar;
 
@@ -95,10 +91,14 @@ fn entity_t *GetActive(const game_state_t *State);
 // objects
 // ======
 fn entity_t *CreateEntity(game_state_t *State, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *Map, u16 max_health_points, s32 accuracy, s32 evasion, s32 remaining_action_points, s32 remaining_movement_points, f32 hitchance_boost_multiplier);
-fn container_t *CreateContainer(game_state_t *State);
+
+fn container_t *CreateContainer(game_state_t *State, v2s Pos);
+fn container_t *GetContainer(game_state_t *State, v2s position);
+
+fn inventory_t *CreateInventory(game_state_t *State);
 
 // ======
-// action
+// actions
 // ======
 fn b32 IsActionQueueCompleted(const game_state_t *queue);
 fn void QueryAsynchronousAction(game_state_t *State, action_type_t type, entity_id_t target, v2s target_p);
