@@ -54,12 +54,7 @@ fn entity_t *CreateBigSlime(game_state_t *State, v2s p)
 
 fn void CreatePoisonTrap(game_state_t *State, v2s p)
 {
-	u8 flags = static_entity_flags_trap | static_entity_flags_stepon_trigger;
-
-	status_effect_t status_effects = {0};
-	status_effects.type = status_effect_poison;
-	status_effects.remaining_turns = 3;
-	status_effects.damage = 1;
+    
 }
 
 fn void CreateRandomLoot(game_state_t *State, v2s position)

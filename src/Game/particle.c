@@ -11,15 +11,22 @@ typedef enum
 {
 	particle_type_none,
 	particle_type_number,
-	particle_type_combat_text
+	particle_type_combat_text,
+	particle_type_text,
 } particle_type_t;
 
 typedef struct
 {
+	particle_type_t type;
+
 	v2 p;
 	f32 t;
-	particle_type_t type;
+
 	s32 number;
+
+	const char *Text;
+	v4 Color;
+
 	combat_text_type_t combat_text;
 } particle_t;
 
@@ -33,14 +40,20 @@ fn particle_t *CreateParticle(particles_t *particles, v2 p, particle_type_t type
 {
 	particle_t *result = 0;
 	if (particles->num < ArraySize(particles->parts))
-		result = &particles->parts[particles->num++];
-	if (result)
 	{
+		result = &particles->parts[particles->num++];
 		ZeroStruct(result);
 		result->p = p;
 		result->type = type;
 	}
 	return result;
+}
+
+fn void CreateTextParticle(particles_t *Particles, v2 Pos, v4 Color, const char *Text)
+{
+	particle_t *Result = CreateParticle(Particles, Pos, particle_type_text);
+	Result->Color = Color;
+	Result->Text = Text;
 }
 
 fn void CreateCombatText(particles_t *particles, v2 p, combat_text_type_t text_type) {

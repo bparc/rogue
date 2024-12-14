@@ -44,7 +44,7 @@ fn void ActionMenu(entity_t *user, game_state_t *state, command_buffer_t *out, a
     {
         slot_t *slot = &Bar->slots[i];
         action_t *action = &slot->action;
-        const action_params_t *action_params = GetParameters(action->type);
+        const action_params_t *action_params = GetActionParams(action->type);
 
         v2 slot_offset = V2(i * (slot_size.x + padding), 0.0f);
         v2 slot_p = Add(slot_start_pos, slot_offset);

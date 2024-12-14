@@ -1,5 +1,7 @@
 typedef struct
 {
+	f32 Lerp;
+
 	f32 elapsed;
 	action_t action_type;
 
@@ -76,20 +78,32 @@ typedef struct
 	evicted_entity_t EvictedEntities[8]; // // NOTE(): A small buffer that stores copies of deleted entities for a brief amount of time.
 } game_state_t;
 
-// =======
-// turn
-// ======
+// =============
+// turn-based
+// ============
+
 fn void PushTurn(game_state_t *queue, entity_t *entity);
 
-fn void InteruptTurn(game_state_t *State, entity_t *Entity);
 fn void EndTurn(game_state_t *queue, entity_t *entity);
+fn void InteruptTurn(game_state_t *State, entity_t *Entity);
 
 fn int32_t IsActive(const game_state_t *State, entity_id_t id);
 fn entity_t *GetActive(const game_state_t *State);
 
-// ======
+fn s32 ConsumeActionPoints(game_state_t *State, s32 count);
+
+// =============
+// animation
+// ============
+
+fn b32 IsActionQueueCompleted(const game_state_t *State);
+fn void QueryAsynchronousAction(game_state_t *State, action_type_t type, entity_id_t target, v2s target_p);
+fn void AnimateAction(const game_state_t *State, const entity_t *Entity, async_action_t *Act, command_buffer_t *Out, f32 dt);
+
+// ============
 // objects
-// ======
+// ============
+
 fn entity_t *CreateEntity(game_state_t *State, v2s p, v2s size, u8 flags, u16 health_points, u16 attack_dmg, const map_t *Map, u16 max_health_points, s32 accuracy, s32 evasion, s32 remaining_action_points, s32 remaining_movement_points, f32 hitchance_boost_multiplier);
 
 fn container_t *CreateContainer(game_state_t *State, v2s Pos);
@@ -97,21 +111,27 @@ fn container_t *GetContainer(game_state_t *State, v2s position);
 
 fn inventory_t *CreateInventory(game_state_t *State);
 
-// ======
-// actions
-// ======
-fn b32 IsActionQueueCompleted(const game_state_t *queue);
-fn void QueryAsynchronousAction(game_state_t *State, action_type_t type, entity_id_t target, v2s target_p);
-fn void CommitAction(game_state_t *State, entity_t *user, entity_t *target, action_t *action, v2s target_p);
+// ============
+// combat
+// ============
 
+fn void CommitCombatAction(game_state_t *State, entity_t *user, entity_t *target, action_t *action, v2s target_p);
+fn void CombatAction(game_state_t *State, entity_t *User, v2s Target, const action_params_t *Action);
+fn void InflictDamage(game_state_t *State, entity_t *user, entity_t *target, s32 damage, const char *damage_type_prefix);
 fn void UseItem(game_state_t *State, entity_t *Entity, inventory_t *Eq, item_t Item);
-fn void Brace(game_state_t *queue, entity_t *entity);
-fn s32 ConsumeActionPoints(game_state_t *queue, s32 count);
 
-// ======
+fn void Brace(game_state_t *State, entity_t *entity);
+
+fn void AddStatusEffect(game_state_t *State, entity_t *Entity, status_effect_type_t status_effect, s32 duration);
+fn void RemoveStatusEffect(game_state_t *State, entity_t *Entity);
+
+// ============
 // grid
-// ======
+// ============
+
 fn b32 IsCellEmpty(game_state_t *State, v2s p);
 fn b32 ChangeCell(game_state_t *State, entity_t *Entity, v2s NewCell);
+
 fn b32 MakeMove(game_state_t *State, entity_t *entity, v2s offset);
 fn b32 Launch(game_state_t *State, v2s source, entity_t *target, u8 push_distance, s32 strength);
+fn void RemoveMovementRange(game_state_t *State);

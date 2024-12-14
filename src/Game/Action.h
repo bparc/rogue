@@ -1,8 +1,4 @@
-typedef enum {
-    status_effect_none = 1 << 0,
-    status_effect_poison = 1 << 1,
-	status_effect_instant_damage = 1 << 2,
-} status_effect_type_t;
+
 
 const char *action_type_t_names[] =
 {
@@ -30,6 +26,7 @@ typedef enum {
 	action_heal,
 	action_slash,
 	action_dash,
+	action_freeze,
 	action_slime_ranged,
 	action_type_count,
 } action_type_t;
@@ -62,6 +59,7 @@ typedef struct
 	};
 	s32 cost;
 	v2s area; // (1, 1) if not specified
+	status_effect_type_t status_effect;
 
 	target_flags_t target; // A list of valid targets. "Any" if not specified.
 
@@ -78,12 +76,6 @@ typedef struct
 } action_t;
 
 typedef struct {
-    status_effect_type_t type;
-    s32 remaining_turns;
-	s32 damage;
-} status_effect_t;
-
-typedef struct {
 	action_t action;
 	item_id_t AssignedItem;
 } slot_t;
@@ -97,7 +89,22 @@ typedef struct {
 fn slot_t *GetSlot(slot_bar_t *Bar, s32 Index);
 static action_params_t _Global_Action_Data[action_type_count];
 
-static inline const action_params_t *GetParameters(action_type_t type)
+void DefaultActionValues(void)
+{
+    for (s32 index = 0; index < ArraySize(_Global_Action_Data); index++)
+    {
+        action_params_t *Params = &_Global_Action_Data[index];
+        Params->type = (action_type_t)index;
+        if (Params->name == NULL)
+            Params->name = "Not Set";
+        if (!Params->range)
+            Params->range = 2;
+        if (!Params->target)
+            Params->target = target_hostile;
+    }
+}
+
+static inline const action_params_t *GetActionParams(action_type_t type)
 {
 	return &_Global_Action_Data[type];
 }
@@ -106,13 +113,13 @@ static action_t ActionFromType(action_type_t Type)
 {
 	action_t Result = {0};
 	Result.type = Type;
-	Result.params = GetParameters(Type);
+	Result.params = GetActionParams(Type);
 	return Result;
 }
 
 fn inline s32 GetAPCost(action_type_t type)
 {
-	s32 result = GetParameters(type)->cost;
+	s32 result = GetActionParams(type)->cost;
 	return result;
 }
 

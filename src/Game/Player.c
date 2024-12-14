@@ -3,6 +3,8 @@ fn inline void SetupPlayer(game_state_t *World, entity_t *UpdatePlayer)
 	inventory_t *Inventory = UpdatePlayer->inventory;
     Eq_AddItem(Inventory, item_green_herb);
     Eq_AddItem(Inventory, item_assault_rifle);
+    Eq_AddItem(Inventory, item_freezing_spell);
+    
     #if 0
     Eq_AddItem(Inventory, item_green_herb);
     Eq_AddItem(Inventory, item_assault_rifle);

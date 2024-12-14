@@ -1,18 +1,4 @@
-void DefaultItemValues(void)
-{
-    for (s32 index = 0; index < ArraySize(_Global_Item_Data); index++)
-    {
-        item_params_t *Params = &_Global_Item_Data[index];
-        Params->type = (item_type_t)index;
-        Params->category = (item_categories_t)index;
-        if (Params->name == NULL)
-            Params->name = "Not Set";
-        if (IsZero(Params->size))
-            Params->size = V2S(1, 1);
-    }
-}
-
-fn void SetupItemDataTable(memory_t *memory, const assets_t *assets)
+fn void Data_ItemTypes(memory_t *memory, const assets_t *assets)
 {
 #define ITM(Type) _Global_Item_Data[item_##Type]  = (item_params_t)
 
@@ -26,6 +12,13 @@ fn void SetupItemDataTable(memory_t *memory, const assets_t *assets)
         .quantity = 30,
         .description = "Common military-grade caseless rifle round for versatile use and easy logistics.",
         .size = V2S(1, 1),
+    };
+
+    ITM(freezing_spell)
+    {
+        .name = "Freezing Spell",
+        .size = V2S(4, 4),
+        .action = action_freeze,
     };
 
     ITM(green_herb)
@@ -55,22 +48,7 @@ fn void SetupItemDataTable(memory_t *memory, const assets_t *assets)
     DefaultItemValues();
 }
 
-void DefaultActionValues(void)
-{
-    for (s32 index = 0; index < ArraySize(_Global_Action_Data); index++)
-    {
-        action_params_t *Params = &_Global_Action_Data[index];
-        Params->type = (action_type_t)index;
-        if (Params->name == NULL)
-            Params->name = "Not Set";
-        if (!Params->range)
-            Params->range = 2;
-        if (!Params->target)
-            Params->target = target_hostile;
-    }
-}
-
-fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
+fn void Data_ActionTypes(memory_t *memory, const assets_t *assets)
 {
     #define ACT(Type) _Global_Action_Data[action_##Type]  = (action_params_t)
 
@@ -81,6 +59,7 @@ fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
     };
     ACT(ranged_attack)
     {
+        .animation_ranged = &assets->SlimeBall,
         .range  = 10,
         .cost   = 1,
         .damage = 38,
@@ -126,8 +105,17 @@ fn void SetupActionDataTable(memory_t *memory, const assets_t *assets)
     ACT(slime_ranged)
     {
         .animation_ranged = &assets->SlimeBall,
+        .flags = action_display_move_name,
         .range  = 5,
         .damage = 3,
+    };
+    ACT(freeze)
+    {
+        .name = "Freeze",
+        .flags = action_display_move_name,
+        .range = 5,
+        .cost = 1,
+        .status_effect = status_effect_freeze,
     };
     #undef ACT
 

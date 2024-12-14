@@ -226,7 +226,7 @@ fn void Inventory(game_state_t *State, interface_t *In, v2 EqMin, inventory_t *E
 
         // Render
         {
-            const v4 ItemColors[4] = { Red(), Blue(), Yellow(), Green() };
+            const v4 ItemColors[4] = { Orange(), Blue(), Yellow(), Green() };
             v4 Color = ItemColors[Item->params->type % ArraySize(ItemColors)];
             DrawBounds(Out, ShrinkBounds(ItemBounds, 5.0f), Color);
             DrawFormat(Out, Font, BoundsCenter(ItemBounds), White(), "#%i", Item->ID);

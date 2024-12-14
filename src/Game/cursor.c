@@ -1,29 +1,9 @@
-fn inline s32 Cursor_DoAction(cursor_t *cursor, map_t *Map, entity_t *user, entity_t *target, game_state_t *State, const action_params_t *settings)
-{
-	entity_id_t id = target ? target->id : 0;
-	v2s TargetedCell = target ? target->p : cursor->p;
-
-	b32 TargetValid = true;
-    if (IsTargetField(settings->type))
-    	TargetValid = (TargetValid && IsTraversable(Map, cursor->p));
-    if (IsTargetHostile(settings->type))
-    	TargetValid = (TargetValid && IsHostile(target));
-
-	b32 Query = false;
-    if (IsLineOfSight(Map, user->p, TargetedCell) && TargetValid)
-       	Query = ConsumeActionPoints(State, settings->cost);
-
-    if (Query)
-		QueryAsynchronousAction(State, settings->type, id, TargetedCell);
-	return Query;
-}
-
 fn void UpdateAndRenderCursor(game_state_t *State, cursor_t *Cursor, command_buffer_t *out,
 	virtual_controls_t cons, entity_t *user, dir_input_t DirInput)
 {
 	// NOTE(): Setup
 	action_t equipped = GetEquippedAction(&State->Bar, user);
-	const action_params_t *settings = GetParameters(equipped.type);
+	const action_params_t *settings = GetActionParams(equipped.type);
 	const s32 Range = settings->range;
 	const v2s Area  = settings->area;
 	
@@ -39,7 +19,7 @@ fn void UpdateAndRenderCursor(game_state_t *State, cursor_t *Cursor, command_buf
 		// are activated directly from the menu, without opening the Cursor.
 		if (IsTargetSelf(equipped.type))
 		{
-			Cursor_DoAction(Cursor, &State->Map, user, user, State, settings);
+			CombatAction(State, user, user->p, settings);
 		}
 		else
 		{
@@ -103,9 +83,12 @@ fn void UpdateAndRenderCursor(game_state_t *State, cursor_t *Cursor, command_buf
 
 			Cursor->Target = target->id;
 		}
-		// NOTE(): Perform an action on the target.
-		b32 not_positioned_on_user = !CompareInts(Cursor->p, user->p);
-		if (WentUp(cons.confirm) && not_positioned_on_user)
-			Cursor_DoAction(Cursor, &State->Map, user, target, State, settings);
+
+		// perform an action on the target
+
+		if (WentUp(cons.confirm) && !CompareInts(Cursor->p, user->p))
+		{
+			CombatAction(State, user, Cursor->p, settings);
+		}
 	}
 }

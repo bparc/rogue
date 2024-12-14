@@ -21,12 +21,6 @@ fn entity_t *CreateEntity(game_state_t *State, v2s p, v2s size, u8 flags, u16 he
 		result->ranged_accuracy = accuracy;
 		result->evasion = evasion;
 		result->hitchance_boost_multiplier = hitchance_boost_multiplier;
-
-		// Initializing status effects to status_effect_none (which is 1)
-		for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
-			result->status_effects[i].type = status_effect_none;
-			result->status_effects[i].remaining_turns = 0;
-		}
 	}
 	
 	return result;
@@ -165,9 +159,34 @@ fn void QueryAsynchronousAction(game_state_t *State, action_type_t type, entity_
 		ZeroStruct(result);
 		result->target_id = target;
 		result->target_p  = target_p;
-
+		
 		result->action_type.type = type;
 	}
+}
+
+fn void AnimateAction(const game_state_t *State, const entity_t *Entity, async_action_t *Act, command_buffer_t *Out, f32 dt)
+{
+	f32 StartTime = 0.00f;
+	f32 Elapsed = 2.0f;
+	
+	const action_params_t *Type = GetActionParams(Act->action_type.type);
+	
+	if (Type->animation_ranged)
+	{
+		f32 Speed = 5.0f;
+
+		v2 A = GetTileCenter(&State->Map, Entity->p);
+		v2 B = GetTileCenter(&State->Map, Act->target_p);
+		Elapsed = Speed * (1.0f / Distance(A, B));
+
+		RenderRangedAnimation(Out, A, B, Type->animation_ranged, Act->Lerp);
+	}
+	else
+	{
+		Elapsed = 2.0f; // instantaneous
+	}
+
+	Act->Lerp += Elapsed;
 }
 
 fn void ControlPanel(game_state_t *State, const virtual_controls_t *cons)
@@ -244,61 +263,9 @@ fn void Brace(game_state_t *State, entity_t *entity)
 	}
 }
 
-/*
-fn void UseItem(game_state_t *State, entity_t *Entity, inventory_t *Eq, item_t Item)
+fn void RemoveMovementRange(game_state_t *State)
 {
-	action_type_t Action = Item.params->action;
-	if (Action != action_none)
-	{
-		QueryAsynchronousAction(State, Action, Entity->id, Entity->p);
-		Eq_RemoveItem(Eq, Item.ID);
-	}
-}
-*/
-
-fn void UpdateAsynchronousActionQueue(game_state_t *State, entity_t *user, f32 dt, command_buffer_t *out)
-{
-	const map_t *Map = &State->Map;
-
-	for (s32 index = 0; index < State->ActionCount; index++)
-	{
-		async_action_t *action = &State->Actions[index];
-		const action_params_t *params = GetParameters(action->action_type.type);
-
-		b32 Commit = true;
-
-		// animate
-		if (params->animation_ranged)
-		{
-			// NOTE(): Ranged actions take some amount of time
-			// to finish.
-
-			// NOTE(): The duration is proportional to the distance.
-
-			v2 From = GetTileCenter(Map, action->target_p);
-			v2 To = user->deferred_p;
-			f32 time = action->elapsed / (Distance(From, To) * 0.005f);
-			Commit = (time >= 1.0f);
-			RenderRangedAnimation(out, To, From, params->animation_ranged, time);
-		}
-		else
-		if (params->flags & action_display_move_name)
-		{
-			f32 time = action->elapsed;
-			v2 X = Ease2(40.0f, 60.0f, 15.0f, time);
-			f32 alpha = 1.0f - X.y;
-			RenderDiegeticText(&State->Camera, State->Assets->Font, user->deferred_p, V2((-20.0f + X.x), -80.0f), A(White(), alpha), params->name);
-			Commit =  (time >= 1.0f);
-		}
-
-		if (Commit)
-		{
-			State->Actions[index--] = State->Actions[--State->ActionCount];
-			CommitAction(State, user, GetEntity(&State->Units, action->target_id), &action->action_type, action->target_p);
-		}
-
-		action->elapsed += dt * 1.0f;
-	}
+	ClearRangeMap(&State->EffectiveRange);
 }
 
 fn void UpdateAI(game_state_t *State, entity_t *Entity)
@@ -400,9 +367,8 @@ fn void EndTurnSystem(game_state_t *State, game_state_t *Game)
 
 fn void InteruptTurn(game_state_t *State, entity_t *Entity)
 {
-	// NOTE(): Alert/Interupt UpdatePlayer Turn
-	PushTurn(State, Entity);
 	State->TurnInited = false;
+	PushTurn(State, Entity);
 }
 
 fn inline s32 CheckEnemyAlertStates(game_state_t *State, entity_t *ActiveEntity)
@@ -442,12 +408,31 @@ fn b32 IsCellEmpty(game_state_t *State, v2s p)
 	return false;
 }
 
+fn void StepOnTile(game_state_t *State, entity_t *entity)
+{
+	tile_t *tile = GetTile(&State->Map, entity->p.x, entity->p.y);
+	if (tile && (tile->trap_type != trap_type_none))
+	{
+    	switch(tile->trap_type)
+    	{
+    	    case trap_type_physical:
+    	        TakeHP(entity, 25);
+    	        break;
+    	    case trap_type_poison:
+    	        AddStatusEffect(State, entity, status_effect_poison, 3);
+    	        break;
+    	    default:
+    	        break;
+    	}
+	}
+}
+
 fn b32 ChangeCell(game_state_t *State, entity_t *Entity, v2s NewCell)
 {
 	b32 Moved = IsCellEmpty(State, NewCell);
 	if (Moved)
 	{
-		StepOnTile(&State->Map, Entity);
+		StepOnTile(State, Entity);
 		Entity->p = NewCell;
 	}
 	return Moved;
@@ -553,7 +538,7 @@ fn b32 Launch(game_state_t *State, v2s source, entity_t *target, u8 push_distanc
             break;
         } else {
             target->p = next_pos;
-            StepOnTile(&State->Map, target);
+            StepOnTile(State, target);
         }
     }
 
@@ -573,107 +558,6 @@ fn void EstablishTurnOrder(game_state_t *State)
 		if (IsHostile(entity) && entity->Alerted)
 			PushTurn(State, entity);
 	}
-}
-
-fn void DoDamage(game_state_t *State, entity_t *user, entity_t *target, s32 damage, const char *damage_type_prefix)
-{
-    damage = damage + (rand() % 3);
-    LogLn(State->Log, "%shit! inflicted %i %s of %sdamage upon the target!",
-        damage_type_prefix, damage, damage == 1 ? "point" : "points", damage_type_prefix);
-    TakeHP(target, (s16)damage);
-    CreateDamageNumber(&State->ParticleSystem, Add(target->deferred_p, V2(-25.0f, -25.0f)), damage);
-
-    if ((rand() / (float)RAND_MAX) < 20) {
-        blood_type_t blood_type = (target->enemy_type == 0) ? blood_red : blood_green;
-        hit_velocity_t hit_velocity = (rand() % 2 == 0) ? high_velocity : low_velocity; // Just a temporary thing until we add ammo types
-        BloodSplatter(&State->Map, user->p, target->p, blood_type, hit_velocity);
-    }
-}
-
-fn inline void AOE(game_state_t *State, entity_t *user, entity_t *target, const action_params_t *params, v2s TileIndex)
-{
-    const char *prefix = "blast ";
-    s32 damage = params->damage;
-    v2s area = params->area;
-    s32 radius_inner = area.x;
-    s32 radius_outer = area.x * (s32)2;
-    v2s explosion_center = TileIndex;
-    for (s32 i = 0; i < State->Units.EntityCount; i++)
-    {
-        entity_t *entity = &State->Units.entities[i];
-        f32 distance = IntDistance(explosion_center, entity->p);
-        
-        if (distance <= radius_inner) {
-            DoDamage(State, user, entity, damage, prefix);
-        } else if (distance <= radius_outer) {
-            DoDamage(State, user, entity, damage, prefix);
-            Launch(State, explosion_center, entity, 2, 25);
-        }
-    }
-}
-
-fn inline void SingleTarget(game_state_t *State, entity_t *user, entity_t *target, const action_params_t *params)
-{
-	s32 chance = 100;
-	CalculateHitChance(user, target, params->type);
-    s32 roll = rand() % 100;
-    s32 roll_crit = rand() % 100;
-    b32 missed = !(roll < chance);
-    b32 crited = (roll_crit < CRITICAL_DAMAGE_MULTIPLIER);
-    b32 grazed = ((roll >= chance)) && (roll < (chance + GRAZE_THRESHOLD));
-
-    if ((missed == false))
-    {    
-        if (crited) {
-            DoDamage(State, user, target, params->damage * CRITICAL_DAMAGE_MULTIPLIER, "critical ");
-            CreateCombatText(&State->ParticleSystem, target->deferred_p, 0);
-        } else {
-            DoDamage(State, user, target, params->damage, "");
-            CreateCombatText(&State->ParticleSystem, target->deferred_p, 1);
-        }
-    }
-    else
-    {
-        if (grazed) {
-            DoDamage(State, user, target, params->damage / 2, "graze ");
-            CreateCombatText(&State->ParticleSystem, target->deferred_p, 3);
-        } else {
-            LogLn(State->Log, "missed!");
-            CreateDamageNumber(&State->ParticleSystem, target->deferred_p, 0);
-            CreateCombatText(&State->ParticleSystem, target->deferred_p, 2);
-        }
-    }
-}
-
-fn void CommitAction(game_state_t *State, entity_t *user, entity_t *target, action_t *action, v2s target_p)
-{
-    const action_params_t *params = GetParameters(action->type);
-
-    switch (params->mode)
-    {
-    case action_mode_damage:
-    {
-        if (IsZero(params->area))
-        {
-        	if (target)
-            	SingleTarget(State, user, target, params);
-        }
-        else
-        {
-            AOE(State, user, target, params, target_p);
-        }
-
-        // NOTE(): Reset per-turn attack buffs/modifiers.
-        user->has_hitchance_boost = false;
-        user->hitchance_boost_multiplier = 1.0f;
-    } break;
-    case action_mode_heal:
-    	{
-    		Heal(target, (s16) params->value);
-    		CreateCombatText(&State->ParticleSystem, target->deferred_p, combat_text_heal);
-    	} break;
-    case action_mode_dash: user->p = target_p; break;
-    }
 }
 
 fn void CheckEncounterModeStatus(game_state_t *State)

@@ -171,6 +171,11 @@ fn void IntegrateRange(range_map_t *Map, const map_t *Obstacles, v2s From, memor
 	DebugLog("From: %i, %i | Range: %i", From.x, From.y, Map->MaxRange);
 }
 
+fn void ClearRangeMap(range_map_t *Map)
+{
+	ZeroStruct(Map);
+}
+
 fn int32_t CheckRange(range_map_t *Map, v2s CellIndex)
 {
 	int32_t Result = 0;

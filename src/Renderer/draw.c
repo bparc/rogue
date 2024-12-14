@@ -166,7 +166,7 @@ fn void RenderRangeMap(command_buffer_t *out, map_t *TileMap, range_map_t *Map)
             {
                 if (Cell->Filled)
                 {
-                    RenderIsoTile(out, TileMap, Index, W(Orange(), 0.5f), true, 0);
+                    RenderIsoTile(out, TileMap, Index, W(Orange(), 0.4f), true, 0);
                 }
 
                 RenderIsoTile(out, TileMap, Index, Red(), false, 0);

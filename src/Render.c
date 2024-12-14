@@ -42,6 +42,12 @@ fn inline void RenderEntity(command_buffer_t *out, const entity_t *entity, f32 a
 			bitmap_color = A(Blue(), 0.9f);
 	}
 
+	status_effect_t CurrentEffect = entity->StatusEffect;
+	if (CurrentEffect.type != status_effect_none)
+	{
+		bitmap_color = Lerp4(bitmap_color, status_effect_Colors[CurrentEffect.type], 1.0f);
+	}
+
 	bitmap_color.w = alpha;
 	DrawBitmap(out, bitmap_p, bitmap_sz, bitmap_color, bitmap);
 	RenderIsoCubeCentered(out, ScreenToIso(p), cube_bb_sz, 50, Pink());
@@ -80,7 +86,7 @@ fn inline void RenderTile(command_buffer_t *out, map_t *Map, s32 x, s32 y, asset
 	}
 }
 
-fn inline void Render_ClipToViewport(game_state_t *State, map_t *Map, bb_t clipplane, command_buffer_t *out)
+fn inline void RenderMap_ClipToViewport(game_state_t *State, map_t *Map, bb_t clipplane, command_buffer_t *out)
 {
 	v2 viewport = Sub(clipplane.max, clipplane.min);
 	assets_t *assets = State->Assets;
@@ -169,15 +175,21 @@ fn void Render_DrawFrame(game_state_t *State, command_buffer_t *out, f32 dt, v2 
 	view.max = Add(view.min, viewport);
 	view = ShrinkBounds(view, 64.0f * 3.0f);
 
-	Render_ClipToViewport(State, Map, view, out);
+	// map
+	RenderMap_ClipToViewport(State, Map, view, out);
+
+	if (State->EncounterModeEnabled)
+	{
+		RenderRangeMap(out, &State->Map, &State->EffectiveRange);
+	}
 
 	// NOTE(): Entities
 	for (s32 index = 0; index < Units->EntityCount; index++)
 	{
 		entity_t *entity = &Units->entities[index];
 
-		// NOTE(): The "deferred_p"s of the 'active' no-player entities are
-		// animated directly in TurnKernel() to allow for
+		// NOTE(): The position of the 'active' no-player entities are
+		// animated directly in TurnSystem() to allow for
 		// more explicit controls over the entity animation in that section of the code-base.
 		if ((entity->flags & entity_flags_controllable) || (IsActive(State, entity->id) == false))
 		{
@@ -231,6 +243,10 @@ fn void Render_DrawFrame(game_state_t *State, command_buffer_t *out, f32 dt, v2 
 	                }
 
 	                DrawFormat(out_top, State->Assets->Font, p, color, "%s", text);
+				} break;
+			case particle_type_text:
+				{
+					DrawFormat(out_top, State->Assets->Font, p, particle->Color, "%s", particle->Text);
 				} break;
 			}
 			continue;

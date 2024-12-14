@@ -65,4 +65,6 @@ typedef struct
 
 fn range_map_cell_t *GetRangeMapCell(range_map_t *Map, v2s Cell);
 fn void IntegrateRange(range_map_t *Map, const map_t *Obstacles, v2s From, memory_t Memory);
+fn void ClearRangeMap(range_map_t *Map);
+
 fn int32_t CheckRange(range_map_t *Map, v2s CellIndex);

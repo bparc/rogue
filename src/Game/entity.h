@@ -1,5 +1,3 @@
-#define MAX_STATUS_EFFECTS 3
-
 typedef enum
 {
 	entity_flags_controllable = 1 << 0,
@@ -45,7 +43,7 @@ typedef struct
 	f32 hitchance_boost_multiplier;
 	b32 has_hitchance_boost;
 
-	status_effect_t status_effects[MAX_STATUS_EFFECTS];
+	status_effect_t StatusEffect;
 
 	// NOTE(): AI stuff
 	b32 Alerted;

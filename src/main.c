@@ -9,6 +9,7 @@
 // NOTE(): Game/
 #include "game/particle.c"
 
+#include "ailments.h"
 #include "game/action.h"
 #include "game/items.h"
 #include "game/inventory.h"
@@ -21,18 +22,23 @@
 #include "game/cursor.h"
 #include "interface/interface.h"
 
+#include "game_data.c"
 #include "game.h"
 #include "menu.h"
 #include "menu.c"
-#include "data.c"
 #include "dungeon.c"
 
 #include "renderer/draw.c"
+
+// game
+#include "ailments.c"
+#include "combat.c"
 
 #include "game/cursor.c"
 #include "game/enemy.c"
 #include "game/player.c"
 #include "game/camera.c"
+
 #include "game.c"
 
 #include "render.c"
@@ -53,8 +59,8 @@ fn void Setup(game_state_t *State, memory_t *Memory, log_t *Log, assets_t *Asset
 	
 	SetupMap(&State->Map, 1024, 1024, Memory, TILE_PIXEL_SIZE);
 
-	SetupItemDataTable(Memory, Assets);
-	SetupActionDataTable(Memory, Assets);
+	Data_ItemTypes(Memory, Assets);
+	Data_ActionTypes(Memory, Assets);
 
 	SetupActionBar(&State->Bar, Assets);
 
@@ -65,6 +71,10 @@ fn void Setup(game_state_t *State, memory_t *Memory, log_t *Log, assets_t *Asset
 	CreateDungeon(State, &State->MapLayout);
 
 	DebugLog("used memory %i/%i KB", Memory->offset / 1024, Memory->size / 1024);
+
+	#if SILENCE_NORMAL_LOGS
+	DebugWarning("SILENCE_NORMAL_LOGS=1 (settings.h)");
+	#endif
 }
 
 fn void Tick(game_state_t *State, f32 dt, client_input_t input, virtual_controls_t cons, command_buffer_t *Layer0, command_buffer_t *Layer1)
@@ -87,8 +97,12 @@ fn void Tick(game_state_t *State, f32 dt, client_input_t input, virtual_controls
 		SetupTurn(State, AP);
 		
 		IntegrateRange(&State->EffectiveRange, &State->Map, Entity->p, *State->Memory);
-		EvaluateStatusEffects(Entity);
 
+		if (State->EncounterModeEnabled && (Entity->StatusEffect.duration > 0))
+		{
+			AilmentEvaluate(State, Entity, &Entity->StatusEffect);
+		}
+		
 		CloseCursor(&State->Cursor);
 		CloseInventory(&State->GUI);			
 	}
@@ -121,14 +135,20 @@ fn void Tick(game_state_t *State, f32 dt, client_input_t input, virtual_controls
 		{
 			UpdateAI(State, Entity);
 		}
-
-		if (State->EncounterModeEnabled)
-		{
-			RenderRangeMap(Layer1, &State->Map, &State->EffectiveRange);
-		}
 	}
 
-	UpdateAsynchronousActionQueue(State, Entity, dt, Layer1);
+	for (s32 ActionIndex = 0; ActionIndex < State->ActionCount; ActionIndex++)
+	{
+		async_action_t *Act = &State->Actions[ActionIndex];
+
+		AnimateAction(State, Entity, Act, Layer1, dt);
+
+		if (Act->Lerp >= 1.0f)
+		{
+			State->Actions[ActionIndex--] = State->Actions[--State->ActionCount];
+			CommitCombatAction(State, Entity, GetEntity(&State->Units, Act->target_id), &Act->action_type, Act->target_p);
+		}
+	}
 
 	garbage_collect_result_t GarbageCollectResult = GarbageCollect(State, State, dt);
 	if (GarbageCollectResult.DeletedEntityCount > 0)

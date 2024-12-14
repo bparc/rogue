@@ -11,7 +11,7 @@ fn inline void SetMenuShortcut(slot_bar_t *menu, assets_t *assets, s32 index,
         shortcut->icon = NULL;
 #undef Icons
     if (!item_params) {
-        shortcut->params = GetParameters(type);
+        shortcut->params = GetActionParams(type);
     } else shortcut->item_params = item_params;
 
     shortcut->type = type;

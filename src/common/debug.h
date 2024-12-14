@@ -29,5 +29,12 @@ fn void DebugText(v2 p, const char *string);
 
 fn void DebugPrint(const char *format, ...);
 
+#if SILENCE_NORMAL_LOGS
+#define DebugLog(Format, ...)
+#else
 #define DebugLog(Format, ...) _DebugLog(__func__, __LINE__, Format, __VA_ARGS__)
+#endif
+
+#define DebugWarning(Format, ...) _DebugLog(__func__, __LINE__, Format, __VA_ARGS__)
+
 fn void _DebugLog(const char *prefix, s32 line, const char *format, ...);

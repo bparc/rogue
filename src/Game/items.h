@@ -17,6 +17,7 @@ typedef enum {
     item_assault_rifle,
     item_standard_caseless_rifle,
     item_green_herb,
+    item_freezing_spell,
     item_type_count
 } item_type_t;
 
@@ -73,6 +74,20 @@ typedef struct {
 } item_t;
 
 static item_params_t _Global_Item_Data[item_type_count];
+
+void DefaultItemValues(void)
+{
+    for (s32 index = 0; index < ArraySize(_Global_Item_Data); index++)
+    {
+        item_params_t *Params = &_Global_Item_Data[index];
+        Params->type = (item_type_t)index;
+        Params->category = (item_categories_t)index;
+        if (Params->name == NULL)
+            Params->name = "Not Set";
+        if (IsZero(Params->size))
+            Params->size = V2S(1, 1);
+    }
+}
 
 fn const item_params_t *GetItemParams(item_type_t type)
 {
