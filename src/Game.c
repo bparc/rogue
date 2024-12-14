@@ -222,8 +222,6 @@ fn garbage_collect_result_t GarbageCollect(game_state_t *Game, game_state_t *Sta
 		entity_t *entity = &storage->entities[index];
 		if (entity->flags & entity_flags_deleted)
 		{
-			Perish(State, entity);
-
 			if (State->EvictedEntityCount < ArraySize(State->EvictedEntities))
 			{
 				evicted_entity_t *evicted = &State->EvictedEntities[State->EvictedEntityCount++];

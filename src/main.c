@@ -19,7 +19,7 @@
 #include "game/action.c"
 #include "game/inventory.c"
 
-#include "game/cursor.h"
+#include "cursor.h"
 #include "interface/interface.h"
 
 #include "game_data.c"
@@ -34,10 +34,9 @@
 #include "ailments.c"
 #include "combat.c"
 
-#include "game/cursor.c"
-#include "game/enemy.c"
-#include "game/player.c"
-#include "game/camera.c"
+#include "cursor.c"
+#include "player.c"
+#include "camera.c"
 
 #include "game.c"
 
