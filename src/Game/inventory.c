@@ -108,8 +108,8 @@ fn item_t *Eq_GetItem(inventory_t *inventory, item_id_t ID)
 
 fn item_id_t Eq_AllocateID(inventory_t *inventory)
 {
-    item_id_t result = (1 + *inventory->GlobalIDGen);
-    *inventory->GlobalIDGen += 1;
+    item_id_t result = (1 + *inventory->global_item_count);
+    *inventory->global_item_count += 1;
 
     return result;
 }
@@ -147,7 +147,7 @@ fn item_t *Eq_AddItem(inventory_t *inventory, item_type_t type)
 {
     item_t *result = NULL;
 
-    item_t Item = MakeItemFromType(type);
+    item_t Item = ItemFromType(type);
     v2s VacantSpace = {0};
     if (Eq_FindVacantSpace(inventory, &VacantSpace, Item.size))
         result = Eq_StoreItemUnchecked(inventory, Item, VacantSpace, Eq_AllocateID(inventory));

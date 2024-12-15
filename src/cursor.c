@@ -3,7 +3,7 @@ fn void UpdateAndRenderCursor(game_state_t *State, cursor_t *Cursor, command_buf
 {
 	// NOTE(): Setup
 	action_t equipped = GetEquippedAction(&State->Bar, user);
-	const action_params_t *settings = GetActionParams(equipped.type);
+	const action_params_t *settings = equipped.Data;
 	const s32 Range = settings->range;
 	const v2s Area  = settings->area;
 	
@@ -13,11 +13,11 @@ fn void UpdateAndRenderCursor(game_state_t *State, cursor_t *Cursor, command_buf
 		DirInput.Dirs, ArraySize(DirInput.Dirs), Orange());
 
 	// NOTE(): Open the Cursor.
-	if (WentDown(cons.confirm) && (Cursor->active == false) && (equipped.type != action_none))
+	if (WentDown(cons.confirm) && (Cursor->active == false) && (equipped.Data->type != action_none))
 	{
 		// NOTE(): Actions that only targets "self"
 		// are activated directly from the menu, without opening the Cursor.
-		if (IsTargetSelf(equipped.type))
+		if (equipped.Data->target & target_self)
 		{
 			CombatAction(State, user, user->p, settings);
 		}
@@ -33,17 +33,18 @@ fn void UpdateAndRenderCursor(game_state_t *State, cursor_t *Cursor, command_buf
 	if (Cursor->active)
 	{
 		// NOTE(): Close the Cursor, if needed.
-		if (WentDown(cons.cancel) || ((equipped.type == action_none || equipped.type == action_heal)))
+		if (WentDown(cons.cancel))
 			Cursor->active = false;
 
 		// NOTE(): Draw the maximum Range of the Cursor.
 		RenderRange(out, &State->Map, user->p, Range, Pink());
 
 		// NOTE() : Draw the explosion radius.
-		if (equipped.type == action_throw) {
-			RenderRange(out, &State->Map, Cursor->p, Area.x, Red()); // inner
-			RenderRange(out, &State->Map, Cursor->p, Area.x * (s32)2, Red()); // outer
-		}
+		#if 0
+		RenderRange(out, &State->Map, Cursor->p, Area.x, Red()); // inner
+		RenderRange(out, &State->Map, Cursor->p, Area.x * (s32)2, Red()); // outer
+		#endif
+
 		// NOTE(): Draw the Cursor.
 		RenderIsoTile(out, &State->Map, Cursor->p, A(Pink(), 0.8f), true, 0);
 
@@ -78,7 +79,7 @@ fn void UpdateAndRenderCursor(game_state_t *State, cursor_t *Cursor, command_buf
 
 		if (IsHostile(target))
 		{
-			s32 chance = CalculateHitChance(user, target, equipped.type);
+			s32 chance = CalculateHitChance(user, target, equipped.Data->type);
 			RenderDiegeticText(&State->Camera, State->Assets->Font, target->deferred_p, V2(-20.0f, -85.0f), White(), "%i%%", chance);
 
 			Cursor->Target = target->id;

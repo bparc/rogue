@@ -30,9 +30,9 @@ fn u8 GetTileValue(const map_t *Map, s32 x, s32 y)
 	return (tile ? tile->value : 0);
 }
 
-fn trap_type_t GetTileTrapType(const map_t *Map, s32 x, s32 y)
+fn trap_type_t GetTileTrapType(const map_t *Map, v2s p)
 {
-	tile_t *result = GetTile((map_t *)Map, x, y);
+	tile_t *result = GetTile((map_t *)Map, p.x, p.y);
 	return (result ? result->trap_type : trap_type_none);
 }
 

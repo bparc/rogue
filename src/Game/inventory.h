@@ -25,7 +25,8 @@ typedef struct {
     item_t equipped_weapon;
     item_t equipped_armor;
     
-    u64 *GlobalIDGen;
+    u64 *global_item_count; // NOTE(): Not too thrilled about this pointer, but getting rid of it would
+    // be would be kind of annoying...
 } inventory_t;
 
 fn void SetupInventory(inventory_t *inventory, u64 *IDGen)
@@ -34,7 +35,7 @@ fn void SetupInventory(inventory_t *inventory, u64 *IDGen)
     inventory->item_count = 0;
     inventory->x = BACKPACK_GRID_X_SIZE;
     inventory->y = BACKPACK_GRID_Y_SIZE;
-    inventory->GlobalIDGen = IDGen;
+    inventory->global_item_count = IDGen;
 }
 
 #undef BACKPACK_GRID_X_SIZE
@@ -54,9 +55,3 @@ fn b32 Eq_IsSpaceOccupied(const inventory_t *eq, v2s offset, v2s size);
 
 fn void Eq_OccupySpace(inventory_t *eq, v2s offset, v2s size, item_id_t ID);
 fn void Eq_FreeSpace(inventory_t *eq, v2s min, v2s size);
-
-typedef struct
-{
-    s32 ID;
-    inventory_t inventory;
-} container_t;

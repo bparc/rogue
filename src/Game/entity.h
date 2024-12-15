@@ -7,9 +7,8 @@ typedef enum
 
 typedef enum
 {
-	static_entity_flags_trap = 1 << 0,
-	static_entity_flags_stepon_trigger = 1 << 1,
-} static_entity_flags;
+	RenderFlags_DisableAutoAnimation = 1 << 0,
+} render_flags_t;
 
 typedef enum
 {
@@ -24,6 +23,7 @@ typedef struct
 	entity_id_t id;
 	u8 enemy_type;
 	u8 flags;
+	u8 render_flags; // flags that last for a duration of a one frame
 
 	inventory_t *inventory;
 
@@ -33,8 +33,8 @@ typedef struct
 	v2s size; //size in squares, 1x1, 2x1, 1x2, etc
 
 	f32 blink_time;
-	u16 health;
-	u16 max_health;
+	s16 health;
+	s16 max_health;
 	u16 attack_dmg;
 
 	s32 ranged_accuracy;
@@ -49,25 +49,32 @@ typedef struct
 	b32 Alerted;
 } entity_t;
 
-fn b32 IsAlive(entity_t *Entity);
+typedef struct
+{
+	union
+	{
+		entity_t entity;
+		entity_t;
+	};
+	f32 time_remaining;
+} evicted_entity_t;
+
+fn b32 IsAlive(const entity_t *Entity);
 fn b32 IsHostile(const entity_t *entity);
 fn b32 IsPlayer(const entity_t *entity);
 
-fn void TakeHP(entity_t *entity, s16 damage);
-fn void Heal(entity_t *entity, s16 healed_hp);
+typedef struct
+{
+    s32 ID;
+    inventory_t inventory;
+} container_t;
 
 typedef struct
 {
-	u64 IDPool;
+	u64 TotalEntityCount;
 	s32 EntityCount;
 	entity_t entities[1024];
 
 	s32 ContainerCount;
 	container_t Containers[64];
 } entity_storage_t;
-
-fn entity_t *GetEntity(entity_storage_t *storage, entity_id_t id);
-fn entity_t *GetEntityFromPosition(entity_storage_t *storage, v2s p);
-
-fn entity_t *FindClosestHostile(entity_storage_t *storage, v2s player_pos);
-fn entity_t *FindClosestPlayer(entity_storage_t *storage, v2s p);

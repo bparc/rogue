@@ -17,27 +17,6 @@ typedef struct {
 	bitmap_t action_bar_icons[16][1]; //icons:variations, order as in world.c
 } combat_ui_t;
 
-typedef struct
-{
-	bmfont_t *Font;
-	bitmap_t Slime;
-	bitmap_t SmallSlimeMelee;
-	bitmap_t BigSlimeMelee;
-	bitmap_t SlimeRangedProjectile; //16x16x
-
-	bitmap_t SlimeBig;
-	bitmap_t Player[4]; //why 4 players?
-	bitmap_t PlayerGrenade;
-	bitmap_t LowTiles[2];	
-	bitmap_t Traps[3];
-	bitmap_t SlimeBall;
-	
-	combat_ui_t CombatUI;
-	terrain_tileset_t Tilesets[1]; //replace with macro PLANETS_MAX_VARIATIONS or something
-
-	b32 Loaded;
-} assets_t;
-
 typedef enum {
 	tile_center = 0, //all 4 cardinal surrounding tiles connect to this
 	tile_full,
@@ -61,11 +40,29 @@ typedef enum {
 	tile_single_connect_right,
 
 	tile_top_bottom,
-	tile_left_right,
-
-
-	
+	tile_left_right,	
 } tile_position;
+
+typedef struct
+{
+	bmfont_t *Font;
+	bitmap_t Slime;
+	bitmap_t SmallSlimeMelee;
+	bitmap_t BigSlimeMelee;
+	bitmap_t SlimeRangedProjectile; //16x16x
+
+	bitmap_t SlimeBig;
+	bitmap_t Player[4]; //why 4 players?
+	bitmap_t PlayerGrenade;
+	bitmap_t LowTiles[2];	
+	bitmap_t Traps[3];
+	bitmap_t SlimeBall;
+	
+	combat_ui_t CombatUI;
+	terrain_tileset_t Tilesets[1]; //replace with macro PLANETS_MAX_VARIATIONS or something
+
+	b32 Loaded;
+} assets_t;
 
 fn void Bitmap(assets_t *assets, bitmap_t *bitmap, const char *path, f32 align_x, f32 align_y)
 {

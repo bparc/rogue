@@ -180,21 +180,19 @@ fn void Render_DrawFrame(game_state_t *State, command_buffer_t *out, f32 dt, v2 
 
 	if (State->EncounterModeEnabled)
 	{
-		RenderRangeMap(out, &State->Map, &State->EffectiveRange);
+		RenderRangeMap(out, &State->Map, &State->EffectiveRange, State->SecondsElapsed);
 	}
 
 	// NOTE(): Entities
 	for (s32 index = 0; index < Units->EntityCount; index++)
 	{
 		entity_t *entity = &Units->entities[index];
-
-		// NOTE(): The position of the 'active' no-player entities are
-		// animated directly in TurnSystem() to allow for
-		// more explicit controls over the entity animation in that section of the code-base.
-		if ((entity->flags & entity_flags_controllable) || (IsActive(State, entity->id) == false))
+		
+		if (!(entity->render_flags & RenderFlags_DisableAutoAnimation))
 		{
 			entity->deferred_p = Lerp2(entity->deferred_p, GetTileCenter(&State->Map, entity->p), 10.0f * dt);
 		}
+
 		entity->blink_time = MaxF32(entity->blink_time - (dt * 1.5f), 0.0f);
 
 		RenderEntity(out, entity, 1.0f, State->Assets, Map);
@@ -202,6 +200,8 @@ fn void Render_DrawFrame(game_state_t *State, command_buffer_t *out, f32 dt, v2 
 		v2 screen_p = CameraToScreen(&State->Camera, Sub(entity->deferred_p, V2(60.0f, 60.0f)));
 		screen_p.x -= 25.0f;
 		RenderHealthPoints(out_top, screen_p, State->Assets, entity);
+
+		entity->render_flags = 0;
 	}
 	for (s32 index = 0; index < State->EvictedEntityCount; index++)
 	{
@@ -209,49 +209,8 @@ fn void Render_DrawFrame(game_state_t *State, command_buffer_t *out, f32 dt, v2 
 		entity->deferred_p = Sub(entity->deferred_p, Scale(V2(10.0f, 10.0f), dt));
 		RenderEntity(out, &entity->entity, entity->time_remaining, State->Assets, Map);
 	}
- 	// NOTE(): Particles
-	for (s32 index = 0; index < particles->num; index++)
-	{
-		particle_t *particle = &particles->parts[index];
-		particle->t += dt;
-		if (particle->t < 1.0f)
-		{
-			f32 t = particle->t;
-			v4 color = White();
-			color.w = (1.0f - Smoothstep(t, 0.5f));
-			v2 p = CameraToScreen(&State->Camera, particle->p);
-			p.y -= ((50.0f * t) + (t * t * t) * 20.0f);
-			p.x += (Sine(t) * 2.0f - 1.0f) * 2.0f;
+ 
 
-			switch (particle->type)
-			{
-			case particle_type_number:
-				{	
-					DrawFormat(out_top, State->Assets->Font, p, color, "%i", particle->number);
-				} break;
-			case particle_type_combat_text:
-				{
-	                const char *text = "";
-	                switch (particle->combat_text)
-	                {
-	                    case combat_text_critical: color = Yellow(); text = "CRITICAL"; break;
-	                    case combat_text_hit:      text = "HIT";      break;
-	                    case combat_text_miss:     color = LightGrey(); text = "MISS";     break;
-	                    case combat_text_graze:    text = "GRAZE";    break;
-	                    case combat_text_alerted:  text = "!"; color = White(); break;
-	                    case combat_text_heal:     text = "HEAL"; color = Green(); break;
-	                }
-
-	                DrawFormat(out_top, State->Assets->Font, p, color, "%s", text);
-				} break;
-			case particle_type_text:
-				{
-					DrawFormat(out_top, State->Assets->Font, p, particle->Color, "%s", particle->Text);
-				} break;
-			}
-			continue;
-		}
-
-		particles->parts[index--] = particles->parts[--particles->num];
-	}
+ 	DrawParticleSystem(&State->ParticleSystem, State->Assets, &State->Camera, out_top, dt);
+	
 }

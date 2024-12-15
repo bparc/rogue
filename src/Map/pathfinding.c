@@ -132,11 +132,12 @@ fn void ExpandRange(range_map_t *Map, const map_t *Obstacles, min_queue_t *Queue
 		{
 			InsertMin(Queue, (Parent.priority + 1), CellIndex, PushStruct(path_tile_t, Mem), Parent.data);
 			Cell->Filled = true;
+			Cell->Tentative = (Parent.priority + 1);
 		}
 	}
 }
 
-fn void IntegrateRange(range_map_t *Map, const map_t *Obstacles, v2s From, memory_t Memory)
+fn void IntegrateRange(range_map_t *Map, const map_t *Obstacles, v2s From, memory_t Memory, s32 Range, min_queue_t *Queue)
 {
 	ZeroStruct(Map);
 	Map->Size = V2S(ArraySize(Map->Cells[0]), ArraySize(Map->Cells));
@@ -144,28 +145,25 @@ fn void IntegrateRange(range_map_t *Map, const map_t *Obstacles, v2s From, memor
 	Map->From = From;
 	Map->Min = IntSub(Map->From, IntHalf(Map->Size));
 
-	Map->MaxRange = 6;
+	Map->MaxRange = Range;
 
-	min_queue_t *Queue = PushStruct(min_queue_t, &Memory);
-	if (Queue)
+	Queue->count = 0;
+
+	InsertMin(Queue, 0, Map->From, PushStruct(path_tile_t, &Memory), NULL);
+	while (Queue->count)
 	{
-		InsertMin(Queue, 0, Map->From, PushStruct(path_tile_t, &Memory), NULL);
-		while (Queue->count)
+		min_queue_entry_t Min = ExtractMin(Queue);
+		if (Map->FilledCount < ArraySize(Map->Filled))
 		{
-			min_queue_entry_t Min = ExtractMin(Queue);
-
-			if (Map->FilledCount < ArraySize(Map->Filled))
-			{
-				range_map_cell_t *Filled = &Map->Filled[Map->FilledCount++];
-				Filled->Filled = true;
-				Filled->Cell = Min.data->p;
-			}
-
-			ExpandRange(Map, Obstacles, Queue, &Memory, Min, +1, +0);
-			ExpandRange(Map, Obstacles, Queue, &Memory, Min, -1, +0);
-			ExpandRange(Map, Obstacles, Queue, &Memory, Min, +0, +1);
-			ExpandRange(Map, Obstacles, Queue, &Memory, Min, +0, -1);
+			range_map_cell_t *Filled = &Map->Filled[Map->FilledCount++];
+			Filled->Filled = true;
+			Filled->Cell = Min.data->p;
+			Filled->Tentative = Min.priority;
 		}
+		ExpandRange(Map, Obstacles, Queue, &Memory, Min, +1, +0);
+		ExpandRange(Map, Obstacles, Queue, &Memory, Min, -1, +0);
+		ExpandRange(Map, Obstacles, Queue, &Memory, Min, +0, +1);
+		ExpandRange(Map, Obstacles, Queue, &Memory, Min, +0, -1);
 	}
 
 	DebugLog("From: %i, %i | Range: %i", From.x, From.y, Map->MaxRange);

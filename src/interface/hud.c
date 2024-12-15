@@ -46,6 +46,9 @@ fn void HUD(command_buffer_t *out, game_state_t *State, const client_input_t *in
         }
 
         ActionMenu(ActiveEntity, State, out, State->Assets, input, State, &State->GUI, ActiveEntity);
+
+        if (WentDown(Cons->Inventory))
+            ToggleInventory(&State->GUI);
     }
     
     EndInterface(&State->GUI);

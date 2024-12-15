@@ -43,10 +43,13 @@ typedef struct
 	min_queue_entry_t entries[1024*1024*2];
 } min_queue_t;
 
+fn void FlushMinQueue(min_queue_t *Queue);
+
 typedef struct
 {
 	uint8_t Filled;
 	v2s Cell;
+	s32 Tentative;
 } range_map_cell_t;
 
 typedef struct
@@ -64,7 +67,7 @@ typedef struct
 } range_map_t;
 
 fn range_map_cell_t *GetRangeMapCell(range_map_t *Map, v2s Cell);
-fn void IntegrateRange(range_map_t *Map, const map_t *Obstacles, v2s From, memory_t Memory);
+fn void IntegrateRange(range_map_t *Map, const map_t *Obstacles, v2s From, memory_t Memory, s32 Range, min_queue_t *Queue);
 fn void ClearRangeMap(range_map_t *Map);
 
 fn int32_t CheckRange(range_map_t *Map, v2s CellIndex);

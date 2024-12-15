@@ -20,7 +20,7 @@ fn void AddStatusEffect(game_state_t *State, entity_t *Entity, status_effect_typ
         Effect->duration = Duration;
         Effect->type = Type;
         
-        _StatusEffectText(State, Entity, Effect->type);
+        CreateTextParticle(&State->ParticleSystem, Entity->deferred_p, status_effect_Colors[Effect->type], status_effect_Text[Effect->type]);
     }
 }
 
@@ -67,13 +67,19 @@ fn void InflictDamage(game_state_t *State, entity_t *user, entity_t *target, s32
 
     if (target->StatusEffect.duration > 0)
     {
-    	AilmentPreDamage(State, target->StatusEffect.type, target, &damage);
+    	StatusEffects_PreDamage(State, target->StatusEffect.type, target, &damage);
     }
 
     LogLn(State->Log, "%shit! inflicted %i %s of %sdamage upon the target!",
         damage_type_prefix, damage, damage == 1 ? "point" : "points", damage_type_prefix);
     
-    TakeHP(target, (s16)damage);
+    target->health -= (s16)damage;
+    target->blink_time = 1.0f;
+
+    if (target->health <= 0)
+    {
+        target->flags |= entity_flags_deleted;
+    }
 
     CreateDamageNumber(&State->ParticleSystem, Add(target->deferred_p, V2(-25.0f, -25.0f)), damage);
 
@@ -83,6 +89,35 @@ fn void InflictDamage(game_state_t *State, entity_t *user, entity_t *target, s32
         BloodSplatter(&State->Map, user->p, target->p, blood_type, hit_velocity);
     }
 }
+
+fn s32 CalculateHitChance(const entity_t *user, const entity_t *target, action_type_t action_type)
+{
+    s32 final_hit_chance;
+    f32 distance = IntDistance(user->p, target->p);
+
+    if (action_type != action_melee_attack) {
+        final_hit_chance = user->ranged_accuracy - target->evasion + BASE_HIT_CHANCE;
+        if (user->has_hitchance_boost) {
+            final_hit_chance = (s32)((f32)final_hit_chance * user->hitchance_boost_multiplier);
+        }
+
+        if (distance > MAX_EFFECTIVE_RANGE) {
+            s32 penalty = (s32) (distance - MAX_EFFECTIVE_RANGE) * DISTANCE_PENALTY_PER_TILE;
+            final_hit_chance -= penalty;
+        }
+
+    } else {
+        final_hit_chance = user->ranged_accuracy - target->evasion + BASE_HIT_CHANCE + MELEE_BONUS;
+        if (user->has_hitchance_boost) {
+            final_hit_chance = (s32)((f32)final_hit_chance * user->hitchance_boost_multiplier);
+        }
+    }
+
+    final_hit_chance = Clamp(final_hit_chance, 0, 100);
+
+    return final_hit_chance;
+}
+
 
 fn inline void _SingleTarget(game_state_t *State, entity_t *user, entity_t *target, const action_params_t *params)
 {
@@ -143,22 +178,21 @@ fn inline void _AOE(game_state_t *State, entity_t *user, entity_t *target, const
 
 fn void CommitCombatAction(game_state_t *State, entity_t *user, entity_t *target, action_t *action, v2s target_p)
 {
-    const action_params_t *params = GetActionParams(action->type);
-
-    switch (params->mode)
+    const action_params_t *Data = action->Data;
+    switch (Data->mode)
     {
     case action_mode_damage:
     {
-        if (IsZero(params->area))
+        if (IsZero(Data->area))
         {
         	if (target)
         	{
-            	_SingleTarget(State, user, target, params);
+            	_SingleTarget(State, user, target, Data);
         	}
         }
         else
         {
-            _AOE(State, user, target, params, target_p);
+            _AOE(State, user, target, Data, target_p);
         }
 
         // NOTE(): Reset per-turn attack buffs/modifiers.
@@ -167,7 +201,7 @@ fn void CommitCombatAction(game_state_t *State, entity_t *user, entity_t *target
     } break;
     case action_mode_heal:
     	{
-    		Heal(target, (s16) params->value);
+            target->health = Min16U(target->max_health, target->health + (s16) Data->value);
     		CreateCombatText(&State->ParticleSystem, target->deferred_p, combat_text_heal);
     	} break;
     case action_mode_dash: user->p = target_p; break;

@@ -58,12 +58,12 @@ typedef struct
 
 typedef struct {
     const item_params_t *params;
-    bitmap_t *icon;
-    
+
     // NOTE(): Space occupied by the item in
     // the inventory grid. Parameterized as a rectangle.
 
     v2s size;
+    
     union
     {
         struct { s32 x, y; };
@@ -72,32 +72,3 @@ typedef struct {
 
     item_id_t ID;
 } item_t;
-
-static item_params_t _Global_Item_Data[item_type_count];
-
-void DefaultItemValues(void)
-{
-    for (s32 index = 0; index < ArraySize(_Global_Item_Data); index++)
-    {
-        item_params_t *Params = &_Global_Item_Data[index];
-        Params->type = (item_type_t)index;
-        Params->category = (item_categories_t)index;
-        if (Params->name == NULL)
-            Params->name = "Not Set";
-        if (IsZero(Params->size))
-            Params->size = V2S(1, 1);
-    }
-}
-
-fn const item_params_t *GetItemParams(item_type_t type)
-{
-    return &_Global_Item_Data[type];
-}
-
-fn item_t MakeItemFromType(item_type_t Type)
-{
-    item_t Result = {0};
-    Result.params = GetItemParams(Type);
-    Result.size   = Result.params->size;
-    return Result;  
-}

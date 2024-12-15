@@ -151,27 +151,26 @@ fn void RenderPath(command_buffer_t *out, map_t *Map, path_t *Path, v4 Color)
     }
 }
 
-fn void RenderRangeMap(command_buffer_t *out, map_t *TileMap, range_map_t *Map)
+fn void RenderRangeMap(command_buffer_t *out, map_t *TileMap, range_map_t *Map, double ElapsedTime)
 {
+    f32 Lerp = (f32)ElapsedTime;
+
     v2s Min = Map->Min;
     v2s Max = IntAdd(Min, Map->Size);
 
-    for (s32 Y = Min.y; Y <= Max.y; Y++)
+    for (int32_t Index = 0; Index < Map->FilledCount; Index++)
     {
-        for (s32 X = Min.x; X <= Max.x; X++)
-        {
-            v2s Index = V2S(X, Y);
-            range_map_cell_t *Cell = GetRangeMapCell(Map, Index);
-            if (Cell)
-            {
-                if (Cell->Filled)
-                {
-                    RenderIsoTile(out, TileMap, Index, W(Orange(), 0.4f), true, 0);
-                }
+        const range_map_cell_t *Cell = &Map->Filled[Index];
+        f32 Dist = ((f32)Cell->Tentative / (f32)Map->MaxRange) * 1.0f;
+        f32 Time = (1.0f - Dist) + ((Lerp * 2.0f));
+        Time = fclampf(Time, 0.0f, 1.0f);
 
-                RenderIsoTile(out, TileMap, Index, Red(), false, 0);
-            }
-        }
+        v4 Color = DarkBlue();
+        Color.w = 0.9f;
+        Color.w *= Time;
+
+        RenderIsoTile(out, TileMap, Cell->Cell, Color, true, 0);
+        RenderIsoTile(out, TileMap, Cell->Cell, White(), false, 0);
     }
 
     RenderIsoTile(out, TileMap, Map->From, Yellow(), true, 0);

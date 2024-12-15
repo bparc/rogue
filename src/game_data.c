@@ -1,3 +1,23 @@
+//
+
+static item_params_t    _Global_Item_Data[item_type_count];
+static action_params_t  _Global_Action_Data[action_type_count];
+
+static action_t ActionFromType(action_type_t Type)
+{
+    action_t Result = {0};
+    Result.Data = &_Global_Action_Data[Type];
+    return Result;
+}
+
+fn item_t ItemFromType(item_type_t Type)
+{
+    item_t Result = {0};
+    Result.params = &_Global_Item_Data[Type];
+    Result.size   = Result.params->size;
+    return Result;  
+}
+
 fn void Data_ItemTypes(memory_t *memory, const assets_t *assets)
 {
 #define ITM(Type) _Global_Item_Data[item_##Type]  = (item_params_t)
@@ -45,7 +65,16 @@ fn void Data_ItemTypes(memory_t *memory, const assets_t *assets)
 
 #undef ITM
 
-    DefaultItemValues();
+    for (s32 index = 0; index < ArraySize(_Global_Item_Data); index++)
+    {
+        item_params_t *Params = &_Global_Item_Data[index];
+        Params->type = (item_type_t)index;
+        Params->category = (item_categories_t)index;
+        if (Params->name == NULL)
+            Params->name = "Not Set";
+        if (IsZero(Params->size))
+            Params->size = V2S(1, 1);
+    }
 }
 
 fn void Data_ActionTypes(memory_t *memory, const assets_t *assets)
@@ -62,7 +91,7 @@ fn void Data_ActionTypes(memory_t *memory, const assets_t *assets)
         .animation_ranged = &assets->SlimeBall,
         .range  = 10,
         .cost   = 1,
-        .damage = 38,
+        .damage = 10,
     };
     ACT(heal)
     {
@@ -119,7 +148,19 @@ fn void Data_ActionTypes(memory_t *memory, const assets_t *assets)
     };
     #undef ACT
 
-    DefaultActionValues();
+    // default values
+    
+    for (s32 index = 0; index < ArraySize(_Global_Action_Data); index++)
+    {
+        action_params_t *Params = &_Global_Action_Data[index];
+        Params->type = (action_type_t)index;
+        if (Params->name == NULL)
+            Params->name = "Not Set";
+        if (!Params->range)
+            Params->range = 2;
+        if (!Params->target)
+            Params->target = target_hostile;
+    }
 }
 
 #define DUNGEON_ROOM_SIZE_X 20

@@ -10,19 +10,19 @@
 #include "game/particle.c"
 
 #include "ailments.h"
-#include "game/action.h"
+#include "game/actions.h"
 #include "game/items.h"
 #include "game/inventory.h"
 
 #include "game/entity.h"
 #include "game/entity.c"
-#include "game/action.c"
-#include "game/inventory.c"
-
-#include "cursor.h"
-#include "interface/interface.h"
 
 #include "game_data.c"
+#include "game/inventory.c"
+#include "cursor.h"
+#include "interface/interface.h"
+#include "interface/bar.h"
+
 #include "game.h"
 #include "menu.h"
 #include "menu.c"
@@ -39,7 +39,6 @@
 #include "camera.c"
 
 #include "game.c"
-
 #include "render.c"
 
 #include "interface/inventory.c"
@@ -79,29 +78,32 @@ fn void Setup(game_state_t *State, memory_t *Memory, log_t *Log, assets_t *Asset
 fn void Tick(game_state_t *State, f32 dt, client_input_t input, virtual_controls_t cons, command_buffer_t *Layer0, command_buffer_t *Layer1)
 {
 	entity_t *Entity = NULL;
+	
+	BeginTurnSystemFrame(State, dt);
 
-	BeginTurnSystem(State, State, dt);
 	Entity = GetActive(State);
 
 	if (Entity == NULL)
 	{
+		// NOTE(): There are no entities left in the queue -
+		// begin a new phase.
+
 		EstablishTurnOrder(State);
+		Entity = GetActive(State);
 	}
 
 	if ((State->TurnInited == false) && Entity)
 	{
 		State->TurnInited = true;
 		
-		s32 AP = 16;
-		SetupTurn(State, AP);
-		
-		IntegrateRange(&State->EffectiveRange, &State->Map, Entity->p, *State->Memory);
+		SetupNewTurn(State, /*AP*/ 16);
+		CreateMovementRange(State, Entity, 6);
 
 		if (State->EncounterModeEnabled && (Entity->StatusEffect.duration > 0))
 		{
-			AilmentEvaluate(State, Entity, &Entity->StatusEffect);
+			StatusEffects_Evaluate(State, Entity, &Entity->StatusEffect);
 		}
-		
+
 		CloseCursor(&State->Cursor);
 		CloseInventory(&State->GUI);			
 	}
@@ -114,7 +116,7 @@ fn void Tick(game_state_t *State, f32 dt, client_input_t input, virtual_controls
 
 		if (Entity->flags & entity_flags_controllable)
 		{
-			// NOTE(): Skip the update for this frame if any of the enemies was alerted
+			// NOTE(): Skip the entity update for this frame if any of the enemies was alerted
 			Update = CheckEnemyAlertStates(State, Entity) ? false : Update;
 		}
 
@@ -149,8 +151,9 @@ fn void Tick(game_state_t *State, f32 dt, client_input_t input, virtual_controls
 		}
 	}
 
-	garbage_collect_result_t GarbageCollectResult = GarbageCollect(State, State, dt);
-	if (GarbageCollectResult.DeletedEntityCount > 0)
+	garbage_collect_result_t GC = GarbageCollect(State, State, dt);
+
+	if (GC.DeletedEntityCount > 0)
 	{
 		CheckEncounterModeStatus(State);
 	}
@@ -159,7 +162,7 @@ fn void Tick(game_state_t *State, f32 dt, client_input_t input, virtual_controls
 	
 	HUD(Debug.out, State, &input, &cons, dt);
 
-	EndTurnSystem(State, State);
+	EndTurnSystemFrame(State, State);
 
 	Render_DrawFrame(State, Layer0, dt, V2(input.viewport[0], input.viewport[1]));
 }

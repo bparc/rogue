@@ -12,7 +12,7 @@ fn entity_t *CreateEntity(game_state_t *State, v2s p, v2s size, u8 flags, u16 he
 
 		result->size = size;
 
-		result->id = (0xff + (storage->IDPool++));
+		result->id = (0xff + (storage->TotalEntityCount++));
 		result->flags = flags;
 		result->health = health_points;
 		result->attack_dmg = attack_dmg;
@@ -82,18 +82,6 @@ fn void ClearTurnQueue(game_state_t *State)
 	State->PhaseSize = 0;
 }
 
-fn inline entity_t *__pull(game_state_t *State)
-{
-	entity_t *result = 0;
-	if (State->QueueSize > 0)
-	{
-		result = GetEntity(&State->Units, State->Queue[State->QueueSize - 1]);
-		if (!result)
-			State->QueueSize--; // NOTE(): The ID is invalid - pull it from the State.
-	}
-	return result;
-}
-
 fn b32 IsActionQueueCompleted(const game_state_t *State)
 {
 	return (State->ActionCount == 0);
@@ -123,15 +111,16 @@ fn entity_t *PeekNextTurn(game_state_t *State, entity_storage_t *storage)
 	return result;
 }
 
-fn void EndTurn(game_state_t *State, entity_t *entity)
+fn void EndTurn(game_state_t *State)
 {
 	if (State->TurnInited)
 	{
-		State->PrevTurnEntity = entity->id;
+		State->PrevTurnEntity = 0;
 		State->SecondsElapsed = 0.0f;
 
 		if (State->QueueSize > 0)
 		{
+			State->PrevTurnEntity = State->Queue[State->QueueSize - 1];
 			State->QueueSize--;
 		}
 
@@ -160,7 +149,7 @@ fn void QueryAsynchronousAction(game_state_t *State, action_type_t type, entity_
 		result->target_id = target;
 		result->target_p  = target_p;
 		
-		result->action_type.type = type;
+		result->action_type = ActionFromType(type);
 	}
 }
 
@@ -169,12 +158,12 @@ fn void AnimateAction(const game_state_t *State, const entity_t *Entity, async_a
 	f32 StartTime = 0.00f;
 	f32 Elapsed = 2.0f;
 	
-	const action_params_t *Type = GetActionParams(Act->action_type.type);
+	const action_params_t *Type = Act->action_type.Data;
 	
 	if (Type->animation_ranged)
 	{
 		f32 Speed = 5.0f;
-
+		
 		v2 A = GetTileCenter(&State->Map, Entity->p);
 		v2 B = GetTileCenter(&State->Map, Act->target_p);
 		Elapsed = Speed * (1.0f / Distance(A, B));
@@ -251,13 +240,14 @@ fn void Brace(game_state_t *State, entity_t *entity)
 	if (State->ActionPoints >= 2 && ((entity->hitchance_boost_multiplier + 0.1f) <= 2.0f))
 	{
 		entity->has_hitchance_boost = true;
-		State->ActionPoints -= 2;
+		ConsumeActionPoints(State, 2);
+		
 		entity->hitchance_boost_multiplier += 0.1f;
-		DebugLog("Used 2 movement points to brace for a hit chance bonus. Hit chance multiplied by %g for next attack.", entity->hitchance_boost_multiplier);
+		LogLn(State->Log, "Used 2 movement points to brace for a hit chance bonus. Hit chance multiplied by %g for next attack.", entity->hitchance_boost_multiplier);
 	}
 	else if (State->ActionPoints >= 2 && entity->hitchance_boost_multiplier + 0.1f > 2.0f)
 	{
-		DebugLog("Brace invalid. Your hit chance multiplier for next attack is %g which is maximum.", entity->hitchance_boost_multiplier);
+		LogLn(State->Log, "Brace invalid. Your hit chance multiplier for next attack is %g which is maximum.", entity->hitchance_boost_multiplier);
 	}
 }
 
@@ -266,29 +256,39 @@ fn void RemoveMovementRange(game_state_t *State)
 	ClearRangeMap(&State->EffectiveRange);
 }
 
+fn void CreateMovementRange(game_state_t *State, entity_t *Entity, s32 Range)
+{
+	IntegrateRange(&State->EffectiveRange, &State->Map, Entity->p, *State->Memory, Range, &State->FloodQueue);
+}
+
 fn void UpdateAI(game_state_t *State, entity_t *Entity)
 {
 	if (!State->EnemyInited)
 	{
+		State->EnemyInited = true;
+		
 		range_map_t *Range = &State->EffectiveRange;
 		if (Range->FilledCount)
 		{
 			range_map_cell_t RandomCell = Range->Filled[rand() % Range->FilledCount];
 			v2s Target = RandomCell.Cell;
 
-			entity_t *UpdatePlayer = FindClosestPlayer(&State->Units, Entity->p);
-			if (UpdatePlayer)
+			entity_t *ClosestPlayer = FindClosestPlayer(&State->Units, Entity->p);
+			if (ClosestPlayer)
 			{
-				if (CheckRange(&State->EffectiveRange, UpdatePlayer->p))
+				if (CheckRange(&State->EffectiveRange, ClosestPlayer->p))
 				{
-					Target = UpdatePlayer->p;
+					Target = ClosestPlayer->p;
 				}
 			}
 
 			FindPath(&State->Map, Entity->p, Target, &State->EnemyPath, *State->Memory);
 		}
-		State->EnemyInited = true;
 	}
+
+	// Animate
+
+	Entity->render_flags |= RenderFlags_DisableAutoAnimation;
 
 	b32 End = true;
 
@@ -330,13 +330,22 @@ fn void UpdateAI(game_state_t *State, entity_t *Entity)
 
 		if (IsActionQueueCompleted(State))
 		{
-			EndTurn(State, Entity);
+			EndTurn(State);
 		}
 	}
 }
 
-fn inline void _PopRemovedUnits(game_state_t *State)
+fn void BeginTurnSystemFrame(game_state_t *State, f32 dt)
 {
+	State->SecondsElapsed += dt;
+	State->EnemyLerp += dt;
+
+	// NOTE(): Before we begin the next frame,
+	// we need to remove all entities on the top of the queue
+	// that were deleted during the duration of the
+	// previous frame. Otherwise the turn system
+	// will stall due to the active entity being NULL.
+
 	while (State->QueueSize > 0)
 	{
 		entity_t *Top = GetEntity(&State->Units, State->Queue[State->QueueSize - 1]);
@@ -348,17 +357,14 @@ fn inline void _PopRemovedUnits(game_state_t *State)
 
 		break;
 	}
+
+	if (State->QueueSize > 0)
+	{
+		State->ActiveUnit = State->Queue[State->QueueSize - 1];
+	}
 }
 
-fn void BeginTurnSystem(game_state_t *State, game_state_t *Game, f32 dt)
-{
-	State->SecondsElapsed += dt;
-	State->EnemyLerp += dt;
-
-	_PopRemovedUnits(State);
-}
-
-fn void EndTurnSystem(game_state_t *State, game_state_t *Game)
+fn void EndTurnSystemFrame(game_state_t *State, game_state_t *Game)
 {
 	
 }
@@ -406,32 +412,24 @@ fn b32 IsCellEmpty(game_state_t *State, v2s p)
 	return false;
 }
 
-fn void StepOnTile(game_state_t *State, entity_t *entity)
-{
-	tile_t *tile = GetTile(&State->Map, entity->p.x, entity->p.y);
-	if (tile && (tile->trap_type != trap_type_none))
-	{
-    	switch(tile->trap_type)
-    	{
-    	    case trap_type_physical:
-    	        TakeHP(entity, 25);
-    	        break;
-    	    case trap_type_poison:
-    	        AddStatusEffect(State, entity, status_effect_poison, 3);
-    	        break;
-    	    default:
-    	        break;
-    	}
-	}
-}
-
 fn b32 ChangeCell(game_state_t *State, entity_t *Entity, v2s NewCell)
 {
 	b32 Moved = IsCellEmpty(State, NewCell);
 	if (Moved)
 	{
-		StepOnTile(State, Entity);
 		Entity->p = NewCell;
+		
+		switch (GetTileTrapType(&State->Map, NewCell))
+		{
+			case trap_type_physical:
+			{
+    	    	InflictDamage(State, Entity, Entity, 25, "physical ");
+    	    } break;
+    	    case trap_type_poison:
+    	    {
+    	       AddStatusEffect(State, Entity, status_effect_poison, 3);
+    	    } break;
+		}
 	}
 	return Moved;
 }
@@ -532,11 +530,10 @@ fn b32 Launch(game_state_t *State, v2s source, entity_t *target, u8 push_distanc
         v2s next_pos = IntAdd(target->p, direction); // Slime is moved through each tile on the way
 
         if (!MoveFitsWithSize(State, target, next_pos)) {
-            TakeHP(target, (s16)damage_per_tile);
+        	InflictDamage(State, target, target, (s16)damage_per_tile, "");
             break;
         } else {
-            target->p = next_pos;
-            StepOnTile(State, target);
+        	ChangeCell(State, target, next_pos);
         }
     }
 
@@ -548,7 +545,7 @@ fn void EstablishTurnOrder(game_state_t *State)
 	ClearTurnQueue(State);
 
 	entity_storage_t *Storage = &State->Units;
-	PushTurn(State, GetEntity(&State->Units, State->Players[0]));
+	
 	
 	for (s32 index = 0; index < Storage->EntityCount; index++)
 	{
@@ -556,6 +553,8 @@ fn void EstablishTurnOrder(game_state_t *State)
 		if (IsHostile(entity) && entity->Alerted)
 			PushTurn(State, entity);
 	}
+
+	PushTurn(State, GetEntity(&State->Units, State->Players[0]));
 }
 
 fn void CheckEncounterModeStatus(game_state_t *State)
@@ -580,7 +579,7 @@ fn void CheckEncounterModeStatus(game_state_t *State)
 	}
 }
 
-fn b32 SetupTurn(game_state_t *State, s32 ActionPointCount)
+fn b32 SetupNewTurn(game_state_t *State, s32 ActionPointCount)
 {
 	State->ActionPoints = ActionPointCount;
 
@@ -589,5 +588,108 @@ fn b32 SetupTurn(game_state_t *State, s32 ActionPointCount)
 	State->EnemyLerp = 0.0f;
 	State->EnemyInited = false;
 
+	RemoveMovementRange(State);
+	
 	return (true);
+}
+
+fn entity_t *GetEntityFromPosition(entity_storage_t *storage, v2s p)
+{
+	for (s32 index = 0; index < storage->EntityCount; index++) {
+        entity_t *entity = &storage->entities[index];
+
+        // "real" pos
+        v2s topLeft = entity->p; 
+        v2s bottomRight = V2S( entity->p.x + entity->size.x - 1, entity->p.y + entity->size.y - 1 );  // bottom right corner (faster? then looping twice)
+
+        if (p.x >= topLeft.x && p.x <= bottomRight.x &&
+            p.y >= topLeft.y && p.y <= bottomRight.y) {
+            return entity;  // point within bounds
+        }
+    }
+    return 0; 
+}
+
+fn entity_t *FindClosestHostile(entity_storage_t *storage, v2s player_pos)
+{
+	entity_t *nearest_enemy = 0;
+	f32 nearest_distance = FLT_MAX;
+
+	for (s32 i = 0; i < storage->EntityCount; i++)
+	{
+		entity_t *entity = &storage->entities[i];
+		if (IsHostile(entity))
+		{
+			f32 distance = IntDistance(entity->p, player_pos);
+			if (distance < nearest_distance)
+			{
+				nearest_enemy = entity;
+				nearest_distance = distance;
+			}
+		}
+	}
+
+	return nearest_enemy;
+}
+
+fn entity_t *FindClosestPlayer(entity_storage_t *storage, v2s p) {
+	entity_t *nearest_player = 0;
+	f32 nearest_distance = FLT_MAX;
+
+	for (s32 i = 0; i < storage->EntityCount; i++)
+	{
+		entity_t *entity = &storage->entities[i];
+		if (IsPlayer(entity))
+		{
+			f32 distance = IntDistance(entity->p, p);
+			if (distance < nearest_distance)
+			{
+				nearest_player = entity;
+				nearest_distance = distance;
+			}
+		}
+	}
+
+	return nearest_player;
+}
+
+fn entity_t *GetEntity(entity_storage_t *storage, entity_id_t id)
+{
+	if (id > 0)
+	{
+		for (s32 index = 0; index < storage->EntityCount; index++)
+		{
+			entity_t *entity = &storage->entities[index];
+			if (entity->id == id)
+				return entity;
+		}
+	}
+	return (0);
+}
+
+fn container_t *GetAdjacentContainer(game_state_t *State, v2s Cell)
+{
+	container_t *Result = 0;
+	for (s32 DirIndex = 0; DirIndex < 4;DirIndex++)
+	{
+		v2s AdjacentCell = IntAdd(Cell, cardinal_directions[DirIndex]);
+		container_t *Container = GetContainer(State, AdjacentCell);
+		if (Container)
+		{
+			Result = Container;		
+			break;
+		}
+	}
+	return Result;
+}
+
+fn b32 GetAdjacentDoor(game_state_t *State, v2s Cell, v2s *DoorCell)
+{
+	b32 Result = 0;
+	for (s32 DirIndex = 0; (DirIndex < 4) && !Result; DirIndex++)
+	{
+		*DoorCell = IntAdd(Cell, cardinal_directions[DirIndex]);
+		Result = IsDoor(&State->Map, *DoorCell);
+	}
+	return Result;
 }

@@ -1,31 +1,3 @@
-fn inline void SetupPlayer(game_state_t *State, entity_t *Entity);
-
-fn entity_t *CreatePlayer(game_state_t *State, v2s p)
-{
-    entity_t *result = 0;
-    if (State->Players[0] == 0)
-    {
-        u16 player_health = 62;
-        u16 player_max_health = 62;
-        u16 attack_dmg = 8; // What does this do now?
-        s32 player_accuracy = 75; // Applying this value for both melee and ranged accuracy
-        s32 player_evasion = 20;
-        result = CreateEntity(State, p, V2S(1, 1), entity_flags_controllable,
-            player_health, attack_dmg, &State->Map, player_max_health, player_accuracy, player_evasion,
-            MAX_PLAYER_ACTION_POINTS, MAX_PLAYER_MOVEMENT_POINTS, 1);
-        
-	    result->inventory = CreateInventory(State); 
-        SetupPlayer(State, result);
-
-        State->Players[0] = result->id;
-    }
-    else
-    {
-        DebugLog("player already created!");
-    }
-    return result;
-}
-
 fn entity_t *CreateSlime(game_state_t*State, v2s p)
 {
 	u16 slime_hp = 54;

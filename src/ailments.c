@@ -1,9 +1,4 @@
-fn inline void _StatusEffectText(game_state_t *State, entity_t *Entity, status_effect_type_t Type)
-{
-    CreateTextParticle(&State->ParticleSystem, Entity->deferred_p, status_effect_Colors[Type], status_effect_Text[Type]);
-}
-
-fn void AilmentEvaluate(game_state_t *State, entity_t *Entity, status_effect_t *Effect)
+fn void StatusEffects_Evaluate(game_state_t *State, entity_t *Entity, status_effect_t *Effect)
 {
     DebugLog("...");
 
@@ -15,7 +10,7 @@ fn void AilmentEvaluate(game_state_t *State, entity_t *Entity, status_effect_t *
     } break;
     case status_effect_freeze:
     {
-        EndTurn(State, Entity);
+        EndTurn(State);
     } break;
     case status_effect_stun:
     {
@@ -23,7 +18,7 @@ fn void AilmentEvaluate(game_state_t *State, entity_t *Entity, status_effect_t *
     } break;
     }
 
-    _StatusEffectText(State, Entity, Effect->type);
+    CreateTextParticle(&State->ParticleSystem, Entity->deferred_p, status_effect_Colors[Effect->type], status_effect_Text[Effect->type]);
 
     if (--Effect->duration <= 0)
     {
@@ -31,7 +26,7 @@ fn void AilmentEvaluate(game_state_t *State, entity_t *Entity, status_effect_t *
     }
 }
 
-fn void AilmentPreDamage(game_state_t *State, status_effect_type_t Type, entity_t *DamageTarget, s32 *Damage)
+fn void StatusEffects_PreDamage(game_state_t *State, status_effect_type_t Type, entity_t *DamageTarget, s32 *Damage)
 {
     switch (Type)
     {

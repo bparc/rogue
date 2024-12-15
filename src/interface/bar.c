@@ -1,3 +1,58 @@
+fn inline void SetMenuShortcut(slot_bar_t *menu, assets_t *assets, s32 index,
+                                action_type_t type, const item_params_t *item_params)
+{
+    Assert(0);
+    #if 0
+    action_t *shortcut = &(menu->slots[index].action);
+#define Icons assets->CombatUI.action_bar_icons
+    if (assets && (type < ArraySize(Icons)))
+        shortcut->icon = &Icons[type][0];
+    else
+        shortcut->icon = NULL;
+#undef Icons
+    if (!item_params) {
+        shortcut->params = GetActionParams(type);
+    } else shortcut->item_params = item_params;
+
+    shortcut->type = type;
+    #endif
+}
+
+fn action_t GetEquippedAction(const slot_bar_t *menu, entity_t *user)
+{
+    action_t Result = ActionFromType(action_none);
+
+    const slot_t *Slot = GetSlot((slot_bar_t *)menu, (s32)(menu->selected_slot - 1));
+    if (Slot)
+    {
+        item_t *Item = Eq_GetItem(user->inventory, Slot->AssignedItem);
+        if (Item)
+        {
+            Result = ActionFromType(Item->params->action);
+        }
+    }
+    return Result;
+}
+
+fn void SetupActionBar(slot_bar_t *bar, assets_t *assets)
+{
+    bar->selected_slot = 1;
+
+    for (s32 i = 0; i < ArraySize(bar->slots); i++)
+    {
+        bar->slots[i].action = ActionFromType(action_none);
+    }
+
+    s32 Index = 0;
+    //SetMenuShortcut(bar, assets, Index++, action_melee_attack);
+    //SetMenuShortcut(bar, assets, Index++, action_ranged_attack);
+    //SetMenuShortcut(bar, assets, Index++, action_heal);
+    //SetMenuShortcut(bar, assets, Index++, action_throw);
+    //SetMenuShortcut(bar, assets, Index++, action_push);
+    //SetMenuShortcut(bar, 0, Index++, action_slash);
+    //SetMenuShortcut(bar, 0, Index++, action_dash);
+}
+
 fn slot_t *GetSlot(slot_bar_t *Bar, s32 Index)
 {
     slot_t *Result = 0;
@@ -44,7 +99,6 @@ fn void ActionMenu(entity_t *user, game_state_t *state, command_buffer_t *out, a
     {
         slot_t *slot = &Bar->slots[i];
         action_t *action = &slot->action;
-        const action_params_t *action_params = GetActionParams(action->type);
 
         v2 slot_offset = V2(i * (slot_size.x + padding), 0.0f);
         v2 slot_p = Add(slot_start_pos, slot_offset);

@@ -54,7 +54,7 @@ fn void SetTileValue(map_t *Map, v2s p, u8 value);
 fn void SetTileTrapType(map_t *Map, v2s p, trap_type_t type);
 
 fn u8 GetTileValue(const map_t *Map, s32 x, s32 y);
-fn trap_type_t GetTileTrapType(const map_t *Map, s32 x, s32 y);
+fn trap_type_t GetTileTrapType(const map_t *Map, v2s p);
 
 // NOTE(): Tile Type Queries
 fn b32 IsTraversable(const map_t *Map, v2s p);
